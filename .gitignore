@@ -4,3 +4,6 @@ var/
 custom.el
 *~
 \#*\#
+straight/
+tree-sitter/
+share

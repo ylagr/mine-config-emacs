@@ -1,5 +1,10 @@
-;;; -*- lexical-binding: t; -*-
+;;; early-init.el --- Initialization file for Emacs  -*- lexical-binding: t; -*-
+;;; Commentary:
+;;; Emacs early Startup File --- initialization for Emacs before init.el
 
+;;; code:
+
+(setq visible-cursor nil)
 ;; restore dumped load-path
 (when (boundp '+saved-load-path-during-dump)
   (message "starting from a dump file ...")
@@ -36,3 +41,6 @@
 
 ;; customization file
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+
+(provide 'early-init)
+;;; early-init.el ends here
