@@ -11,16 +11,17 @@
 ;; installing packages during initialization.
 (setq package-quickstart nil)
 
-;; ------------------ move default dir
+;; ------------------ move default dir   " it make win gui server mode err"
 ;; replace emacs paths early -- before doing anything
-(use-package no-littering
-  :ensure t
-  :demand t
-  :config
-  (setq auto-save-file-name-transforms
-        `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))
-	)
-  )
+;; (use-package no-littering
+;;   :ensure t
+;;   :demand t
+;;   :config
+;;   (setq auto-save-file-name-transforms
+;;         `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))
+;; 	)
+;;   )
+
 ;; -------------------------------config start
 ;; =============================  config use-package
 ;; Set up use-package for user config
@@ -104,6 +105,8 @@
 ;(setq completion-preview-ignore-case t)
 (setq completion-ignore-case t)
 ;(setq completion-preview-completion-styles '(orderless basic partial-completion initials orderless))
+(setq scroll-margin 3)			;set next page margin line
+(setq scroll-conservatively 101)	;if value greater than 100, will nerver scroll
 
 (repeat-mode +1)
 
@@ -116,6 +119,7 @@
   :config (setq show-paren-when-point-in-periphery t
  		show-paren-when-point-inside-paren t
 	       	show-paren-style 'mixed
+		
  		)
   )
 
@@ -259,12 +263,19 @@
 ;; custom
 (when (file-exists-p custom-file)
   (load custom-file))
-
 ;; End of hacks.
 (setq file-name-handler-alist +file-name-handler-alist)
 (setq gc-cons-threshold 16777216) ;; 16mb
 ;; Re-enable package-quickstart.
 (setq package-quickstart t)
+
+(use-package server
+    :if window-system
+;     :commands (server-running-p)
+     :init
+  (progn
+      (server-mode +1)
+      (message "Emacs Server …DONE")))
 
 
 

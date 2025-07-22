@@ -29,7 +29,7 @@
 
 ;; set frame parameters early to prevent flickering.
 (setq default-frame-alist
-      '((height . 50)
+      '((height . 55)
 	(width . 120)
 	(vertical-scroll-bars . +1)
 	(tool-bar-mode . +1)

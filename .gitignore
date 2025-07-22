@@ -7,3 +7,6 @@ custom.el
 straight/
 tree-sitter/
 share
+*
+!early-init.el
+!init.el
