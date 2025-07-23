@@ -6,7 +6,8 @@
 ;; -----------------  Hacks for speeding up initialization.
 (defconst +file-name-handler-alist file-name-handler-alist)
 (setq file-name-handler-alist nil)
-(setq gc-cons-threshold most-positive-fixnum) ; gc use big memory
+(setq gc-cons-threshold 16777216)
+;(setq gc-cons-threshold most-positive-fixnum) ; gc use big memory
 ;; Packages should have been made available.  Disable it to speed up
 ;; installing packages during initialization.
 (setq package-quickstart nil)
@@ -26,13 +27,42 @@
 ;; =============================  config use-package
 ;; Set up use-package for user config
 (setq use-package-always-ensure t)  ; All packages used have to be installed
-
+(message "asasdfasdfasfdasdfasdfasdasdfasdfasdfasdffasdff")
 ;; ============================  benchmark
 (use-package benchmark-init
   :demand t
   :config (benchmark-init/activate)
   :hook (after-init . benchmark-init/deactivate)
   )
+;(desktop-save-mode +1)
+(recentf-mode +1)
+(setq recentf-max-menu-items 25)
+(defvar autosaves-dir (expand-file-name "autosaves/" user-emacs-directory))
+(defvar backups-dir (expand-file-name "backups/" user-emacs-directory))
+(make-directory autosaves-dir t)
+(make-directory backups-dir t)
+
+;; change default action
+(setq default-directory "~/" )
+(message "%s" (expand-file-name "~/"))
+(setq backup-directory-alist
+;      `((".*" . ,temporary-file-directory))
+      `((".*" . ,backups-dir))
+
+     backup-by-copying t ; 自动备份
+     delete-old-versions t ; 自动删除旧的备份文件
+     kept-new-versions 3 ; 保留最近的3个备份文件
+     kept-old-versions 1 ; 保留最早的1个备份文件
+     version-control t) ; 多次备份
+(setq auto-save-file-name-transforms
+;      `((".*" ,temporary-file-directory t))
+      `((".*" ,autosaves-dir t))		;自动保存临时文件
+      )
+(setq auto-save-timeout 5)		;set default auto save time without input
+;(setq create-lockfiles nil) ; 使用下方操作修改lock文件（.#*）位置
+(setq lock-file-name-transforms
+      `((".*" ,backups-dir t))
+      )
 
 ;; def fun show os name
 (defun print-os()
@@ -77,7 +107,8 @@
 (global-set-key (kbd "ESC ]") 'cycle-spacing) ;原始M-SPC功能修改为
 ;;(global-set-key (kbd "ESC SPC") 'cycle-spacing) ;test ESC SPC leaderkey使用
 (global-set-key (kbd "M-o") 'other-window)
-
+(global-set-key (kbd "M-SPC c") 'comment-line)
+(global-set-key (kbd "C-j c") 'comment-line)
 (global-set-key (kbd "C-j C-k") 'kill-whole-line)
 
 ;; ======================      config ui
@@ -96,7 +127,7 @@
 (show-paren-mode +1)			;
 (delete-selection-mode +1)              ;选中区域后插入删除选中文字
 (global-auto-revert-mode +1)		;实时刷新文件
-(add-hook 'prog-mode-hook 'hs-minor-mode)
+(add-hook 'prog-mode-hook 'hs-minor-mode) ;折叠模式
 
 ;(setq icomplete-in-buffer t)
 ;(setq completion-auto-help 'always)
@@ -119,14 +150,43 @@
   :config (setq show-paren-when-point-in-periphery t
  		show-paren-when-point-inside-paren t
 	       	show-paren-style 'mixed
-		
+		show-paren-delay 0.2
  		)
   )
+;; set hl line only use in line end non-word partition
+(use-package hl-line
+  :hook (after-init . global-hl-line-mode)
+  :config
+  (setq hl-line-sticky-flag nil)
+  ;; Highlight starts from EOL, to avoid conflicts with other overlays
+  (setq hl-line-range-function (lambda () (cons (line-end-position)
+						(line-beginning-position 2))
+				 )
+	)
+  )
+;; see in url https://emacs-china.org/t/topic/28495/3
+(use-package highlight-parentheses
+;  :straight t
+  :hook ((minibuffer-setup . highlight-parentheses-minibuffer-setup)
+					;         (prog-mode . highlight-parentheses-mode))
+;         (after-init . highlight-parentheses-mode)
+         (after-init . global-highlight-parentheses-mode)
+	 )
+  :config
+  (setq highlight-parentheses-colors
+;	'("firebrick1" "firebrick3" "orange1" "orange3")
+	'("firebrick1" "IndianRed1" "firebrick3" "IndianRed3" "IndianRed4")
+        highlight-parentheses-attributes
+	'((:underline t) (:underline t) (:underline t))
+        highlight-parentheses-delay 0.2
+	)
+  )
+
 
 (use-package which-key
   :hook (after-init . which-key-mode)
   :custom
-  (which-key-idle-delay 0.01)
+  (which-key-idle-delay 0.2)
   )
 
 
@@ -158,16 +218,19 @@
   )
 (use-package orderless
   :init
-  (setq completion-styles '(orderless partial-completion basic initials)
+  (setq completion-styles '(orderless basic)
 	completion-category-defaults nil
-	completion-category-overrides nil
+	completion-category-overrides '((file (styles basic partial-completion)))
 	)
   )
+
 
 (use-package consult
   :ensure t
   :bind
-  (("C-s" . consult-line))
+  (("C-j s" . consult-line)
+   ("M-SPC s" . consult-line)
+   )
   )
 
 (use-package corfu
