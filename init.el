@@ -30,7 +30,7 @@
 (message "asasdfasdfasfdasdfasdfasdasdfasdfasdfasdffasdff")
 ;; ============================  benchmark
 (use-package benchmark-init
-  :demand t
+  :demand t				;立刻加载
   :config (benchmark-init/activate)
   :hook (after-init . benchmark-init/deactivate)
   )
@@ -138,6 +138,7 @@
 ;(setq completion-preview-completion-styles '(orderless basic partial-completion initials orderless))
 (setq scroll-margin 3)			;set next page margin line
 (setq scroll-conservatively 101)	;if value greater than 100, will nerver scroll
+(setq resize-mini-windows t)
 
 (repeat-mode +1)
 
@@ -218,7 +219,7 @@
   )
 (use-package orderless
   :init
-  (setq completion-styles '(orderless basic)
+  (setq completion-styles '(partial-completion orderless basic)
 	completion-category-defaults nil
 	completion-category-overrides '((file (styles basic partial-completion)))
 	)
@@ -251,6 +252,43 @@
   :bind
   (:map corfu-map ("RET" . 'newline))
   )
+
+;; Add extensions
+(use-package cape
+  ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
+  ;; Press C-c p ? to for help.
+  :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
+  ;; Alternatively bind Cape commands individually.
+  ;; :bind (("C-c p d" . cape-dabbrev)
+  ;;        ("C-c p h" . cape-history)
+  ;;        ("C-c p f" . cape-file)
+  ;;        ...)
+  :init
+  ;; Add to the global default value of `completion-at-point-functions' which is
+  ;; used by `completion-at-point'.  The order of the functions matters, the
+  ;; first function returning a result wins.  Note that the list of buffer-local
+  ;; completion functions takes precedence over the global list.
+  (add-hook 'completion-at-point-functions #'cape-abbrev)
+;  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-file)
+  (add-hook 'completion-at-point-functions #'cape-elisp-block)
+  ;; (add-hook 'completion-at-point-functions #'cape-history)
+  ;; ...
+  )
+;; key bind mode
+(use-package meow
+  :config
+  (meow-motion-define-key '("n" . next-line))
+  (meow-motion-define-key '("p" . previous-line))
+  (meow-motion-define-key '("f" . forward-char))
+  (meow-motion-define-key '("b" . backward-char))
+ 
+  (meow-motion-define-key '("q" . meow-motion-mode))
+  (meow-motion-define-key '("i" . meow-motion-mode))
+  (global-set-key (kbd "C-c m") 'meow-motion-mode)
+
+  )
+
 (use-package flymake
   :ensure nil
   :init
@@ -333,12 +371,14 @@
 (setq package-quickstart t)
 
 (use-package server
-    :if window-system
+  :if window-system
 ;     :commands (server-running-p)
      :init
   (progn
       (server-mode +1)
-      (message "Emacs Server …DONE")))
+      (message "Emacs Server …DONE")
+      )
+  )
 
 
 
