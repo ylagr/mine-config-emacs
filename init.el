@@ -286,7 +286,7 @@
   (meow-motion-define-key '("q" . meow-motion-mode))
   (meow-motion-define-key '("i" . meow-motion-mode))
   (global-set-key (kbd "C-c m") 'meow-motion-mode)
-
+  (global-set-key (kbd "C-'") 'meow-motion-mode)
   )
 
 (use-package flymake
