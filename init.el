@@ -240,8 +240,8 @@
   :hook (after-init . global-corfu-mode)
   :custom
   (corfu-auto t)
-  (corfu-auto-deply 0)
-  (corfu-min-width 1)
+  (corfu-auto-deply 0.2)
+  (corfu-min-width 2)
 ;  (keymap-unset corfu-map "RET");配置无效 原因不明
 ;  (corfu-quit-at-boundary nil)
   :init
@@ -251,6 +251,19 @@
   (corfu-indexed-mode)
   :bind
   (:map corfu-map ("RET" . 'newline))
+  :config
+  (progn
+    (defun corfu-move-to-minibuffer ()
+      (interactive)
+      (pcase completion-in-region--data
+        (`(,beg ,end ,table ,pred ,extras)
+         (let ((completion-extra-properties extras)
+               completion-cycle-threshold completion-cycling)
+           (consult-completion-in-region beg end table pred))))
+      )
+    (keymap-set corfu-map "M-m" #'corfu-move-to-minibuffer)
+    (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer)
+    )
   )
 
 ;; Add extensions
