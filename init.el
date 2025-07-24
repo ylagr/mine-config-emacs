@@ -295,12 +295,20 @@
   (meow-motion-define-key '("p" . previous-line))
   (meow-motion-define-key '("f" . forward-char))
   (meow-motion-define-key '("b" . backward-char))
- 
+  (meow-motion-define-key `("x" . ,(kbd "C-x")))
+  (meow-motion-define-key `("<escape>" . ,(kbd "<escape>")))'
   (meow-motion-define-key '("q" . meow-motion-mode))
   (meow-motion-define-key '("i" . meow-motion-mode))
   (global-set-key (kbd "C-c m") 'meow-motion-mode)
-  (global-set-key (kbd "C-'") 'meow-motion-mode)
+  (defun meow-motion-enable()
+    (interactive)
+    (setq meow-motion-mode t)
+    (message "Meow-Motion mode enable in current buffer" )
+    )
+  (global-set-key (kbd "C-'") 'meow-motion-enable)
   )
+
+
 
 (use-package flymake
   :ensure nil
