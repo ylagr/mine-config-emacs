@@ -27,7 +27,7 @@
 ;; =============================  config use-package
 ;; Set up use-package for user config
 (setq use-package-always-ensure t)  ; All packages used have to be installed
-(message "asasdfasdfasfdasdfasdfasdasdfasdfasdfasdffasdff")
+
 ;; ============================  benchmark
 (use-package benchmark-init
   :demand t				;立刻加载
@@ -39,12 +39,16 @@
 (setq recentf-max-menu-items 25)
 (defvar autosaves-dir (expand-file-name "autosaves/" user-emacs-directory))
 (defvar backups-dir (expand-file-name "backups/" user-emacs-directory))
-(make-directory autosaves-dir t)
-(make-directory backups-dir t)
+(unless (file-exists-p autosaves-dir)
+  (make-directory autosaves-dir t)
+  )
+(unless (file-exists-p backups-dir)
+  (make-directory backups-dir t)
+  )
 
 ;; change default action
 (setq default-directory "~/" )
-(message "%s" (expand-file-name "~/"))
+(message "set default dir = %s" (expand-file-name "~/"))
 (setq backup-directory-alist
 ;      `((".*" . ,temporary-file-directory))
       `((".*" . ,backups-dir))
@@ -148,6 +152,9 @@
 
 ;; ======================      config ui
 (setq cursor-type 'bar);box)       ; 终端不生效  原因不明
+(setq isearch-lazy-count t
+      lazy-count-prefix-format "%s/%s ")
+
 ;;(fido-vertical-mode +1)			;minibuffer垂直补全  和 orderless冲突
 ;(icomplete-vertical-mode +1)	      ;minibuffer垂直补全
 (global-hl-line-mode 1)		;高亮当前行
@@ -162,7 +169,20 @@
 (show-paren-mode +1)			;
 (delete-selection-mode +1)              ;选中区域后插入删除选中文字
 (global-auto-revert-mode +1)		;实时刷新文件
+
+(eval-after-load "dired"
+  '(define-key dired-mode-map (kbd "b") 'dired-up-directory)
+  )
 (add-hook 'prog-mode-hook 'hs-minor-mode) ;折叠模式
+;; 这里额外启用了 :box t 属性使得提示更加明显
+;; (defconst hideshow-folded-face '((t (:inherit 'font-lock-comment-face :box t))))
+;; (defun hideshow-folded-overlay-fn (ov)
+;;     (when (eq 'code (overlay-get ov 'hs))
+;;       (let* ((nlines (count-lines (overlay-start ov) (overlay-end ov)))
+;;              (info (format " ... #%d " nlines)))
+;;         (overlay-put ov 'display (propertize info 'face hideshow-folded-face)))))
+;; (setq hs-set-up-overlay 'hideshow-folded-overlay-fn)
+
 
 ;(setq icomplete-in-buffer t)
 (setq completion-auto-help 'always)
@@ -184,6 +204,29 @@
 ;(completion-preview-active-mode)
 
 (repeat-mode +1)
+(setq repeat-exit-key (kbd "q"))
+(defvar buffer-lunch-repeat-map ; C-x <left> 或 <right>
+      (let ((map (make-sparse-keymap)))
+        (define-key map (kbd "n") #'next-line)
+        (define-key map (kbd "p") #'previous-line)
+        (define-key map (kbd "f") #'forward-char)
+	(define-key map (kbd "b") #'backward-char)
+	(define-key map (kbd "e") #'previous-line)
+	(define-key map (kbd "d") #'next-line)
+	(define-key map (kbd "s") #'backward-char)
+	(define-key map (kbd "v") #'forward-word)
+	(define-key map (kbd "z") #'backward-word)
+	(define-key map (kbd "a") #'back-to-indentation)
+	(define-key map (kbd "g") #'move-end-of-line)
+	(define-key map (kbd "N") #'next-ten-lines)
+	(define-key map (kbd "P") #'previous-ten-lines)
+
+        (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-ten-lines next-ten-lines))
+          (put it 'repeat-map 'buffer-lunch-repeat-map))
+        map)
+      "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
+      )
+
 
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode)
@@ -197,6 +240,12 @@
 		show-paren-delay 0.2
  		)
   )
+(use-package colorful-mode
+  :defer t
+  :config
+  (setq colorful-use-prefix t))
+
+
 ;; set hl line only use in line end non-word partition
 (use-package hl-line
   :hook (after-init . global-hl-line-mode)
@@ -273,6 +322,20 @@
 	)
   )
 
+(use-package diff-hl
+  :hook
+;  (global-diff-hl-mode . diff-hl-margin-mode)
+  (diff-hl-mode . diff-hl-margin-local-mode)
+  (dired-mode . diff-hl-dired-mode)
+  (magit-post-refresh-hook . diff-hl-magit-post-refresh)
+  :init
+  (global-diff-hl-mode +1)
+ ; (global-diff-hl-show-hunk-mouse-mode -1)
+ ; (diff-hl-flydiff-mode +1)
+  (diff-hl-amend-mode +1)
+  :config
+  (advice-add 'svn-status-update-modeline :after #'diff-hl-update)
+  )
 
 (use-package consult
   :ensure t
