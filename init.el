@@ -110,11 +110,46 @@
 (global-set-key (kbd "M-SPC c") 'comment-line)
 (global-set-key (kbd "C-j c") 'comment-line)
 (global-set-key (kbd "C-j C-k") 'kill-whole-line)
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+(global-set-key (kbd "C-,") 'completion-at-point)
+(defun newline-and-indent-up ()
+  "回车到上一行."
+  (interactive)
+  (forward-line -1)
+  (move-end-of-line 1)
+  (newline-and-indent)
+  )
+(defun newline-and-indent-down ()
+  "回车到下一行."
+  (interactive)
+  (move-end-of-line 1)
+  (newline-and-indent)
+  )
+(defun duplicate-line ()
+  "Duplicate line."
+  (interactive)
+  (move-beginning-of-line 1)
+  (kill-line)
+  (yank)
+  (open-line 1)
+  (forward-line 1)
+  (yank)
+  )
+(defun clear-line ()
+  "clear line."
+  (interactive)
+  (move-beginning-of-line 1)
+  (kill-line)
+  )
+(global-set-key (kbd "C-j C-i") 'newline-and-indent-up)
+(global-set-key (kbd "C-j C-o") 'newline-and-indent-down)
+(global-set-key (kbd "C-j C-d") 'duplicate-line)
+(global-set-key (kbd "C-j C-l") 'clear-line)
 
 ;; ======================      config ui
 (setq cursor-type 'box)       ; 终端不生效  原因不明
 ;;(fido-vertical-mode +1)			;minibuffer垂直补全  和 orderless冲突
-(icomplete-vertical-mode +1)	      ;minibuffer垂直补全
+;(icomplete-vertical-mode +1)	      ;minibuffer垂直补全
 (global-hl-line-mode 1)		;高亮当前行
 (global-tab-line-mode +1)		;显示tab line 不同的buffer编辑区
 (tab-bar-mode +1)			;显示tab bar  相当于不同的工作区
@@ -130,15 +165,23 @@
 (add-hook 'prog-mode-hook 'hs-minor-mode) ;折叠模式
 
 ;(setq icomplete-in-buffer t)
-;(setq completion-auto-help 'always)
+(setq completion-auto-help 'always)
 ;(setq completions-detailed t)
-;(global-completion-preview-mode +1)
-;(setq completion-preview-ignore-case t)
+(setq completions-format 'one-column);one-column quickly vertical>slow
+(setq completion-cycle-threshold 4)
+(setq completion-preview-ignore-case t)
 (setq completion-ignore-case t)
-;(setq completion-preview-completion-styles '(orderless basic partial-completion initials orderless))
+(setq completions-max-height 15)
+
+(setq completion-preview-completion-styles '(orderless basic initials))
+(global-completion-preview-mode +1)
+
+
 (setq scroll-margin 3)			;set next page margin line
 (setq scroll-conservatively 101)	;if value greater than 100, will nerver scroll
 (setq resize-mini-windows t)
+(setq max-mini-window-height 5)
+;(completion-preview-active-mode)
 
 (repeat-mode +1)
 
@@ -219,7 +262,10 @@
   )
 (use-package orderless
   :init
-  (setq completion-styles '(partial-completion orderless basic)
+  (setq orderless-matching-styles '(orderless-literal
+				    orderless-flex
+				    orderless-regexp))
+  (setq completion-styles '(orderless basic)
 	completion-category-defaults nil
 	completion-category-overrides '((file (styles basic partial-completion)))
 	)
@@ -233,16 +279,32 @@
    ("M-SPC s" . consult-line)
    )
   )
+(use-package vertico
+  :init
+  (vertico-mode +1)
+  )
+(use-package posframe
+  )
+(use-package vertico-posframe
+  :after (vertico posframe)
+  )
+;(vertico-posframe-mode +1)
+
+
+(use-package company
+  :disabled
+  :init
+  (company-mode +1)
+  )
 
 (use-package corfu
 ;  :disabled
   :ensure t
   :hook (after-init . global-corfu-mode)
   :custom
-  (corfu-auto t)
-  (corfu-auto-deply 0.2)
+  (corfu-auto nil)
+  (corfu-auto-deply 0.1)
   (corfu-min-width 2)
-;  (keymap-unset corfu-map "RET");配置无效 原因不明
 ;  (corfu-quit-at-boundary nil)
   :init
   (corfu-history-mode)
@@ -250,8 +312,13 @@
   (corfu-echo-mode)
   (corfu-indexed-mode)
   :bind
-  (:map corfu-map ("RET" . 'newline))
+  (
+   :map corfu-map
+   ("RET" . 'newline)
+   ("SPC" . corfu-insert-separator)
+   )
   :config
+;  (keymap-unset corfu-map "RET");配置无效 原因不明
   (progn
     (defun corfu-move-to-minibuffer ()
       (interactive)
@@ -265,6 +332,7 @@
     (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer)
     )
   )
+
 
 ;; Add extensions
 (use-package cape
@@ -288,15 +356,19 @@
   ;; (add-hook 'completion-at-point-functions #'cape-history)
   ;; ...
   )
+
+(newline-and-indent )
+
 ;; key bind mode
 (use-package meow
+  :
   :config
   (meow-motion-define-key '("n" . next-line))
   (meow-motion-define-key '("p" . previous-line))
   (meow-motion-define-key '("f" . forward-char))
   (meow-motion-define-key '("b" . backward-char))
   (meow-motion-define-key `("x" . ,(kbd "C-x")))
-  (meow-motion-define-key `("<escape>" . ,(kbd "<escape>")))'
+  (meow-motion-define-key `("<escape>" . ,(kbd "<escape>")))
   (meow-motion-define-key '("q" . meow-motion-mode))
   (meow-motion-define-key '("i" . meow-motion-mode))
   (global-set-key (kbd "C-c m") 'meow-motion-mode)
@@ -337,7 +409,7 @@
 
 ;; ========================   config project
 (use-package projection
-  :disabled
+;  :disabled
   )
 (use-package magit
   ;:disabled
