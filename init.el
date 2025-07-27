@@ -147,7 +147,7 @@
 (global-set-key (kbd "C-j C-l") 'clear-line)
 
 ;; ======================      config ui
-(setq cursor-type 'box)       ; 终端不生效  原因不明
+(setq cursor-type 'bar);box)       ; 终端不生效  原因不明
 ;;(fido-vertical-mode +1)			;minibuffer垂直补全  和 orderless冲突
 ;(icomplete-vertical-mode +1)	      ;minibuffer垂直补全
 (global-hl-line-mode 1)		;高亮当前行
@@ -264,7 +264,9 @@
   :init
   (setq orderless-matching-styles '(orderless-literal
 				    orderless-flex
-				    orderless-regexp))
+				    orderless-regexp
+				    )
+	)
   (setq completion-styles '(orderless basic)
 	completion-category-defaults nil
 	completion-category-overrides '((file (styles basic partial-completion)))
@@ -315,7 +317,7 @@
   (
    :map corfu-map
    ("RET" . 'newline)
-   ("SPC" . corfu-insert-separator)
+   ("SPC" . 'corfu-insert-separator)
    )
   :config
 ;  (keymap-unset corfu-map "RET");配置无效 原因不明
@@ -357,29 +359,143 @@
   ;; ...
   )
 
-(newline-and-indent )
 
 ;; key bind mode
 (use-package meow
-  :
-  :config
-  (meow-motion-define-key '("n" . next-line))
-  (meow-motion-define-key '("p" . previous-line))
-  (meow-motion-define-key '("f" . forward-char))
-  (meow-motion-define-key '("b" . backward-char))
-  (meow-motion-define-key `("x" . ,(kbd "C-x")))
-  (meow-motion-define-key `("<escape>" . ,(kbd "<escape>")))
-  (meow-motion-define-key '("q" . meow-motion-mode))
-  (meow-motion-define-key '("i" . meow-motion-mode))
-  (global-set-key (kbd "C-c m") 'meow-motion-mode)
-  (defun meow-motion-enable()
-    (interactive)
-    (setq meow-motion-mode t)
-    (message "Meow-Motion mode enable in current buffer" )
-    )
-  (global-set-key (kbd "C-'") 'meow-motion-enable)
+   :config
+  (defun meow-setup ()
+    (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
+    (meow-motion-define-key
+  ; '("j" . meow-next)
+  ; '("k" . meow-prev)
+  ; '("<escape>" . ignore)
+   )
+  (meow-leader-define-key
+   ;; Use SPC (0-9) for digit arguments.
+   '("1" . meow-digit-argument)
+   '("2" . meow-digit-argument)
+   '("3" . meow-digit-argument)
+   '("4" . meow-digit-argument)
+   '("5" . meow-digit-argument)
+   '("6" . meow-digit-argument)
+   '("7" . meow-digit-argument)
+   '("8" . meow-digit-argument)
+   '("9" . meow-digit-argument)
+   '("0" . meow-digit-argument)
+   '("/" . meow-keypad-describe-key)
+   '("?" . meow-cheatsheet)
+   )
+  (meow-normal-define-key
+   '("0" . meow-expand-0)
+   '("9" . meow-expand-9)
+   '("8" . meow-expand-8)
+   '("7" . meow-expand-7)
+   '("6" . meow-expand-6)
+   '("5" . meow-expand-5)
+   '("4" . meow-expand-4)
+   '("3" . meow-expand-3)
+   '("2" . meow-expand-2)
+   '("1" . meow-expand-1)
+   '("-" . negative-argument)
+   '(";" . meow-reverse)
+   '("," . meow-inner-of-thing)
+   '("." . meow-bounds-of-thing)
+   '("[" . meow-beginning-of-thing)
+   '("]" . meow-end-of-thing)
+   '("a" . meow-append)
+   '("A" . meow-open-below)
+   ;; '("b" . meow-back-word)
+   ;; '("B" . meow-back-symbol)
+   '("c" . meow-change)
+   '("C" . meow-kill)
+   '("d" . meow-next)
+   '("D" . meow-next-expand)
+   ;; '("d" . meow-delete)
+   ;; '("D" . meow-backward-delete)
+   '("e" . meow-prev)
+   '("E" . meow-prev-expand)
+   ;; '("e" . meow-next-word)
+   ;; '("E" . meow-next-symbol)
+   '("f" . meow-right)
+   '("F" . meow-right-expand)
+   ;; '("f" . meow-find)
+   '("g" . meow-cancel-selection)
+   '("G" . meow-grab)
+   '("h" . meow-left)
+   '("H" . meow-left-expand)
+   '("i" . meow-insert)
+   '("I" . meow-open-above)
+   '("j" . meow-next)
+   '("J" . meow-next-expand)
+   '("k" . meow-prev)
+   '("K" . meow-prev-expand)
+   '("l" . meow-right)
+   '("L" . meow-right-expand)
+   '("m" . meow-join)
+   '("n" . meow-search)
+   '("o" . meow-block)
+   '("O" . meow-to-block)
+   '("p" . meow-yank)
+   ;; '("q" . meow-quit)
+   '("q" . meow-kill)
+   '("Q" . meow-quit)
+   ;; '("Q" . meow-goto-line)
+   '("r" . meow-replace)
+   '("R" . meow-swap-grab)
+   '("s" . meow-left)
+   '("S" . meow-left-expand)
+   ;; '("s" . meow-kill)
+   '("t" . meow-till)
+   '("T" . meow-find)
+   '("u" . meow-undo)
+   '("U" . meow-undo-in-selection)
+   '("v" . meow-next-word)
+   '("V" . meow-next-symbol)
+   ;; '("v" . meow-visit)
+   '("w" . meow-mark-word)
+   '("W" . meow-mark-symbol)
+   '("x" . meow-line)
+   '("X" . meow-goto-line)
+   '("y" . meow-save)
+   '("Y" . meow-sync-grab)
+   ;; '("z" . meow-pop-selection)
+   '("`" . meow-pop-selection)
+   '("z" . meow-back-word)
+   '("Z" . meow-back-symbol)
+   '("'" . repeat)
+   '("<escape>" . ignore))
   )
-
+  (meow-setup)
+  (meow-global-mode 1)
+ 
+  ;; (meow-motion-define-key '("n" . next-line))
+  ;; (meow-motion-define-key '("p" . previous-line))
+  ;; (meow-motion-define-key '("f" . forward-char))
+  ;; (meow-motion-define-key '("b" . backward-char))
+  ;; (meow-motion-define-key `("x" . ,(kbd "C-x")))
+  ;; (meow-motion-define-key `("<escape>" . ,(kbd "<escape>")))
+  ;; (meow-motion-define-key '("q" . meow-motion-mode))
+  ;; (meow-motion-define-key '("i" . meow-motion-mode))
+  ;; (global-set-key (kbd "C-c m") 'meow-motion-mode)
+  ;; (defun meow-motion-enable()
+  ;;   (interactive)
+  ;;   (setq meow-motion-mode t)
+  ;;   (message "Meow-Motion mode enable in current buffer" )
+  ;;   )
+  ;; (global-set-key (kbd "C-'") 'meow-motion-enable)
+  (defun meow-enable ()
+    "Enable meow."
+    (interactive)
+    (meow-global-mode +1)
+    )
+  (defun meow-disable ()
+    "Disable meow."
+    (interactive)
+    (meow-global-mode -1)
+    )
+  (global-set-key (kbd "C-'") 'meow-enable)
+  (global-set-key (kbd "C-.") 'meow-disable)
+  )
 
 
 (use-package flymake
@@ -398,8 +514,8 @@
 ;; ====================     term
 (use-package eat
   :bind (
-	 ("ESC SPC v" . eat-other-window)
-	 :map eat-semi-char-mode-map ("M-o" . other-window)
+	 ("ESC SPC v" . 'eat-other-window)
+	 :map eat-semi-char-mode-map ("M-o" . 'other-window)
 	  )
   :config
   (setq eat-kill-buffer-on-exit nil)
@@ -453,6 +569,10 @@
 ;;             :build (:not compile))
 ;;   :init
 ;;   (global-lsp-bridge-mode))
+(use-package kbd-mode
+  :disabled
+  :vc (:url "https://github.com/kmonad/kbd-mode" :rev :newest)
+  )
 
 ;; custom
 (when (file-exists-p custom-file)
