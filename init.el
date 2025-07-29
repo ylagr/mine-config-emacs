@@ -47,8 +47,6 @@
   )
 
 ;; change default action
-(setq default-directory "~/" )
-(message "set default dir = %s" (expand-file-name "~/"))
 (setq backup-directory-alist
 ;      `((".*" . ,temporary-file-directory))
       `((".*" . ,backups-dir))

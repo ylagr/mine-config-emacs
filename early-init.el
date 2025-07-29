@@ -29,9 +29,12 @@
 
 ;; set frame parameters early to prevent flickering.
 (setq default-frame-alist
-      '((height . 55)
+      '((height . 54)
 	(width . 120)
+	(left . 10)
+	(top . 15)
 	(vertical-scroll-bars . +1)
+	(horizontal-scroll-bars . +1)
 	(tool-bar-mode . +1)
 	)
       )
@@ -41,6 +44,8 @@
 
 ;; customization file
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(setq default-directory "~/" )
+(message "set default dir = %s" default-directory)
 
 (provide 'early-init)
 ;;; early-init.el ends here
