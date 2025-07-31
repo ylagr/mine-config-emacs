@@ -547,6 +547,7 @@
     meow-cursor-type-insert '(bar . 4)
     meow-expand-hint-remove-delay 60.0
     )
+   (add-to-list 'meow-mode-state-list '(ement-room-mode . insert))
    )
   (defun meow-setup-modeline ()
       (setq meow-replace-state-name-list
@@ -610,6 +611,8 @@
 
 ;; ====================     term
 (use-package eat
+  :if (not window-system)
+  :defer t
   :bind (
 	 ("ESC SPC v" . 'eat-other-window)
 	 :map eat-semi-char-mode-map ("M-o" . 'other-window)
