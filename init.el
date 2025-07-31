@@ -594,7 +594,26 @@
   (global-set-key (kbd "C-'") 'meow-enable)
   (global-set-key (kbd "C-.") 'meow-disable)
   )
+(use-package nerd-icons
+;  :disabled
+  :demand t
+  :config
+  ;; Fonts for nerd-icons need to be configured in graphical frames.
+  (message "xxxxx nerd icon")
+(defun +nerd-icons--after-make-frame-h (&optional frame)
+  (with-selected-frame (or frame (selected-frame))
+    ;;  `framep' returns t on terminal
+    (unless (memq (framep (selected-frame)) '(t))
+      (require 'nerd-icons)
+      (nerd-icons-set-font))))
+(add-hook 'after-make-frame-functions '+nerd-icons--after-make-frame-h)
+(add-hook 'server-after-make-frame-hook '+nerd-icons--after-make-frame-h)
 
+;; show nerd-icons on mode-line
+(setq-default mode-line-buffer-identification
+              (seq-union '((:eval (nerd-icons-icon-for-buffer)) " ")
+                         mode-line-buffer-identification))
+  )
 
 (use-package flymake
   :ensure nil
