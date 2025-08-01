@@ -112,7 +112,7 @@
 (global-set-key (kbd "M-SPC c") 'comment-line)
 (global-set-key (kbd "C-j c") 'comment-line)
 (keymap-unset lisp-interaction-mode-map "C-j")
-(keymap-set lisp-interaction-mode-map "C-j" 'eval-print-last-sexp)
+(keymap-set lisp-interaction-mode-map "C-j C-j" 'eval-print-last-sexp)
 (global-set-key (kbd "C-j C-k") 'kill-whole-line)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (global-set-key (kbd "C-,") 'completion-at-point)
