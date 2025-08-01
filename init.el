@@ -712,7 +712,28 @@
       )
   )
 
+;;; config message window always in last
+(progn
+  (defun my-messages-buffer-auto-tail (&rest args)
+    "Make *Messages* buffer auto-scroll to the end after each message."
+    (let* ((buf-name "*Messages*")
+           (buf (get-buffer buf-name)))
+      (when (and buf (window-live-p (get-buffer-window buf)))
+	;; If *Messages* buffer is currently visible in a window,
+	;; move its point to the end.
+	(dolist (win (get-buffer-window-list buf-name nil :all-frames))
+	  (unless (and win (eq (selected-window) win))
+            (with-selected-window win
+              (goto-char (point-max)))
+	    )
+	  )
+	)
+      )
+    )
 
+  ;; Advice the 'message' function to always jump to the end of *Messages* buffer
+  (advice-add 'message :after #'my-messages-buffer-auto-tail)
+  )
 
 (provide 'init)
 ;;; init.el ends here
