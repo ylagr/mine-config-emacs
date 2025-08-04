@@ -784,11 +784,11 @@
     (progn
       (setq line-spacing 0.1)
       (let (
-	    (use-font (font-spec :family "ubuntumono nerd font mono" :size 16))
+	    (use-font (font-spec :family "ubuntu mono" :size 16))
 	    (last-font (font-spec :family "noto sans sc"))
 	    (symbol-font (font-spec :family "Segoe UI symbol"))
 	    (han-font (font-spec :family  "lxgw wenkai"))
-	    (han-font-sarasa (font-spec :family "sarasa gothic cl"))
+	    ;;(han-font-sarasa (font-spec :family "sarasa gothic cl"))
 	    )
 	(if (find-font use-font)
 	    (set-face-attribute 'default nil :font use-font )
