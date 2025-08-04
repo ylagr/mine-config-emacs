@@ -82,22 +82,45 @@
 
 ;; 自定义两个函数
 ;; Faster move cursor
-(defun next-ten-lines()
-  "Move cursor to next 10 lines."
-  (interactive)
-  (forward-line 10))
+(if nil
+    (progn
+      (defun next-ten-lines()
+	"Move cursor to next 10 lines."
+	(interactive)
+	(forward-line 10))
 
-(defun previous-ten-lines()
-  "Move cursor to previous 10 lines."
-  (interactive)
-  (forward-line -10))
-;; 绑定到快捷键
-(global-set-key (kbd "M-n") 'next-ten-lines)            ; 光标向下移动 10 行
-(global-set-key (kbd "M-p") 'previous-ten-lines)        ; 光标向上移动 10 行
+      (defun previous-ten-lines()
+	"Move cursor to previous 10 lines."
+	(interactive)
+	(forward-line -10))
+      ;; 绑定到快捷键
+      (global-set-key (kbd "M-n") 'next-ten-lines)            ; 光标向下移动 10 行
+      (global-set-key (kbd "M-p") 'previous-ten-lines)        ; 光标向上移动 10 行
+
+      )
+  )
+(if t
+    (progn
+      (defun scroll-half-page-down ()
+	"Scroll down half the page."
+	(interactive)
+	(scroll-down (/ (window-body-height) 2)))
+
+      (defun scroll-half-page-up ()
+	"Scroll up half the page."
+	(interactive)
+	(scroll-up (/ (window-body-height) 2)))
+
+      (global-set-key "\M-n" 'scroll-half-page-up)
+      (global-set-key "\M-p" 'scroll-half-page-down)
+
+      )
+  )
 
 ;; ======================       keybind
 (global-set-key (kbd "M-<f3>") 'open-init-file)
 (global-set-key (kbd "C-x ,") 'open-init-file)
+(global-set-key (kbd "C-x ，") 'open-init-file)
 (global-set-key (kbd "C-c C-_") 'comment-or-uncomment-region)
 (global-set-key (kbd "C-c C-/") 'comment-or-uncomment-region)
 (global-set-key (kbd "C-x C-k") 'kill-current-buffer)
@@ -116,6 +139,7 @@
 (global-set-key (kbd "C-j C-k") 'kill-whole-line)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (global-set-key (kbd "C-,") 'completion-at-point)
+
 (defun newline-and-indent-up ()
   "回车到上一行."
   (interactive)
@@ -173,7 +197,7 @@
 (electric-indent-mode +1)
 (electric-layout-mode +1)
 (show-paren-mode +1)			;
-(delete-selection-mode +1)              ;选中区域后插入删除选中文字
+;;(delete-selection-mode +1)              ;选中区域后插入删除选中文字
 (global-auto-revert-mode +1)		;实时刷新文件
 
 (eval-after-load "dired"
@@ -226,8 +250,13 @@
 	(define-key map (kbd "g") #'move-end-of-line)
 	(define-key map (kbd "N") #'next-ten-lines)
 	(define-key map (kbd "P") #'previous-ten-lines)
-
-        (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-ten-lines next-ten-lines))
+	(define-key map (kbd "4") #'scroll-up-command)
+	(define-key map (kbd "2") #'scroll-down-command)
+	(define-key map (kbd "w") #'scroll-half-page-down)
+	(define-key map (kbd "r") #'scroll-half-page-up)
+	(define-key map (kbd "i") #'repeat-exit)
+ 
+        (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-ten-lines next-ten-lines scroll-up-command scroll-down-command scroll-half-page-up scroll-half-page-down ))
           (put it 'repeat-map 'buffer-lunch-repeat-map))
         map)
       "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
@@ -348,6 +377,17 @@
   :bind
   (("C-j s" . consult-line)
    ("M-SPC s" . consult-line)
+   ("M-SPC m" . consult-mark)
+   ("M-SPC g m" . consult-global-mark)
+   ("M-SPC g s" . consult-line-multi)
+   ("M-SPC g i" . consult-imenu-multi)
+   ("M-SPC b" . consult-buffer)
+   ("M-SPC i" . consult-imenu)
+   ("M-SPC e" . consult-flymake)
+   ("M-SPC r r" . consult-register)
+   ("M-SPC r s" . consult-register-store)
+   ("M-SPC r l" . consult-register-load)
+  
    )
   )
 (use-package vertico
@@ -386,8 +426,10 @@
   (
    :map corfu-map
    ("RET" . 'newline)
-   ("SPC" . 'corfu-insert-separator)
+   ;;   ("SPC" . 'corfu-insert-separator) ; set spc use in complete
+
    )
+
   :config
 ;  (keymap-unset corfu-map "RET");配置无效 原因不明
   (progn
@@ -403,6 +445,7 @@
     (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer)
     )
   )
+
 
 
 ;; Add extensions
@@ -431,7 +474,8 @@
 
 ;; key bind mode
 (use-package meow
-   :config
+  :disabled
+  :config
   (defun meow-setup ()
     (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
     (meow-motion-define-key
@@ -713,7 +757,8 @@
   )
 
 ;;; config message window always in last
-(progn
+(use-package emacs
+  :config
   (defun my-messages-buffer-auto-tail (&rest args)
     "Make *Messages* buffer auto-scroll to the end after each message."
     (let* ((buf-name "*Messages*")
@@ -734,6 +779,42 @@
   ;; Advice the 'message' function to always jump to the end of *Messages* buffer
   (advice-add 'message :after #'my-messages-buffer-auto-tail)
   )
+;; set font
+(if t
+    (progn
+      (setq line-spacing 0.1)
+      (let (
+	    (use-font (font-spec :family "ubuntumono nerd font mono" :size 16))
+	    (last-font (font-spec :family "noto sans sc"))
+	    (symbol-font (font-spec :family "Segoe UI symbol"))
+	    (han-font (font-spec :family  "lxgw wenkai"))
+	    (han-font-sarasa (font-spec :family "sarasa gothic cl"))
+	    )
+	(if (find-font use-font)
+	    (set-face-attribute 'default nil :font use-font )
+	  )
+	(if (find-font last-font)
+	    (set-fontset-font (frame-parameter nil 'font) nil last-font)
+	  )
+	(if (find-font symbol-font)
+	    (set-fontset-font t nil symbol-font)
+	  )
+	(if (find-font han-font)
+	    (set-fontset-font "fontset-default" 'han han-font nil 'prepend)
+	  )
+;;	(if (find-font han-font-sarasa)
+;;	    (set-fontset-font "fontset-default" 'han han-font-sarasa nil 'prepend)
+;;	  )
+	)
+      )
+  )
+;; set mode line
+(if t
+    (progn
+      
+      )
+  )
+
 
 (provide 'init)
 ;;; init.el ends here
