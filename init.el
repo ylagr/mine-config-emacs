@@ -674,6 +674,7 @@
 
 ;; ====================     term
 (use-package eat
+  :disabled
   :if (not window-system)
   :defer t
   :bind (
