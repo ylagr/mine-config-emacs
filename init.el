@@ -45,7 +45,7 @@
 (unless (file-exists-p backups-dir)
   (make-directory backups-dir t)
   )
-
+(setq process-adaptive-read-buffering t)
 ;; change default action
 (setq backup-directory-alist
 ;      `((".*" . ,temporary-file-directory))
@@ -173,7 +173,7 @@
 (global-set-key (kbd "C-j C-o") 'newline-and-indent-down)
 (global-set-key (kbd "C-j C-d") 'duplicate-line)
 (global-set-key (kbd "C-j C-l") 'clear-line)
-
+(global-set-key (kbd "M-SPC O") 'other-frame)
 ;; ======================      config ui
 (defun cursor-type-default ()
   "Cursor default."
@@ -255,10 +255,22 @@
 	(define-key map (kbd "w") #'scroll-half-page-down)
 	(define-key map (kbd "r") #'scroll-half-page-up)
 	(define-key map (kbd "i") #'repeat-exit)
- 
-        (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-ten-lines next-ten-lines scroll-up-command scroll-down-command scroll-half-page-up scroll-half-page-down ))
+	(define-key map (kbd "o") #'other-window)
+	(define-key map (kbd "O") #'other-frame)
+    (define-key map (kbd "m") #'newline)
+	
+        (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-ten-lines next-ten-lines scroll-up-command scroll-down-command scroll-half-page-up scroll-half-page-down other-window ))
           (put it 'repeat-map 'buffer-lunch-repeat-map))
         map)
+      "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
+      )
+(defvar frame-lunch-repeat-map ; C-x <left> 或 <right>
+      (let ((omap (make-sparse-keymap)))
+	(define-key omap (kbd "O") #'other-frame)
+	
+        (dolist (it '(other-frame))
+          (put it 'repeat-map 'buffer-lunch-repeat-map))
+        omap)
       "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
       )
 
@@ -387,8 +399,10 @@
    ("M-SPC r r" . consult-register)
    ("M-SPC r s" . consult-register-store)
    ("M-SPC r l" . consult-register-load)
-  
+   
    )
+  :config
+  (setq consult-async-refresh-delay 0.5)
   )
 (use-package vertico
   :init
@@ -413,9 +427,9 @@
   :ensure t
   :hook (after-init . global-corfu-mode)
   :custom
-  (corfu-auto nil)
+  (corfu-auto t)
   (corfu-auto-deply 0.1)
-  (corfu-min-width 2)
+  (corfu-min-width 3)
 ;  (corfu-quit-at-boundary nil)
   :init
   (corfu-history-mode)
@@ -748,6 +762,7 @@
 (setq package-quickstart t)
 
 (use-package server
+  :disabled
   :if window-system
 ;     :commands (server-running-p)
      :init

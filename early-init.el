@@ -25,6 +25,7 @@
 
 ;; quick start
 (setq package-quickstart t)
+(setq package-check-signature nil)
 ;(setq package-quickstart-file (expand-file-name "var/package-quickstart.el" user-emacs-directory))
 
 ;; set frame parameters early to prevent flickering.
