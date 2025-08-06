@@ -30,7 +30,7 @@
 
 ;; set frame parameters early to prevent flickering.
 (setq default-frame-alist
-      '((height . 54)
+      '((height . 48)
 	(width . 120)
 	(left . 10)
 	(top . 15)
