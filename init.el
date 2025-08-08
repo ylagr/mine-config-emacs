@@ -688,8 +688,8 @@
 
 ;; ====================     term
 (use-package eat
-  :disabled
-  :if (not window-system)
+;;  :disabled
+;;  :if (not window-system)
   :defer t
   :bind (
 	 ("ESC SPC v" . 'eat-other-window)
@@ -703,10 +703,10 @@
 
 ;; ========================   config project
 (use-package projection
-;  :disabled
+;;  :disabled
   )
 (use-package magit
-  ;:disabled
+  ;; :disabled
   :defer t
   )
 (use-package eglot
@@ -801,6 +801,7 @@
       (setq line-spacing 0.1)
       (let (
 	    (use-font (font-spec :family "ubuntu mono" :size 16))
+	    (use-font-l (font-spec :family "ubuntu mono Ligaturized" :size 16))
 	    (last-font (font-spec :family "noto sans sc"))
 	    (symbol-font (font-spec :family "Segoe UI symbol"))
 	    (han-font (font-spec :family  "lxgw wenkai"))
@@ -808,6 +809,9 @@
 	    )
 	(if (find-font use-font)
 	    (set-face-attribute 'default nil :font use-font )
+	  (if (find-font use-font-l)
+	      (set-face-attribute 'default nil :font use-font-l)
+	      )
 	  )
 	(if (find-font last-font)
 	    (set-fontset-font (frame-parameter nil 'font) nil last-font)
@@ -818,9 +822,9 @@
 	(if (find-font han-font)
 	    (set-fontset-font "fontset-default" 'han han-font nil 'prepend)
 	  )
-;;	(if (find-font han-font-sarasa)
-;;	    (set-fontset-font "fontset-default" 'han han-font-sarasa nil 'prepend)
-;;	  )
+	;;	(if (find-font han-font-sarasa)
+	;;	    (set-fontset-font "fontset-default" 'han han-font-sarasa nil 'prepend)
+	;;	  )
 	)
       )
   )
