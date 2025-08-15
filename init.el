@@ -1,16 +1,29 @@
-;;; init.el --- Initialization file for Emacs  -*- lexical-binding: t; -*-
+;; init.el --- Initialization file for Emacs  -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Emacs Startup File --- initialization for Emacs
 
 ;;; code:
 ;; -----------------  Hacks for speeding up initialization.
 (defconst +file-name-handler-alist file-name-handler-alist)
+
 (setq file-name-handler-alist nil)
 (setq gc-cons-threshold 16777216)
 ;(setq gc-cons-threshold most-positive-fixnum) ; gc use big memory
 ;; Packages should have been made available.  Disable it to speed up
 ;; installing packages during initialization.
 (setq package-quickstart nil)
+;; ------------------- Common consts
+(defconst l/mac (eq system-type 'darwin))
+(defconst l/windows (eq system-type 'windows-nt))
+(defconst l/linux (eq system-type 'gnu/linux))
+(defconst l/wsl2 (string-match-p "WSL2" (shell-command-to-string "uname -r")))
+(defconst l/wsl1 (and
+		  (eq system-type 'gnu/linux)
+		  (not l/wsl2)
+		  ))
+
+;; Don't recenter to the middle of the screen
+(setq recenter-positions '(top 0.3 bottom))
 
 ;; ------------------ move default dir   " it make win gui server mode err"
 ;; replace emacs paths early -- before doing anything
@@ -23,9 +36,9 @@
 ;; 	)
 ;;   )
 
-;; -------------------------------config start
-;; =============================  config use-package
-;; Set up use-package for user config
+;; -------------------------------config/ start
+;; =============================  config/ use-package
+;; Set up use-package for user config/
 (setq use-package-always-ensure t)  ; All packages used have to be installed
 
 ;; ============================  benchmark
@@ -34,6 +47,7 @@
   :config (benchmark-init/activate)
   :hook (after-init . benchmark-init/deactivate)
   )
+(setq confirm-kill-emacs 'yes-or-no-p)
 ;(desktop-save-mode +1)
 (recentf-mode +1)
 (setq recentf-max-menu-items 25)
@@ -118,28 +132,29 @@
   )
 
 ;; ======================       keybind
-(global-set-key (kbd "M-<f3>") 'open-init-file)
-(global-set-key (kbd "C-x ,") 'open-init-file)
-(global-set-key (kbd "C-x ，") 'open-init-file)
-(global-set-key (kbd "C-c C-_") 'comment-or-uncomment-region)
-(global-set-key (kbd "C-c C-/") 'comment-or-uncomment-region)
-(global-set-key (kbd "C-x C-k") 'kill-current-buffer)
+(global-set-key (kbd "M-<f3>") #'open-init-file)
+(global-set-key (kbd "C-x ,") #'open-init-file)
+(global-set-key (kbd "C-x ，") #'open-init-file)
+(global-set-key (kbd "C-c C-_") #'comment-or-uncomment-region)
+(global-set-key (kbd "C-c C-/") #'comment-or-uncomment-region)
+(global-set-key (kbd "C-x C-k") #'kill-current-buffer)
 ;; leader key
 (global-set-key (kbd "M-SPC") nil) ;修改默认keybind M-SPC -> nil, 作为leader使用，用于各种命令替代
-(global-set-key (kbd "M-ESC") 'keyboard-quit)
+(global-set-key (kbd "M-ESC") #'keyboard-quit)
 (global-set-key (kbd "C-j") nil)	      ;修改默认的C-j功能，作为编辑的leader key使用
-(global-set-key (kbd "C-j C-j") 'electric-newline-and-maybe-indent);原始的C-j功能修改
-(global-set-key (kbd "ESC ]") 'cycle-spacing) ;原始M-SPC功能修改为
+(global-set-key (kbd "C-j C-j") #'electric-newline-and-maybe-indent);原始的C-j功能修改
+(global-set-key (kbd "ESC ]") #'cycle-spacing) ;原始M-SPC功能修改为
 ;;(global-set-key (kbd "ESC SPC") 'cycle-spacing) ;test ESC SPC leaderkey使用
-(global-set-key (kbd "M-o") 'other-window)
-(global-set-key (kbd "M-SPC c") 'comment-line)
-(global-set-key (kbd "C-j c") 'comment-line)
+(global-set-key (kbd "M-o") #'other-window)
+(global-set-key (kbd "M-SPC c") #'comment-line)
+(global-set-key (kbd "C-j c") #'comment-line)
 (keymap-unset lisp-interaction-mode-map "C-j")
-(keymap-set lisp-interaction-mode-map "C-j C-j" 'eval-print-last-sexp)
-(global-set-key (kbd "C-j C-k") 'kill-whole-line)
-(global-set-key (kbd "C-x C-b") 'ibuffer)
-(global-set-key (kbd "C-,") 'completion-at-point)
-
+(keymap-set lisp-interaction-mode-map "C-j C-j" #'eval-print-last-sexp)
+(global-set-key (kbd "C-j C-k") #'kill-whole-line)
+(global-set-key (kbd "C-x C-b") #'ibuffer)
+(global-set-key (kbd "C-,") #'completion-at-point)
+(global-set-key (kbd "M-z") #'zap-up-to-char) ;old func is zap-to-char, diff is with no up del input char.
+(global-set-key (kbd "C-z") #'repeat)
 (defun newline-and-indent-up ()
   "回车到上一行."
   (interactive)
@@ -164,23 +179,24 @@
   (yank)
   )
 (defun clear-line ()
-  "clear line."
+  "Clear line."
   (interactive)
   (move-beginning-of-line 1)
   (kill-line)
   )
-(global-set-key (kbd "C-j C-i") 'newline-and-indent-up)
-(global-set-key (kbd "C-j C-o") 'newline-and-indent-down)
-(global-set-key (kbd "C-j C-d") 'duplicate-line)
-(global-set-key (kbd "C-j C-l") 'clear-line)
-(global-set-key (kbd "M-SPC O") 'other-frame)
-;; ======================      config ui
+(global-set-key (kbd "C-j C-i") #'newline-and-indent-up)
+(global-set-key (kbd "C-j C-o") #'newline-and-indent-down)
+(global-set-key (kbd "C-j C-d") #'duplicate-line)
+(global-set-key (kbd "C-j C-l") #'clear-line)
+(global-set-key (kbd "M-SPC O") #'other-frame)
+;; ======================      config u
+(setq use-short-answers t)
 (defun cursor-type-default ()
   "Cursor default."
   (interactive)
   (setq cursor-type '(hbar . 6))
   )
-(cursor-type-default)
+;;(cursor-type-default)
 ;(setq cursor-type '(hbar . 4));box)       ; 终端不生效  原因不明
 (setq isearch-lazy-count t
       lazy-count-prefix-format "%s/%s ")
@@ -199,9 +215,11 @@
 (show-paren-mode +1)			;
 ;;(delete-selection-mode +1)              ;选中区域后插入删除选中文字
 (global-auto-revert-mode +1)		;实时刷新文件
+;; avoid kill no selection region, just kill a word, like vim
+(setq kill-region-dwim 'emacs-word)
 
 (eval-after-load "dired"
-  '(define-key dired-mode-map (kbd "b") 'dired-up-directory)
+  '(define-key dired-mode-map (kbd "b") #'dired-up-directory)
   )
 (add-hook 'prog-mode-hook 'hs-minor-mode) ;折叠模式
 ;; 这里额外启用了 :box t 属性使得提示更加明显
@@ -225,13 +243,22 @@
 
 (setq completion-preview-completion-styles '(orderless basic initials))
 (global-completion-preview-mode +1)
+;;(completion-preview-active-mode)
+;; Don't let Emacs hurt my ears
+(setq visible-bell nil)
+(setq ring-bell-function 'ignore)
 
-
-(setq scroll-margin 3)			;set next page margin line
+(setq scroll-step 1)
+(setq scroll-margin 2)			;set next page margin line
 (setq scroll-conservatively 101)	;if value greater than 100, will nerver scroll
+(setq scroll-preserve-screen-position t)
 (setq resize-mini-windows t)
 (setq max-mini-window-height 5)
-;(completion-preview-active-mode)
+					
+
+
+;; Disable fancy features when the file is too large
+(global-so-long-mode t)
 
 (repeat-mode +1)
 (setq repeat-exit-key (kbd "q"))
@@ -273,6 +300,83 @@
         omap)
       "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
       )
+;; config/ window move
+;; Use ace-window for quick window navigation
+;; Sorry, `other-window', but you are too weak!
+(use-package ace-window
+  :bind (("C-x o" . ace-window)
+        ;; ("C-x C-o" . ace-window)
+	 )  ;; was delete-blank-lines
+  :config
+  (custom-set-faces
+   '(aw-leading-char-face
+     ((t (:inherit ace-jump-face-foreground :height 3.0)))))
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
+        aw-scope 'frame))
+;; config downcase word -> downcase dwim
+(use-package emacs
+  :config
+  ;; dwim
+  (global-set-key (kbd "M-l") #'downcase-dwim)
+  (global-set-key (kbd "M-u") #'upcase-dwim)
+  (global-set-key (kbd "M-c") #'capitalize-dwim)
+  ;; Mark
+  (setq global-mark-ring-max 50)
+  (setq mark-ring-max 50)
+  (setq set-mark-command-repeat-pop t)
+  ;; Kill
+  (setq kill-do-not-save-duplicates t) 	; not save same kill ring
+  (setq save-interprogram-paste-before-kill t)  ;; save system copycliboard data into kill ring
+  ;; Reverse yank-pop.  By default, it is C-u M-y, but it's not as
+  ;; intuitive.  The "Shift reverse" metaphor seems well established.
+  (global-set-key (kbd "M-Y") #'(lambda () (interactive) (yank-pop -1)))
+  )
+
+;; config undo
+(setq undo-limit (* 100 1024 1024))
+(setq undo-strong-limit (* 200 1024 1024))
+(setq undo-outer-limit (* 50 1024 1024))
+(use-package vundo
+  :bind
+  ("C-x u" . vundo)
+  )
+(use-package undohist
+  :init
+  (add-hook 'after-init-hook
+          #'(lambda ()
+              (require 'undohist)
+              (undohist-initialize)
+
+              ;; Patch to make undohist silent
+              (define-advice undohist-recover-1 (:override ())
+                (let* ((buffer (current-buffer))
+                       (file (buffer-file-name buffer))
+                       (undo-file (make-undohist-file-name file))
+                       undo-list)
+                  (when (and (undohist-recover-file-p file)
+                             (file-exists-p undo-file)
+                             (null buffer-undo-list))
+                    (with-temp-buffer
+                      (insert-file-contents undo-file)
+                      (goto-char (point-min))
+                      (let ((alist (undohist-decode (read (current-buffer)))))
+                        (if (string= (md5 buffer) (assoc-default 'digest alist))
+                            (setq undo-list (assoc-default 'undo-list alist))
+                          (message "File digest doesn't match, so undo history will be discarded."))))
+                    (when (consp undo-list)
+                      (setq buffer-undo-list undo-list)))))))
+  :config
+;;  (setq undohist-directory (no-littering-expand-var-file-name "undohist"))
+  (push "\\.git/COMMIT_EDITMSG\\'" undohist-ignored-files)
+  (push "dict.yaml\\'" undohist-ignored-files)
+  (push "essay.txt\\'" undohist-ignored-files)
+  (push tramp-file-name-regexp undohist-ignored-files)
+  
+  )
+
+(use-package undo-tree
+  :disabled
+  )
 
 
 (use-package rainbow-delimiters
@@ -285,6 +389,8 @@
  		show-paren-when-point-inside-paren t
 	       	show-paren-style 'mixed
 		show-paren-delay 0.2
+		;;		show-paren-context-when-offscreen 'child-frame
+		show-paren-context-when-offscreen t
  		)
   )
 (use-package colorful-mode
@@ -321,14 +427,50 @@
         highlight-parentheses-delay 0.2
 	)
   )
-
-
+;; use to save key statistics
+(use-package keyfreq
+  :disabled
+  :config
+  (keyfreq-mode 1)
+  )
+;; config/ echo key
+(setq echo-keystrokes 0.01)
+(use-package embark
+  :bind
+  ("C-." . embark-act)
+  ("M-SPC ." . embark-dwim)
+  ("C-c h b" . embark-bindings)
+  ("C-c h B" . embark-bindings-at-point)
+  ;;("M-n" . embark-next-symbol)
+  ;;("M-p" . embark-previous-symbol)
+  :custom
+  (embark-quit-after-action nil)
+  (prefix-help-command #'embark-prefix-help-command)
+  (embark-indicators '(embark-minimal-indicator
+                       embark-highlight-indicator
+                       embark-isearch-highlight-indicator))
+  (embark-cycle-key ".")
+  (embark-help-key "?")
+  :config
+  (setq embark-candidate-collectors
+        (cl-substitute 'embark-sorted-minibuffer-candidates
+                       'embark-minibuffer-candidates
+                       embark-candidate-collectors))
+  (delete 'embark-target-flymake-at-point embark-target-finders)
+  )
+(use-package avy
+  :bind ("C-;" . avy-goto-char-timer)
+  :custom
+  (avy-all-windows nil)
+  (avy-all-windows-alt t)
+  )
 (use-package which-key
+  :disabled
   :hook (after-init . which-key-mode)
   :custom
-  (which-key-idle-delay 0.2)
+  (which-key-idle-delay 0.5)
   )
-
+ 
 
 
 ;; ------------------  补全
@@ -359,7 +501,7 @@
 (use-package orderless
   :init
   (setq orderless-matching-styles '(orderless-literal
-				    orderless-flex
+;;				    orderless-flex
 				    orderless-regexp
 				    )
 	)
@@ -461,7 +603,6 @@
   )
 
 
-
 ;; Add extensions
 (use-package cape
   ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
@@ -477,11 +618,19 @@
   ;; used by `completion-at-point'.  The order of the functions matters, the
   ;; first function returning a result wins.  Note that the list of buffer-local
   ;; completion functions takes precedence over the global list.
-  (add-hook 'completion-at-point-functions #'cape-abbrev)
-;  (add-hook 'completion-at-point-functions #'cape-dabbrev)
-  (add-hook 'completion-at-point-functions #'cape-file)
-  (add-hook 'completion-at-point-functions #'cape-elisp-block)
-  ;; (add-hook 'completion-at-point-functions #'cape-history)
+ ;; (setf super-cape (cape-capf-super #'cape-abbrev #'cape-elisp-block #'cape-elisp-symbol #'cape-file #'cape-emoji #'cape-dabbrev #'cape-sgml #'cape-sgml #'cape-tex #'cape-line #'cape-keyword))
+  (setq completion-at-point-functions (list
+				       (cape-capf-super #'cape-abbrev #'cape-elisp-block #'cape-elisp-symbol #'cape-file #'cape-emoji #'cape-dabbrev #'cape-sgml #'cape-sgml #'cape-tex #'cape-line #'cape-keyword)
+				       'tags-completion-at-point-function
+				       ))
+;;;;  (add-hook 'completion-at-point-functions #'super-cape)
+  ;; (add-hook 'completion-at-point-functions #'cape-line)
+  ;; (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  ;; (add-hook 'completion-at-point-functions #'cape-file)
+  ;; (add-hook 'completion-at-point-functions #'cape-elisp-block)
+  ;; (add-hook 'completion-at-point-functions #'cape-abbrev)
+  ;;;; (add-hook 'completion-at-point-functions #'cape-history)
+  
   ;; ...
   )
 
@@ -653,25 +802,68 @@
   (global-set-key (kbd "C-.") 'meow-disable)
   )
 (use-package nerd-icons
-;  :disabled
+  ;;:disabled
   :demand t
   :config
   ;; Fonts for nerd-icons need to be configured in graphical frames.
   (message "xxxxx nerd icon")
-(defun +nerd-icons--after-make-frame-h (&optional frame)
-  (with-selected-frame (or frame (selected-frame))
-    ;;  `framep' returns t on terminal
-    (unless (memq (framep (selected-frame)) '(t))
-      (require 'nerd-icons)
-      (nerd-icons-set-font))))
-(add-hook 'after-make-frame-functions '+nerd-icons--after-make-frame-h)
-(add-hook 'server-after-make-frame-hook '+nerd-icons--after-make-frame-h)
+  (defun +nerd-icons--after-make-frame-h (&optional frame)
+    (with-selected-frame (or frame (selected-frame))
+      ;;  `framep' returns t on terminal
+      (unless (memq (framep (selected-frame)) '(t))
+	(require 'nerd-icons)
+	(nerd-icons-set-font))))
+  (add-hook 'after-make-frame-functions '+nerd-icons--after-make-frame-h)
+  (add-hook 'server-after-make-frame-hook '+nerd-icons--after-make-frame-h)
 
-;; show nerd-icons on mode-line
-(setq-default mode-line-buffer-identification
-              (seq-union '((:eval (nerd-icons-icon-for-buffer)) " ")
-                         mode-line-buffer-identification))
+  ;; show nerd-icons on mode-line
+  (setq-default mode-line-buffer-identification
+		(seq-union '((:eval (nerd-icons-icon-for-buffer)) " ")
+                           mode-line-buffer-identification))
   )
+(use-package nerd-icons-grep
+  :after nerd-icons
+  :config
+  (add-hook 'grep-mode-hook #'nerd-icons-grep-mode)
+  )
+(use-package nerd-icons-xref
+  :after nerd-icons
+  :config
+  (add-hook 'xref--xref-buffer-mode-hook #'nerd-icons-xref-mode )
+  (add-hook 'xref-etags-mode-hook #'nerd-icons-xref-mode)
+  )
+(use-package nerd-icons-dired
+  :after nerd-icons
+  :config
+  (add-hook 'dired-mode-hook 'nerd-icons-dired-mode)
+  )
+(use-package nerd-icons-ibuffer
+  :after nerd-icons
+  :config
+  (add-hook 'ibuffer-mode-hook #'nerd-icons-ibuffer-mode)
+  ;;()
+  )
+
+(use-package nerd-icons-corfu
+  :after nerd-icons
+  :config
+  (add-hook 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
+  )
+(use-package tab-line-nerd-icons
+  :after nerd-icons
+  :config
+  (tab-line-nerd-icons-global-mode t)
+  )
+(use-package nerd-icons-completion
+  :after nerd-icons
+  :config
+  (nerd-icons-completion-mode t)
+  )
+(use-package compile-multi-nerd-icons
+  :disabled
+  :after nerd-icons
+  )
+
 
 (use-package flymake
   :ensure nil
@@ -689,7 +881,8 @@
 ;; ====================     term
 (use-package eat
 ;;  :disabled
-;;  :if (not window-system)
+  ;;  :if (not window-system)
+  :if (or l/mac l/linux)
   :defer t
   :bind (
 	 ("ESC SPC v" . 'eat-other-window)
@@ -711,12 +904,44 @@
   )
 (use-package eglot
   :ensure nil
-;  :hook (prog-mode . eglot-ensure)
+					;  :hook (prog-mode . eglot-ensure)
   :bind ("C-c e f" . eglot-format)
+  :config
+  (defun jdtls-command-contact (&optional interactive)
+    (let* ((jdtls-cache-dir (file-name-concat user-emacs-directory "cache" "lsp-cache"))
+           (project-dir (file-name-nondirectory (directory-file-name (project-root (project-current)))))
+           (data-dir (expand-file-name (file-name-concat jdtls-cache-dir (md5 project-dir))))
+           ;; lombok 版本不能过低，会导致 dape 启动 lombok 不能加载。
+           (jvm-args `(,(concat "-javaagent:" (expand-file-name "~/.m2/repository/org/projectlombok/lombok/1.18.34/lombok-1.18.34.jar"))
+                       "-Xmx8G"
+                       ;; "-XX:+UseG1GC"
+                       "-XX:+UseZGC"
+                       "-XX:+UseStringDeduplication"
+                       ;; "-XX:FreqInlineSize=325"
+                       ;; "-XX:MaxInlineLevel=9"
+                       "-XX:+UseCompressedOops"))
+           (jvm-args (mapcar (lambda (arg) (concat "--jvm-arg=" arg)) jvm-args))
+           ;; tell jdtls the data directory and jvm args
+           (contact (append '("jdtls")
+                            jvm-args
+                            `("-data" ,data-dir)
+                            `(:initializationOptions
+                              (:bundles
+                               [,(file-truename "~/.m2/repository/com/microsoft/java/com.microsoft.java.debug.plugin/0.53.0/com.microsoft.java.debug.plugin-0.53.0.jar")])))
+		    ))
+      contact)
+    )
+
+  (push '((java-mode java-ts-mode) . jdtls-command-contact) eglot-server-programs)
+
   )
+;;(message "%s" eglot-java-eclipse-jdt-args)
 (use-package eglot-java
   :after eglot
-  ;:init
+  ;; :init
+  :config
+  ;;(setq lombok-path  (expand-file-name "~/.m2/repository/org/projectlombok/lombok/1.18.34/lombok-1.18.34.jar"))
+  ;; (add-to-list 'eglot-java-eclipse-jdt-args (concat "-javaagent:" lombok-path) 'append)
   )
 
 ;; =============== package straight
@@ -772,7 +997,7 @@
       )
   )
 
-;;; config message window always in last
+;;; config/ message window always in last
 (use-package emacs
   :config
   (defun my-messages-buffer-auto-tail (&rest args)
@@ -834,7 +1059,72 @@
       
       )
   )
+(use-package rime
+  :if (or l/linux l/mac)
+  :config
+  (setq default-input-method "rime")
+  )
 
+(use-package telega
+  :disabled
+  :config
+;;  (setq telega-server-libs-prefix "/home/linuxbrew/.linuxbrew/opt/tdlib/")
+  )
+
+;; Sublime-like multiple cursors.
+(use-package multiple-cursors
+;;  :disabled
+  ;;:bind ("S-M-<mouse-1>" . mc/add-cursor-on-click)
+  :bind ("S-M-<down-mouse-1>" . mc/add-cursor-on-click)
+  :bind ("C->" . 'mc/mark-next-like-this)
+  :bind ("C-<" . 'mc/mark-previous-like-this)
+  )
+
+;; translate
+(use-package gt
+  :config
+  (setq gt-preset-translators
+	`((ts-1 . ,(gt-translator
+                    :taker (gt-taker :langs '(en zh) :text 'word :prompt 'buffer)
+                    ;; :engines (gt-youdao-dict-engine)
+		    :engines
+		    (list
+		     ;;(gt-google-engine :if 'word)                        ; 只有当翻译内容为单词时启用
+                     ;; (gt-bing-engine :if '(and not-word parts))            ; 只有翻译内容不是单词且是多个段落时启用
+		     (gt-bing-engine :if '(and not-word))                  ; 只有翻译内容不是单词时启用
+		     ;;(gt-deepl-engine :if 'not-word :cache nil)          ; 只有翻译内容不是单词时启用; 不缓存
+		     (gt-youdao-dict-engine :if '(or src:zh tgt:zh))       ; 只有翻译中文时启用
+		     (gt-youdao-suggest-engine :if '(and word src:en))     ; 只有翻译英文单词时启用
+		     )
+                    ;; :render (gt-overlay-render))
+		    :render (gt-buffer-render)
+		    ;; :render (gt-posframe-pop-render)
+		    )
+		)
+          (ts-2 . ,(gt-translator
+                    :taker (gt-taker :langs '(en fr ru) :text 'sentence)
+                    :engines (gt-google-engine)
+                    :render (gt-insert-render)))
+          (ts-3 . ,(gt-translator
+                    :taker (gt-taker :langs '(en zh) :text 'buffer
+                                     :pick 'word :pick-pred (lambda (w) (length> w 6)))
+                    :engines (gt-google-engine)
+                    :render (gt-overlay-render :type 'help-echo))))
+	)
+  )
+(use-package dumb-jump
+  :config
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+  )
+
+(use-package treemacs
+  :config
+  (add-hook 'treemacs-mode-hook #'(lambda ()
+				   (treemacs-git-mode 'deferred))
+	    )
+  ;;(setq treemacs-indent-guide-style 'block)
+  ;;(add-hook 'treemacs-mode-hook 'treemacs-indent-guide-mode)
+  )
 
 (provide 'init)
 ;;; init.el ends here
