@@ -10,3 +10,5 @@ share
 *
 !early-init.el
 !init.el
+!tmp.el
+!lib/

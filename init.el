@@ -25,6 +25,7 @@
 ;; Don't recenter to the middle of the screen
 (setq recenter-positions '(top 0.3 bottom))
 
+
 ;; ------------------ move default dir   " it make win gui server mode err"
 ;; replace emacs paths early -- before doing anything
 ;; (use-package no-littering
@@ -313,7 +314,7 @@
      ((t (:inherit ace-jump-face-foreground :height 3.0)))))
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
         aw-scope 'frame))
-;; config downcase word -> downcase dwim
+;; config/ downcase word -> downcase dwim
 (use-package emacs
   :config
   ;; dwim
@@ -441,11 +442,12 @@
   ("M-SPC ." . embark-dwim)
   ("C-c h b" . embark-bindings)
   ("C-c h B" . embark-bindings-at-point)
+;;  ("C-h" . embark-prefix-help-command)
   ;;("M-n" . embark-next-symbol)
   ;;("M-p" . embark-previous-symbol)
   :custom
   (embark-quit-after-action nil)
-  (prefix-help-command #'embark-prefix-help-command)
+;;  (prefix-help-command #'embark-prefix-help-command)
   (embark-indicators '(embark-minimal-indicator
                        embark-highlight-indicator
                        embark-isearch-highlight-indicator))
@@ -818,8 +820,11 @@
 
   ;; show nerd-icons on mode-line
   (setq-default mode-line-buffer-identification
-		(seq-union '((:eval (nerd-icons-icon-for-buffer)) " ")
-                           mode-line-buffer-identification))
+		(seq-union '(
+			     (:eval (nerd-icons-icon-for-buffer)) " "
+			     )
+                           mode-line-buffer-identification)
+		)
   )
 (use-package nerd-icons-grep
   :after nerd-icons
@@ -833,6 +838,7 @@
   (add-hook 'xref-etags-mode-hook #'nerd-icons-xref-mode)
   )
 (use-package nerd-icons-dired
+  :disabled
   :after nerd-icons
   :config
   (add-hook 'dired-mode-hook 'nerd-icons-dired-mode)
@@ -841,7 +847,6 @@
   :after nerd-icons
   :config
   (add-hook 'ibuffer-mode-hook #'nerd-icons-ibuffer-mode)
-  ;;()
   )
 
 (use-package nerd-icons-corfu
@@ -850,6 +855,7 @@
   (add-hook 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
   )
 (use-package tab-line-nerd-icons
+  ;;:disabled
   :after nerd-icons
   :config
   (tab-line-nerd-icons-global-mode t)
@@ -858,6 +864,12 @@
   :after nerd-icons
   :config
   (nerd-icons-completion-mode t)
+  )
+
+(use-package nerd-icons-multimodal
+  :load-path "lib/nerd-icons-multimodal/"
+  :config
+  (global-nerd-icons-multimodal-mode t)
   )
 (use-package compile-multi-nerd-icons
   :disabled
