@@ -97,20 +97,20 @@
 
 ;; 自定义两个函数
 ;; Faster move cursor
-(if nil
+(if t
     (progn
-      (defun next-ten-lines()
-	"Move cursor to next 10 lines."
+      (defun next-half-page-lines()
+	"Move cursor to next half-page lines."
 	(interactive)
-	(forward-line 10))
+	(forward-line (/ (window-body-height) 2)))
 
-      (defun previous-ten-lines()
-	"Move cursor to previous 10 lines."
+      (defun previous-half-page-lines()
+	"Move cursor to previous half-page lines."
 	(interactive)
-	(forward-line -10))
+	(forward-line (/ (window-body-height) -2)))
       ;; 绑定到快捷键
-      (global-set-key (kbd "M-n") 'next-ten-lines)            ; 光标向下移动 10 行
-      (global-set-key (kbd "M-p") 'previous-ten-lines)        ; 光标向上移动 10 行
+      (global-set-key (kbd "M-N") 'next-half-page-lines)            ; 光标向下移动 屏幕一半 行
+      (global-set-key (kbd "M-P") 'previous-half-page-lines)        ; 光标向上移动 屏幕一半 行
 
       )
   )
@@ -190,7 +190,9 @@
 (global-set-key (kbd "C-j C-d") #'duplicate-line)
 (global-set-key (kbd "C-j C-l") #'clear-line)
 (global-set-key (kbd "M-SPC O") #'other-frame)
-;; ======================      config u
+(global-set-key (kbd "C-c C-n") #'scratch-buffer)
+
+;; ======================      config ui
 (setq use-short-answers t)
 (defun cursor-type-default ()
   "Cursor default."
@@ -201,6 +203,7 @@
 ;(setq cursor-type '(hbar . 4));box)       ; 终端不生效  原因不明
 (setq isearch-lazy-count t
       lazy-count-prefix-format "%s/%s ")
+(define-key isearch-mode-map [remap isearch-delete-char] #'isearch-del-char)
 
 ;;(fido-vertical-mode +1)			;minibuffer垂直补全  和 orderless冲突
 ;(icomplete-vertical-mode +1)	      ;minibuffer垂直补全
@@ -262,51 +265,51 @@
 (global-so-long-mode t)
 
 (repeat-mode +1)
-(setq repeat-exit-key (kbd "q"))
+(setq repeat-exit-key (kbd "i"))
 (defvar buffer-lunch-repeat-map ; C-x <left> 或 <right>
-      (let ((map (make-sparse-keymap)))
-        (define-key map (kbd "n") #'next-line)
-        (define-key map (kbd "p") #'previous-line)
-        (define-key map (kbd "f") #'forward-char)
-	(define-key map (kbd "b") #'backward-char)
-	(define-key map (kbd "e") #'previous-line)
-	(define-key map (kbd "d") #'next-line)
-	(define-key map (kbd "s") #'backward-char)
-	(define-key map (kbd "v") #'forward-word)
-	(define-key map (kbd "z") #'backward-word)
-	(define-key map (kbd "a") #'back-to-indentation)
-	(define-key map (kbd "g") #'move-end-of-line)
-	(define-key map (kbd "N") #'next-ten-lines)
-	(define-key map (kbd "P") #'previous-ten-lines)
-	(define-key map (kbd "4") #'scroll-up-command)
-	(define-key map (kbd "2") #'scroll-down-command)
-	(define-key map (kbd "w") #'scroll-half-page-down)
-	(define-key map (kbd "r") #'scroll-half-page-up)
-	(define-key map (kbd "i") #'repeat-exit)
-	(define-key map (kbd "o") #'other-window)
-	(define-key map (kbd "O") #'other-frame)
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "n") #'next-line)
+    (define-key map (kbd "p") #'previous-line)
+    (define-key map (kbd "f") #'forward-char)
+    (define-key map (kbd "b") #'backward-char)
+    (define-key map (kbd "e") #'previous-line)
+    (define-key map (kbd "d") #'next-line)
+    (define-key map (kbd "s") #'backward-char)
+    (define-key map (kbd "v") #'forward-word)
+    (define-key map (kbd "z") #'backward-word)
+    (define-key map (kbd "a") #'back-to-indentation)
+    (define-key map (kbd "g") #'move-end-of-line)
+    (define-key map (kbd "N") #'next-half-page-lines)
+    (define-key map (kbd "P") #'previous-half-page-lines)
+    (define-key map (kbd "4") #'scroll-up-command)
+    (define-key map (kbd "2") #'scroll-down-command)
+    (define-key map (kbd "w") #'scroll-half-page-down)
+    (define-key map (kbd "r") #'scroll-half-page-up)
+    (define-key map (kbd "i") #'repeat-exit)
+    (define-key map (kbd "o") #'other-window)
+    (define-key map (kbd "O") #'other-frame)
     (define-key map (kbd "m") #'newline)
-	
-        (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-ten-lines next-ten-lines scroll-up-command scroll-down-command scroll-half-page-up scroll-half-page-down other-window ))
-          (put it 'repeat-map 'buffer-lunch-repeat-map))
-        map)
-      "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
-      )
+    
+    (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-half-page-lines next-half-page-lines scroll-up-command scroll-down-command scroll-half-page-up scroll-half-page-down other-window ))
+      (put it 'repeat-map 'buffer-lunch-repeat-map))
+    map)
+  "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
+  )
 (defvar frame-lunch-repeat-map ; C-x <left> 或 <right>
-      (let ((omap (make-sparse-keymap)))
-	(define-key omap (kbd "O") #'other-frame)
-	
-        (dolist (it '(other-frame))
-          (put it 'repeat-map 'buffer-lunch-repeat-map))
-        omap)
-      "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
-      )
+  (let ((omap (make-sparse-keymap)))
+    (define-key omap (kbd "O") #'other-frame)
+    
+    (dolist (it '(other-frame))
+      (put it 'repeat-map 'buffer-lunch-repeat-map))
+    omap)
+  "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
+  )
 ;; config/ window move
 ;; Use ace-window for quick window navigation
 ;; Sorry, `other-window', but you are too weak!
 (use-package ace-window
   :bind (("C-x o" . ace-window)
-        ;; ("C-x C-o" . ace-window)
+         ;; ("C-x C-o" . ace-window)
 	 )  ;; was delete-blank-lines
   :config
   (custom-set-faces
@@ -1035,7 +1038,7 @@
 ;; set font
 (if t
     (progn
-      (setq line-spacing 0.1)
+      ;; (setq line-spacing 0.1)
       (let (
 	    (use-font (font-spec :family "ubuntu mono" :size 16))
 	    (use-font-l (font-spec :family "ubuntu mono Ligaturized" :size 16))
@@ -1048,7 +1051,7 @@
 	    (set-face-attribute 'default nil :font use-font )
 	  (if (find-font use-font-l)
 	      (set-face-attribute 'default nil :font use-font-l)
-	      )
+	    )
 	  )
 	(if (find-font last-font)
 	    (set-fontset-font (frame-parameter nil 'font) nil last-font)
@@ -1057,7 +1060,15 @@
 	    (set-fontset-font t nil symbol-font)
 	  )
 	(if (find-font han-font)
-	    (set-fontset-font "fontset-default" 'han han-font nil 'prepend)
+	    (progn
+	      (set-fontset-font "fontset-default" 'han han-font nil 'prepend)
+	      (setq face-font-rescale-alist '(
+					      ("lxgw" . 1.0)
+					      ("ubuntu" . 1.0)
+					      )
+		    )
+	      (setq line-spacing 0.00)
+	      )
 	  )
 	;;	(if (find-font han-font-sarasa)
 	;;	    (set-fontset-font "fontset-default" 'han han-font-sarasa nil 'prepend)
@@ -1071,6 +1082,7 @@
       
       )
   )
+
 (use-package rime
   :if (or l/linux l/mac)
   :config
