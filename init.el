@@ -1149,6 +1149,8 @@
   ;;(setq treemacs-indent-guide-style 'block)
   ;;(add-hook 'treemacs-mode-hook 'treemacs-indent-guide-mode)
   )
-
+(use-package wgrep
+  :config
+  )
 (provide 'init)
 ;;; init.el ends here

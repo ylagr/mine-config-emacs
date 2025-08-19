@@ -25,6 +25,7 @@
   )
 (setq state "🅘")
 (setq state "🅚")
+(setq state "🅡")
 (use-package wgrep
   :bind
   (:map grep-mode-map
