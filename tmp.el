@@ -13,8 +13,18 @@
    header-line-format
    '("GC: " (:eval (number-to-string gcs-done)) " - " (:eval (number-to-string gc-elapsed)) "s"))
 
-
-
+(setq-default mode-line-format (append '("🅚") mode-line-format))
+(defvar modeline)
+(setq modeline mode-line-format)
+(setq-default mode-line-format modeline)
+(setq-default mode-line-format (append '((:eval (curstate))) mode-line-format))
+(:eval (state))
+(defvar state)
+(defun curstate ()
+  (or state nil)
+  )
+(setq state "🅘")
+(setq state "🅚")
 (use-package wgrep
   :bind
   (:map grep-mode-map
