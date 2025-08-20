@@ -12,3 +12,6 @@ share
 !init.el
 !tmp.el
 !lib/
+!lib/*/
+!lib/*
+!lib/**/*

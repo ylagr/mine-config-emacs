@@ -1,0 +1,3 @@
+[submodule "lib/nerd-icons-multimodal"]
+	path = lib/nerd-icons-multimodal
+	url = https://github.com/abougouffa/nerd-icons-multimodal.git
