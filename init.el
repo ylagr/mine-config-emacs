@@ -18,9 +18,9 @@
 (defconst l/linux (eq system-type 'gnu/linux))
 (defconst l/wsl2 (string-match-p "WSL2" (shell-command-to-string "uname -r")))
 (defconst l/wsl1 (and
-		  (eq system-type 'gnu/linux)
-		  (not l/wsl2)
-		  ))
+                  (eq system-type 'gnu/linux)
+                  (not l/wsl2)
+                  ))
 
 ;; Don't recenter to the middle of the screen
 (setq recenter-positions '(top 0.3 bottom))
@@ -34,7 +34,7 @@
 ;;   :config
 ;;   (setq auto-save-file-name-transforms
 ;;         `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))
-;; 	)
+;;      )
 ;;   )
 
 ;; -------------------------------config/ start
@@ -44,7 +44,7 @@
 
 ;; ============================  benchmark
 (use-package benchmark-init
-  :demand t				;立刻加载
+  :demand t                             ;立刻加载
   :config (benchmark-init/activate)
   :hook (after-init . benchmark-init/deactivate)
   )
@@ -73,9 +73,9 @@
      version-control t) ; 多次备份
 (setq auto-save-file-name-transforms
 ;      `((".*" ,temporary-file-directory t))
-      `((".*" ,autosaves-dir t))		;自动保存临时文件
+      `((".*" ,autosaves-dir t))                ;自动保存临时文件
       )
-(setq auto-save-timeout 5)		;set default auto save time without input
+(setq auto-save-timeout 5)              ;set default auto save time without input
 ;(setq create-lockfiles nil) ; 使用下方操作修改lock文件（.#*）位置
 (setq lock-file-name-transforms
       `((".*" ,backups-dir t))
@@ -100,14 +100,14 @@
 (if t
     (progn
       (defun next-half-page-lines()
-	"Move cursor to next half-page lines."
-	(interactive)
-	(forward-line (/ (window-body-height) 2)))
+        "Move cursor to next half-page lines."
+        (interactive)
+        (forward-line (/ (window-body-height) 2)))
 
       (defun previous-half-page-lines()
-	"Move cursor to previous half-page lines."
-	(interactive)
-	(forward-line (/ (window-body-height) -2)))
+        "Move cursor to previous half-page lines."
+        (interactive)
+        (forward-line (/ (window-body-height) -2)))
       ;; 绑定到快捷键
       (global-set-key (kbd "M-N") 'next-half-page-lines)            ; 光标向下移动 屏幕一半 行
       (global-set-key (kbd "M-P") 'previous-half-page-lines)        ; 光标向上移动 屏幕一半 行
@@ -117,14 +117,14 @@
 (if t
     (progn
       (defun scroll-half-page-down ()
-	"Scroll down half the page."
-	(interactive)
-	(scroll-down (/ (window-body-height) 2)))
+        "Scroll down half the page."
+        (interactive)
+        (scroll-down (/ (window-body-height) 2)))
 
       (defun scroll-half-page-up ()
-	"Scroll up half the page."
-	(interactive)
-	(scroll-up (/ (window-body-height) 2)))
+        "Scroll up half the page."
+        (interactive)
+        (scroll-up (/ (window-body-height) 2)))
 
       (global-set-key "\M-n" 'scroll-half-page-up)
       (global-set-key "\M-p" 'scroll-half-page-down)
@@ -142,7 +142,7 @@
 ;; leader key
 (global-set-key (kbd "M-SPC") nil) ;修改默认keybind M-SPC -> nil, 作为leader使用，用于各种命令替代
 (global-set-key (kbd "M-ESC") #'keyboard-quit)
-(global-set-key (kbd "C-j") nil)	      ;修改默认的C-j功能，作为编辑的leader key使用
+(global-set-key (kbd "C-j") nil)              ;修改默认的C-j功能，作为编辑的leader key使用
 (global-set-key (kbd "C-j C-j") #'electric-newline-and-maybe-indent);原始的C-j功能修改
 (global-set-key (kbd "ESC ]") #'cycle-spacing) ;原始M-SPC功能修改为
 ;;(global-set-key (kbd "ESC SPC") 'cycle-spacing) ;test ESC SPC leaderkey使用
@@ -205,26 +205,30 @@
       lazy-count-prefix-format "%s/%s ")
 (define-key isearch-mode-map [remap isearch-delete-char] #'isearch-del-char)
 
-;;(fido-vertical-mode +1)			;minibuffer垂直补全  和 orderless冲突
-;(icomplete-vertical-mode +1)	      ;minibuffer垂直补全
-(global-hl-line-mode 1)		;高亮当前行
-(global-tab-line-mode +1)		;显示tab line 不同的buffer编辑区
-(tab-bar-mode +1)			;显示tab bar  相当于不同的工作区
-(column-number-mode +1)			;显示行列在buffer区域
+;;(fido-vertical-mode +1)                       ;minibuffer垂直补全  和 orderless冲突
+;(icomplete-vertical-mode +1)         ;minibuffer垂直补全
+(global-hl-line-mode 1)         ;高亮当前行
+(global-tab-line-mode +1)               ;显示tab line 不同的buffer编辑区
+(tab-bar-mode +1)                       ;显示tab bar  相当于不同的工作区
+(column-number-mode +1)                 ;显示行列在buffer区域
 (global-display-line-numbers-mode +1)
-(electric-pair-mode +1)			;自动补全括号
+(electric-pair-mode +1)                 ;自动补全括号
 (electric-quote-mode +1)
 (electric-indent-mode +1)
 (electric-layout-mode +1)
-(show-paren-mode +1)			;
+(show-paren-mode +1)                    ;
 ;;(delete-selection-mode +1)              ;选中区域后插入删除选中文字
-(global-auto-revert-mode +1)		;实时刷新文件
+(global-auto-revert-mode +1)            ;实时刷新文件
 ;; avoid kill no selection region, just kill a word, like vim
 (setq kill-region-dwim 'emacs-word)
 
 (eval-after-load "dired"
-  '(define-key dired-mode-map (kbd "b") #'dired-up-directory)
+  '(progn
+     (define-key dired-mode-map (kbd "b") #'dired-up-directory)
+     (define-key dired-mode-map (kbd "F") #'dired-create-empty-file)
+     )
   )
+
 (add-hook 'prog-mode-hook 'hs-minor-mode) ;折叠模式
 ;; 这里额外启用了 :box t 属性使得提示更加明显
 ;; (defconst hideshow-folded-face '((t (:inherit 'font-lock-comment-face :box t))))
@@ -248,17 +252,17 @@
 (setq completion-preview-completion-styles '(orderless basic initials))
 (global-completion-preview-mode +1)
 ;;(completion-preview-active-mode)
-;; Don't let Emacs hurt my ears
+;; Don't let Emacs hurt my ears.
 (setq visible-bell nil)
 (setq ring-bell-function 'ignore)
 
 (setq scroll-step 1)
-(setq scroll-margin 2)			;set next page margin line
-(setq scroll-conservatively 101)	;if value greater than 100, will nerver scroll
+(setq scroll-margin 2)                  ;set next page margin line
+(setq scroll-conservatively 101)        ;if value greater than 100, will nerver scroll
 (setq scroll-preserve-screen-position t)
 (setq resize-mini-windows t)
 (setq max-mini-window-height 5)
-					
+                                        
 
 
 ;; Disable fancy features when the file is too large
@@ -310,7 +314,7 @@
 (use-package ace-window
   :bind (("C-x o" . ace-window)
          ;; ("C-x C-o" . ace-window)
-	 )  ;; was delete-blank-lines
+         )  ;; was delete-blank-lines
   :config
   (custom-set-faces
    '(aw-leading-char-face
@@ -329,7 +333,7 @@
   (setq mark-ring-max 50)
   (setq set-mark-command-repeat-pop t)
   ;; Kill
-  (setq kill-do-not-save-duplicates t) 	; not save same kill ring
+  (setq kill-do-not-save-duplicates t)  ; not save same kill ring
   (setq save-interprogram-paste-before-kill t)  ;; save system copycliboard data into kill ring
   ;; Reverse yank-pop.  By default, it is C-u M-y, but it's not as
   ;; intuitive.  The "Shift reverse" metaphor seems well established.
@@ -379,6 +383,7 @@
   )
 
 (use-package undo-tree
+  ;; sorry, vundo more useful.
   :disabled
   )
 
@@ -390,12 +395,12 @@
 (use-package paren
   :init
   :config (setq show-paren-when-point-in-periphery t
- 		show-paren-when-point-inside-paren t
-	       	show-paren-style 'mixed
-		show-paren-delay 0.2
-		;;		show-paren-context-when-offscreen 'child-frame
-		show-paren-context-when-offscreen t
- 		)
+                show-paren-when-point-inside-paren t
+                show-paren-style 'mixed
+                show-paren-delay 0.2
+                ;;              show-paren-context-when-offscreen 'child-frame
+                show-paren-context-when-offscreen t
+                )
   )
 (use-package colorful-mode
   :defer t
@@ -410,26 +415,26 @@
   (setq hl-line-sticky-flag nil)
   ;; Highlight starts from EOL, to avoid conflicts with other overlays
   (setq hl-line-range-function (lambda () (cons (line-end-position)
-						(line-beginning-position 2))
-				 )
-	)
+                                                (line-beginning-position 2))
+                                 )
+        )
   )
 ;; see in url https://emacs-china.org/t/topic/28495/3
 (use-package highlight-parentheses
 ;  :straight t
   :hook ((minibuffer-setup . highlight-parentheses-minibuffer-setup)
-					;         (prog-mode . highlight-parentheses-mode))
+                                        ;         (prog-mode . highlight-parentheses-mode))
 ;         (after-init . highlight-parentheses-mode)
          (after-init . global-highlight-parentheses-mode)
-	 )
+         )
   :config
   (setq highlight-parentheses-colors
-;	'("firebrick1" "firebrick3" "orange1" "orange3")
-	'("firebrick1" "IndianRed1" "firebrick3" "IndianRed3" "IndianRed4")
+;       '("firebrick1" "firebrick3" "orange1" "orange3")
+        '("firebrick1" "IndianRed1" "firebrick3" "IndianRed3" "IndianRed4")
         highlight-parentheses-attributes
-	'((:underline t) (:underline t) (:underline t))
+        '((:underline t) (:underline t) (:underline t))
         highlight-parentheses-delay 0.2
-	)
+        )
   )
 ;; use to save key statistics
 (use-package keyfreq
@@ -441,27 +446,34 @@
 (setq echo-keystrokes 0.01)
 (use-package embark
   :bind
+  (:map embark-general-map
+        ("e" . embark-export)
+        )
   ("C-." . embark-act)
   ("M-SPC ." . embark-dwim)
   ("C-c h b" . embark-bindings)
   ("C-c h B" . embark-bindings-at-point)
-;;  ("C-h" . embark-prefix-help-command)
+  ;;  ("C-h" . embark-prefix-help-command)
   ;;("M-n" . embark-next-symbol)
   ;;("M-p" . embark-previous-symbol)
   :custom
   (embark-quit-after-action nil)
-;;  (prefix-help-command #'embark-prefix-help-command)
+  ;;  (prefix-help-command #'embark-prefix-help-command)
   (embark-indicators '(embark-minimal-indicator
                        embark-highlight-indicator
                        embark-isearch-highlight-indicator))
   (embark-cycle-key ".")
   (embark-help-key "?")
+
   :config
   (setq embark-candidate-collectors
         (cl-substitute 'embark-sorted-minibuffer-candidates
                        'embark-minibuffer-candidates
                        embark-candidate-collectors))
   (delete 'embark-target-flymake-at-point embark-target-finders)
+  )
+(use-package embark-consult
+  :after (embark consult)
   )
 (use-package avy
   :bind ("C-;" . avy-goto-char-timer)
@@ -506,14 +518,14 @@
 (use-package orderless
   :init
   (setq orderless-matching-styles '(orderless-literal
-;;				    orderless-flex
-				    orderless-regexp
-				    )
-	)
+;;                                  orderless-flex
+                                    orderless-regexp
+                                    )
+        )
   (setq completion-styles '(orderless basic)
-	completion-category-defaults nil
-	completion-category-overrides '((file (styles basic partial-completion)))
-	)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles basic partial-completion)))
+        )
   )
 
 (use-package diff-hl
@@ -625,9 +637,9 @@
   ;; completion functions takes precedence over the global list.
  ;; (setf super-cape (cape-capf-super #'cape-abbrev #'cape-elisp-block #'cape-elisp-symbol #'cape-file #'cape-emoji #'cape-dabbrev #'cape-sgml #'cape-sgml #'cape-tex #'cape-line #'cape-keyword))
   (setq completion-at-point-functions (list
-				       (cape-capf-super #'cape-abbrev #'cape-elisp-block #'cape-elisp-symbol #'cape-file #'cape-emoji #'cape-dabbrev #'cape-sgml #'cape-sgml #'cape-tex #'cape-line #'cape-keyword)
-				       'tags-completion-at-point-function
-				       ))
+                                       (cape-capf-super #'cape-abbrev #'cape-elisp-block #'cape-elisp-symbol #'cape-file #'cape-emoji #'cape-dabbrev #'cape-sgml #'cape-sgml #'cape-tex #'cape-line #'cape-keyword)
+                                       'tags-completion-at-point-function
+                                       ))
 ;;;;  (add-hook 'completion-at-point-functions #'super-cape)
   ;; (add-hook 'completion-at-point-functions #'cape-line)
   ;; (add-hook 'completion-at-point-functions #'cape-dabbrev)
@@ -768,7 +780,7 @@
           (insert . "🅘 INSERT")
           (motion . "🅜 MOTION")
           (keypad . "🅚 KEYPAD"))
-	)
+        )
     )
   (meow-setup)
   (meow-setup-modeline)
@@ -816,18 +828,18 @@
     (with-selected-frame (or frame (selected-frame))
       ;;  `framep' returns t on terminal
       (unless (memq (framep (selected-frame)) '(t))
-	(require 'nerd-icons)
-	(nerd-icons-set-font))))
+        (require 'nerd-icons)
+        (nerd-icons-set-font))))
   (add-hook 'after-make-frame-functions '+nerd-icons--after-make-frame-h)
   (add-hook 'server-after-make-frame-hook '+nerd-icons--after-make-frame-h)
 
   ;; show nerd-icons on mode-line
   (setq-default mode-line-buffer-identification
-		(seq-union '(
-			     (:eval (nerd-icons-icon-for-buffer)) " "
-			     )
+                (seq-union '(
+                             (:eval (nerd-icons-icon-for-buffer)) " "
+                             )
                            mode-line-buffer-identification)
-		)
+                )
   )
 (use-package nerd-icons-grep
   :after nerd-icons
@@ -886,8 +898,9 @@
   (add-hook 'prog-mode-hook 'flymake-mode)
   (setq flymake-show-diagnostics-at-end-of-line t)
   (setq flymake-no-changes-timeout 0.9)
+  (add-to-list 'elisp-flymake-byte-compile-load-path load-path)
   :bind
-  (
+  (:map flymake-mode-map
    ("C-j C-n" . 'flymake-goto-next-error)
    ("C-j C-p" . 'flymake-goto-prev-error)
    )
@@ -900,9 +913,9 @@
   :if (or l/mac l/linux)
   :defer t
   :bind (
-	 ("ESC SPC v" . 'eat-other-window)
-	 :map eat-semi-char-mode-map ("M-o" . 'other-window)
-	  )
+         ("ESC SPC v" . 'eat-other-window)
+         :map eat-semi-char-mode-map ("M-o" . 'other-window)
+          )
   :config
   (setq eat-kill-buffer-on-exit nil)
   (setq eat-enable-blinking-text t)
@@ -919,7 +932,7 @@
   )
 (use-package eglot
   :ensure nil
-					;  :hook (prog-mode . eglot-ensure)
+                                        ;  :hook (prog-mode . eglot-ensure)
   :bind ("C-c e f" . eglot-format)
   :config
   (defun jdtls-command-contact (&optional interactive)
@@ -943,7 +956,7 @@
                             `(:initializationOptions
                               (:bundles
                                [,(file-truename "~/.m2/repository/com/microsoft/java/com.microsoft.java.debug.plugin/0.53.0/com.microsoft.java.debug.plugin-0.53.0.jar")])))
-		    ))
+                    ))
       contact)
     )
 
@@ -1020,15 +1033,15 @@
     (let* ((buf-name "*Messages*")
            (buf (get-buffer buf-name)))
       (when (and buf (window-live-p (get-buffer-window buf)))
-	;; If *Messages* buffer is currently visible in a window,
-	;; move its point to the end.
-	(dolist (win (get-buffer-window-list buf-name nil :all-frames))
-	  (unless (and win (eq (selected-window) win))
+        ;; If *Messages* buffer is currently visible in a window,
+        ;; move its point to the end.
+        (dolist (win (get-buffer-window-list buf-name nil :all-frames))
+          (unless (and win (eq (selected-window) win))
             (with-selected-window win
               (goto-char (point-max)))
-	    )
-	  )
-	)
+            )
+          )
+        )
       )
     )
 
@@ -1040,49 +1053,53 @@
     (progn
       ;; (setq line-spacing 0.1)
       (let (
-	    (use-font (font-spec :family "ubuntu mono" :size 16))
-	    (use-font-l (font-spec :family "ubuntu mono Ligaturized" :size 16))
-	    (last-font (font-spec :family "noto sans sc"))
-	    (symbol-font (font-spec :family "Segoe UI symbol"))
-	    (han-font (font-spec :family  "lxgw wenkai"))
-	    ;;(han-font-sarasa (font-spec :family "sarasa gothic cl"))
-	    )
-	(if (find-font use-font)
-	    (set-face-attribute 'default nil :font use-font )
-	  (if (find-font use-font-l)
-	      (set-face-attribute 'default nil :font use-font-l)
-	    )
-	  )
-	(if (find-font last-font)
-	    (set-fontset-font (frame-parameter nil 'font) nil last-font)
-	  )
-	(if (find-font symbol-font)
-	    (set-fontset-font t nil symbol-font)
-	  )
-	(if (find-font han-font)
-	    (progn
-	      (set-fontset-font "fontset-default" 'han han-font nil 'prepend)
-	      (setq face-font-rescale-alist '(
-					      ("lxgw" . 1.0)
-					      ("ubuntu" . 1.0)
-					      )
-		    )
-	      (setq line-spacing 0.00)
-	      )
-	  )
-	;;	(if (find-font han-font-sarasa)
-	;;	    (set-fontset-font "fontset-default" 'han han-font-sarasa nil 'prepend)
-	;;	  )
-	)
+            (use-font (font-spec :family "ubuntu mono" :size 16))
+            (use-font-l (font-spec :family "ubuntu mono Ligaturized" :size 16))
+            (last-font (font-spec :family "noto sans sc"))
+            (symbol-font (font-spec :family "Segoe UI symbol"))
+            (han-font (font-spec :family  "lxgw wenkai"))
+            ;;(han-font-sarasa (font-spec :family "sarasa gothic cl"))
+            )
+        (if (find-font use-font)
+            (set-face-attribute 'default nil :font use-font )
+          (if (find-font use-font-l)
+              (set-face-attribute 'default nil :font use-font-l)
+            )
+          )
+        (if (find-font last-font)
+            (set-fontset-font (frame-parameter nil 'font) nil last-font)
+          )
+        (if (find-font symbol-font)
+            (set-fontset-font t nil symbol-font)
+          )
+        (if (find-font han-font)
+            (progn
+              (set-fontset-font "fontset-default" 'han han-font nil 'prepend)
+              (setq face-font-rescale-alist '(
+                                              ("lxgw" . 1.0)
+                                              ("ubuntu" . 1.0)
+                                              )
+                    )
+              (setq line-spacing 0.00)
+              )
+          )
+        ;;      (if (find-font han-font-sarasa)
+        ;;          (set-fontset-font "fontset-default" 'han han-font-sarasa nil 'prepend)
+        ;;        )
+        )
       )
   )
-;; set mode line
-(if t
+;; config/ mode line
+(if (boundp repeat-in-progress)
     (progn
-      
+      (defun l/repeat-mode-curstate ()
+        (when repeat-in-progress
+	  "🅡")
+	)
+      (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (l/repeat-mode-curstate))))
       )
   )
-
+(or repeat-mode)
 (use-package rime
   :if (or l/linux l/mac)
   :config
@@ -1149,7 +1166,17 @@
   ;;(setq treemacs-indent-guide-style 'block)
   ;;(add-hook 'treemacs-mode-hook 'treemacs-indent-guide-mode)
   )
+(add-to-list 'grep-find-ignored-files ".tag*")
+(add-to-list 'grep-find-ignored-files ".TAG*")
+(add-to-list 'grep-find-ignored-files "tag*")
+(add-to-list 'grep-find-ignored-files "TAG*")
+
 (use-package wgrep
+  :bind
+  (:map grep-mode-map
+	("C-c C-p" . wgrep-change-to-wgrep-mode)
+	("e" . wgrep-change-to-wgrep-mode)
+	)
   :config
   )
 (provide 'init)

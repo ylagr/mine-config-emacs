@@ -20,12 +20,12 @@
 (setq-default mode-line-format (append '((:eval (curstate))) mode-line-format))
 (:eval (state))
 (defvar state)
-(defun curstate ()
-  (or state nil)
+(defun l/repeat-map-curstate ()
+  'l/repeat-map-state
   )
 (setq state "🅘")
 (setq state "🅚")
-(setq state "🅡")
+
 (use-package wgrep
   :bind
   (:map grep-mode-map
