@@ -940,6 +940,8 @@
 (use-package magit
   ;; :disabled
   :defer t
+  :config
+  (global-set-key (kbd "C-j g") #'magit)
   )
 (use-package eglot
   :ensure nil
@@ -1118,9 +1120,13 @@
   )
 
 (use-package telega
-  :disabled
+  ;;  :disabled
+  :if (or l/linux l/mac)
   :config
-;;  (setq telega-server-libs-prefix "/home/linuxbrew/.linuxbrew/opt/tdlib/")
+  ;; comment because homebrew’s tdlib is v1.8.0 less than need version v1.8.4
+;;  (if nil ;l/linux
+;;      (setq telega-server-libs-prefix "/home/linuxbrew/.linuxbrew/opt/tdlib/")
+;;      )
   )
 
 ;; Sublime-like multiple cursors.
@@ -1137,7 +1143,8 @@
   :config
   (setq gt-preset-translators
 	`((ts-1 . ,(gt-translator
-                    :taker (gt-taker :langs '(en zh) :text 'word :prompt 'buffer)
+                    ;; :taker (gt-taker :langs '(en zh) :text 'word :prompt 'buffer)
+                    :taker (gt-taker :langs '(en zh) :text 'word :prompt nil)
                     ;; :engines (gt-youdao-dict-engine)
 		    :engines
 		    (list
@@ -1163,6 +1170,7 @@
                     :engines (gt-google-engine)
                     :render (gt-overlay-render :type 'help-echo))))
 	)
+  (global-set-key (kbd "M-SPC t") #'gt-translate)
   )
 (use-package dumb-jump
   :config
