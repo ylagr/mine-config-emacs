@@ -48,290 +48,298 @@
   :config (benchmark-init/activate)
   :hook (after-init . benchmark-init/deactivate)
   )
-(setq confirm-kill-emacs 'yes-or-no-p)
-;(desktop-save-mode +1)
-(recentf-mode +1)
-(setq recentf-max-menu-items 25)
-(defvar autosaves-dir (expand-file-name "autosaves/" user-emacs-directory))
-(defvar backups-dir (expand-file-name "backups/" user-emacs-directory))
-(unless (file-exists-p autosaves-dir)
-  (make-directory autosaves-dir t)
-  )
-(unless (file-exists-p backups-dir)
-  (make-directory backups-dir t)
-  )
-(setq process-adaptive-read-buffering t)
-;; change default action
-(setq backup-directory-alist
-;      `((".*" . ,temporary-file-directory))
-      `((".*" . ,backups-dir))
-
-     backup-by-copying t ; 自动备份
-     delete-old-versions t ; 自动删除旧的备份文件
-     kept-new-versions 3 ; 保留最近的3个备份文件
-     kept-old-versions 1 ; 保留最早的1个备份文件
-     version-control t) ; 多次备份
-(setq auto-save-file-name-transforms
-;      `((".*" ,temporary-file-directory t))
-      `((".*" ,autosaves-dir t))                ;自动保存临时文件
-      )
-(setq auto-save-timeout 5)              ;set default auto save time without input
-;(setq create-lockfiles nil) ; 使用下方操作修改lock文件（.#*）位置
-(setq lock-file-name-transforms
-      `((".*" ,backups-dir t))
-      )
-
-;; def fun show os name
-(defun print-os()
-  "Show current os name."
-  (interactive)
-  (message "%s" system-type)
-  )
-
-;; def fun quick open config file
-(defun open-init-file()
-"Open Emacs config file."
-  (interactive)
-  (find-file (concat user-emacs-directory "init.el"))
-  )
-
-;; 自定义两个函数
-;; Faster move cursor
-(if t
-    (progn
-      (defun next-half-page-lines()
-        "Move cursor to next half-page lines."
-        (interactive)
-        (forward-line (/ (window-body-height) 2)))
-
-      (defun previous-half-page-lines()
-        "Move cursor to previous half-page lines."
-        (interactive)
-        (forward-line (/ (window-body-height) -2)))
-      ;; 绑定到快捷键
-      (global-set-key (kbd "M-N") 'next-half-page-lines)            ; 光标向下移动 屏幕一半 行
-      (global-set-key (kbd "M-P") 'previous-half-page-lines)        ; 光标向上移动 屏幕一半 行
-
-      )
-  )
-(if t
-    (progn
-      (defun scroll-half-page-down ()
-        "Scroll down half the page."
-        (interactive)
-        (scroll-down (/ (window-body-height) 2)))
-
-      (defun scroll-half-page-up ()
-        "Scroll up half the page."
-        (interactive)
-        (scroll-up (/ (window-body-height) 2)))
-
-      (global-set-key "\M-n" 'scroll-half-page-up)
-      (global-set-key "\M-p" 'scroll-half-page-down)
-
-      )
-  )
-
-;; ======================       keybind
-(global-set-key (kbd "M-<f3>") #'open-init-file)
-(global-set-key (kbd "C-x ,") #'open-init-file)
-(global-set-key (kbd "C-x ，") #'open-init-file)
-(global-set-key (kbd "C-c C-_") #'comment-or-uncomment-region)
-(global-set-key (kbd "C-c C-/") #'comment-or-uncomment-region)
-(global-set-key (kbd "C-x C-k") #'kill-current-buffer)
-;; leader key
-(global-set-key (kbd "M-SPC") nil) ;修改默认keybind M-SPC -> nil, 作为leader使用，用于各种命令替代
-(global-set-key (kbd "M-ESC") #'keyboard-quit)
-(global-set-key (kbd "C-j") nil)              ;修改默认的C-j功能，作为编辑的leader key使用
-(global-set-key (kbd "C-j C-j") #'electric-newline-and-maybe-indent);原始的C-j功能修改
-(global-set-key (kbd "ESC ]") #'cycle-spacing) ;原始M-SPC功能修改为
-;;(global-set-key (kbd "ESC SPC") 'cycle-spacing) ;test ESC SPC leaderkey使用
-(global-set-key (kbd "M-o") #'other-window)
-(global-set-key (kbd "M-SPC c") #'comment-line)
-(global-set-key (kbd "C-j c") #'comment-line)
-(keymap-unset lisp-interaction-mode-map "C-j")
-(keymap-set lisp-interaction-mode-map "C-j C-j" #'eval-print-last-sexp)
-(global-set-key (kbd "C-j C-k") #'kill-whole-line)
-(global-set-key (kbd "C-x C-b") #'ibuffer)
-(global-set-key (kbd "C-,") #'completion-at-point)
-(global-set-key (kbd "M-z") #'zap-up-to-char) ;old func is zap-to-char, diff is with no up del input char.
-(global-set-key (kbd "C-z") #'repeat)
-(defun newline-and-indent-up ()
-  "回车到上一行."
-  (interactive)
-  (forward-line -1)
-  (move-end-of-line 1)
-  (newline-and-indent)
-  )
-(defun newline-and-indent-down ()
-  "回车到下一行."
-  (interactive)
-  (move-end-of-line 1)
-  (newline-and-indent)
-  )
-(defun duplicate-line ()
-  "Duplicate line."
-  (interactive)
-  (move-beginning-of-line 1)
-  (kill-line)
-  (yank)
-  (open-line 1)
-  (forward-line 1)
-  (yank)
-  )
-(defun clear-line ()
-  "Clear line."
-  (interactive)
-  (move-beginning-of-line 1)
-  (kill-line)
-  )
-(global-set-key (kbd "C-j C-i") #'newline-and-indent-up)
-(global-set-key (kbd "C-j C-o") #'newline-and-indent-down)
-(global-set-key (kbd "C-j C-d") #'duplicate-line)
-(global-set-key (kbd "C-j C-l") #'clear-line)
-(global-set-key (kbd "M-SPC O") #'other-frame)
-(global-set-key (kbd "C-c C-n") #'scratch-buffer)
-
-;; ======================      config ui
-(setq use-short-answers t)
-(defun cursor-type-default ()
-  "Cursor default."
-  (interactive)
-  (setq cursor-type '(hbar . 6))
-  )
-;;(cursor-type-default)
-;(setq cursor-type '(hbar . 4));box)       ; 终端不生效  原因不明
-(setq isearch-lazy-count t
-      lazy-count-prefix-format "%s/%s ")
-(define-key isearch-mode-map [remap isearch-delete-char] #'isearch-del-char)
-
-;;(fido-vertical-mode +1)                       ;minibuffer垂直补全  和 orderless冲突
-;(icomplete-vertical-mode +1)         ;minibuffer垂直补全
-(global-hl-line-mode 1)         ;高亮当前行
-(global-tab-line-mode +1)               ;显示tab line 不同的buffer编辑区
-(tab-bar-mode +1)                       ;显示tab bar  相当于不同的工作区
-(column-number-mode +1)                 ;显示行列在buffer区域
-(global-display-line-numbers-mode +1)
-(electric-pair-mode +1)                 ;自动补全括号
-(electric-quote-mode +1)
-(electric-indent-mode +1)
-(electric-layout-mode +1)
-(show-paren-mode +1)                    ;
-;;(delete-selection-mode +1)              ;选中区域后插入删除选中文字
-(global-auto-revert-mode +1)            ;实时刷新文件
-;; avoid kill no selection region, just kill a word, like vim
-(setq kill-region-dwim 'emacs-word)
-
-(eval-after-load "dired"
-  '(progn
-     (define-key dired-mode-map (kbd "b") #'dired-up-directory)
-     (define-key dired-mode-map (kbd "F") #'dired-create-empty-file)
-     )
-  )
-
-(add-hook 'prog-mode-hook 'hs-minor-mode) ;折叠模式
-;; 这里额外启用了 :box t 属性使得提示更加明显
-;; (defconst hideshow-folded-face '((t (:inherit 'font-lock-comment-face :box t))))
-;; (defun hideshow-folded-overlay-fn (ov)
-;;     (when (eq 'code (overlay-get ov 'hs))
-;;       (let* ((nlines (count-lines (overlay-start ov) (overlay-end ov)))
-;;              (info (format " ... #%d " nlines)))
-;;         (overlay-put ov 'display (propertize info 'face hideshow-folded-face)))))
-;; (setq hs-set-up-overlay 'hideshow-folded-overlay-fn)
 
 
-;(setq icomplete-in-buffer t)
-(setq completion-auto-help 'always)
-;(setq completions-detailed t)
-(setq completions-format 'one-column);one-column quickly vertical>slow
-(setq completion-cycle-threshold 4)
-(setq completion-preview-ignore-case t)
-(setq completion-ignore-case t)
-(setq completions-max-height 15)
-
-(setq completion-preview-completion-styles '(orderless basic initials))
-(global-completion-preview-mode +1)
-;;(completion-preview-active-mode)
-;; Don't let Emacs hurt my ears.
-(setq visible-bell nil)
-(setq ring-bell-function 'ignore)
-
-(setq scroll-step 1)
-(setq scroll-margin 2)                  ;set next page margin line
-(setq scroll-conservatively 101)        ;if value greater than 100, will nerver scroll
-(setq scroll-preserve-screen-position t)
-(setq resize-mini-windows t)
-(setq max-mini-window-height 5)
-                                        
-
-
-;; Disable fancy features when the file is too large
-(global-so-long-mode t)
-
-(repeat-mode +1)
-(setq repeat-exit-key (kbd "i"))
-(defvar buffer-lunch-repeat-map ; C-x <left> 或 <right>
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "n") #'next-line)
-    (define-key map (kbd "p") #'previous-line)
-    (define-key map (kbd "f") #'forward-char)
-    (define-key map (kbd "b") #'backward-char)
-    (define-key map (kbd "e") #'previous-line)
-    (define-key map (kbd "d") #'next-line)
-    (define-key map (kbd "s") #'backward-char)
-    (define-key map (kbd "h") #'backward-char)
-    (define-key map (kbd "l") #'forward-char)
-    (define-key map (kbd "v") #'forward-word)
-    (define-key map (kbd "z") #'backward-word)
-    (define-key map (kbd "a") #'back-to-indentation)
-    (define-key map (kbd "g") #'move-end-of-line)
-    (define-key map (kbd "N") #'next-half-page-lines)
-    (define-key map (kbd "j") #'next-half-page-lines)
-    (define-key map (kbd "P") #'previous-half-page-lines)
-    (define-key map (kbd "k") #'previous-half-page-lines)
-    (define-key map (kbd "4") #'scroll-up-command)
-    (define-key map (kbd "2") #'scroll-down-command)
-    (define-key map (kbd "w") #'scroll-half-page-down)
-    (define-key map (kbd "r") #'scroll-half-page-up)
-    (define-key map (kbd "i") #'repeat-exit)
-    (define-key map (kbd "o") #'other-window)
-    (define-key map (kbd "O") #'other-frame)
-    (define-key map (kbd "m") #'newline)
-    (define-key map (kbd "x") #'delete-char)
-    (define-key map (kbd "t") #'kill-current-buffer)
-    (define-key map (kbd "c") #'comment-line)
-    (define-key map (kbd ".") #'xref-find-definitions)
-    (define-key map (kbd "/") #'xref-find-references)
-    (define-key map (kbd ",") #'xref-go-back)
-    
-    (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-half-page-lines next-half-page-lines scroll-up-command scroll-down-command scroll-half-page-up scroll-half-page-down other-window kill-current-buffer
-			    xref-find-definitions xref-find-references xref-go-back comment-line))
-      (put it 'repeat-map 'buffer-lunch-repeat-map))
-    map)
-  "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
-  )
-(defvar frame-lunch-repeat-map ; C-x <left> 或 <right>
-  (let ((omap (make-sparse-keymap)))
-    (define-key omap (kbd "O") #'other-frame)
-    
-    (dolist (it '(other-frame))
-      (put it 'repeat-map 'buffer-lunch-repeat-map))
-    omap)
-  "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
-  )
-;; config/ window move
-;; Use ace-window for quick window navigation
-;; Sorry, `other-window', but you are too weak!
-(use-package ace-window
-  :bind (("C-x o" . ace-window)
-         ;; ("C-x C-o" . ace-window)
-         )  ;; was delete-blank-lines
+;; config/ builtin config and kbd.
+(use-package emacs
+  :demand t
   :config
-  (custom-set-faces
-   '(aw-leading-char-face
-     ((t (:inherit ace-jump-face-foreground :height 3.0)))))
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
-        aw-scope 'frame))
+  (setq confirm-kill-emacs 'yes-or-no-p)
+  ;; (desktop-save-mode +1)
+  (recentf-mode +1)
+  (setq recentf-max-menu-items 25)
+  (defvar autosaves-dir (expand-file-name "autosaves/" user-emacs-directory))
+  (defvar backups-dir (expand-file-name "backups/" user-emacs-directory))
+  (unless (file-exists-p autosaves-dir)
+    (make-directory autosaves-dir t)
+    )
+  (unless (file-exists-p backups-dir)
+    (make-directory backups-dir t)
+    )
+  ;; change default action
+  (setq backup-directory-alist
+					;      `((".*" . ,temporary-file-directory))
+	`((".*" . ,backups-dir))
+
+	backup-by-copying t ; 自动备份
+	delete-old-versions t ; 自动删除旧的备份文件
+	kept-new-versions 3 ; 保留最近的3个备份文件
+	kept-old-versions 1 ; 保留最早的1个备份文件
+	version-control t) ; 多次备份
+  (setq auto-save-file-name-transforms
+					;      `((".*" ,temporary-file-directory t))
+	`((".*" ,autosaves-dir t))                ;自动保存临时文件
+	)
+  (setq auto-save-timeout 5)              ;set default auto save time without input
+					;(setq create-lockfiles nil) ; 使用下方操作修改lock文件（.#*）位置
+  (setq lock-file-name-transforms
+	`((".*" ,backups-dir t))
+	)
+
+  ;; def fun show os name
+  (defun print-os()
+    "Show current os name."
+    (interactive)
+    (message "%s" system-type)
+    )
+
+  ;; def fun quick open config file
+  (defun open-init-file()
+    "Open Emacs config file."
+    (interactive)
+    (find-file (concat user-emacs-directory "init.el"))
+    )
+
+  ;; 自定义两个函数
+  ;; Faster move cursor
+  (if t
+      (progn
+	(defun next-half-page-lines()
+          "Move cursor to next half-page lines."
+          (interactive)
+          (forward-line (/ (window-body-height) 2)))
+
+	(defun previous-half-page-lines()
+          "Move cursor to previous half-page lines."
+          (interactive)
+          (forward-line (/ (window-body-height) -2)))
+	;; 绑定到快捷键
+	(global-set-key (kbd "M-N") 'next-half-page-lines)            ; 光标向下移动 屏幕一半 行
+	(global-set-key (kbd "M-P") 'previous-half-page-lines)        ; 光标向上移动 屏幕一半 行
+
+	)
+    )
+  (if t
+      (progn
+	(defun scroll-half-page-down ()
+          "Scroll down half the page."
+          (interactive)
+          (scroll-down (/ (window-body-height) 2)))
+
+	(defun scroll-half-page-up ()
+          "Scroll up half the page."
+          (interactive)
+          (scroll-up (/ (window-body-height) 2)))
+
+	(global-set-key "\M-n" 'scroll-half-page-up)
+	(global-set-key "\M-p" 'scroll-half-page-down)
+
+	)
+    )
+
+  ;; ======================       keybind
+  (global-set-key (kbd "M-<f3>") #'open-init-file)
+  (global-set-key (kbd "C-x ,") #'open-init-file)
+  (global-set-key (kbd "C-x ，") #'open-init-file)
+  (global-set-key (kbd "C-c C-_") #'comment-or-uncomment-region)
+  (global-set-key (kbd "C-c C-/") #'comment-or-uncomment-region)
+  (global-set-key (kbd "C-x C-k") #'kill-current-buffer)
+  ;; leader key
+  (global-set-key (kbd "M-SPC") nil) ;修改默认keybind M-SPC -> nil, 作为leader使用，用于各种命令替代
+  (global-set-key (kbd "M-ESC") #'keyboard-quit)
+  (global-set-key (kbd "C-j") nil)              ;修改默认的C-j功能，作为编辑的leader key使用
+  (global-set-key (kbd "C-j C-j") #'electric-newline-and-maybe-indent);原始的C-j功能修改
+  (global-set-key (kbd "ESC ]") #'cycle-spacing) ;原始M-SPC功能修改为
+  ;;(global-set-key (kbd "ESC SPC") 'cycle-spacing) ;test ESC SPC leaderkey使用
+  (global-set-key (kbd "M-o") #'other-window)
+  (global-set-key (kbd "M-SPC c") #'comment-line)
+  (global-set-key (kbd "C-j c") #'comment-line)
+  (keymap-unset lisp-interaction-mode-map "C-j")
+  (keymap-set lisp-interaction-mode-map "C-j C-j" #'eval-print-last-sexp)
+  (global-set-key (kbd "C-j C-k") #'kill-whole-line)
+  (global-set-key (kbd "C-x C-b") #'ibuffer)
+  (global-set-key (kbd "C-,") #'completion-at-point)
+  (global-set-key (kbd "M-z") #'zap-up-to-char) ;old func is zap-to-char, diff is with no up del input char.
+  (global-set-key (kbd "C-'") #'repeat)
+  (defun newline-and-indent-up ()
+    "回车到上一行."
+    (interactive)
+    (forward-line -1)
+    (move-end-of-line 1)
+    (newline-and-indent)
+    )
+  (defun newline-and-indent-down ()
+    "回车到下一行."
+    (interactive)
+    (move-end-of-line 1)
+    (newline-and-indent)
+    )
+  (defun duplicate-line ()
+    "Duplicate line."
+    (interactive)
+    (move-beginning-of-line 1)
+    (kill-line)
+    (yank)
+    (open-line 1)
+    (forward-line 1)
+    (yank)
+    )
+  (defun clear-line ()
+    "Clear line."
+    (interactive)
+    (move-beginning-of-line 1)
+    (kill-line)
+    )
+  (global-set-key (kbd "C-j C-i") #'newline-and-indent-up)
+  (global-set-key (kbd "C-j C-o") #'newline-and-indent-down)
+  (global-set-key (kbd "C-j C-d") #'duplicate-line)
+  (global-set-key (kbd "C-j C-l") #'clear-line)
+  (global-set-key (kbd "M-SPC O") #'other-frame)
+  (global-set-key (kbd "C-c C-n") #'scratch-buffer)
+  ;; ======================      config ui
+  (setq use-short-answers t)
+  (defun cursor-type-default ()
+    "Cursor default."
+    (interactive)
+    (setq cursor-type '(hbar . 6))
+    )
+  ;;(cursor-type-default)
+					;(setq cursor-type '(hbar . 4));box)       ; 终端不生效  原因不明
+  (setq isearch-lazy-count t
+	lazy-count-prefix-format "%s/%s ")
+  (define-key isearch-mode-map [remap isearch-delete-char] #'isearch-del-char)
+
+  ;;(fido-vertical-mode +1)                       ;minibuffer垂直补全  和 orderless冲突
+					;(icomplete-vertical-mode +1)         ;minibuffer垂直补全
+  (global-hl-line-mode 1)         ;高亮当前行
+  (global-tab-line-mode +1)               ;显示tab line 不同的buffer编辑区
+  (tab-bar-mode +1)                       ;显示tab bar  相当于不同的工作区
+  (column-number-mode +1)                 ;显示行列在buffer区域
+  (global-display-line-numbers-mode +1)
+  (electric-pair-mode +1)                 ;自动补全括号
+  (electric-quote-mode +1)
+  (electric-indent-mode +1)
+  (electric-layout-mode +1)
+  (show-paren-mode +1)                    ;
+  ;;(delete-selection-mode +1)              ;选中区域后插入删除选中文字
+  (global-auto-revert-mode +1)            ;实时刷新文件
+  ;; avoid kill no selection region, just kill a word, like vim
+  (setq kill-region-dwim 'emacs-word)
+
+  (eval-after-load "dired"
+    '(progn
+       (define-key dired-mode-map (kbd "b") #'dired-up-directory)
+       (define-key dired-mode-map (kbd "F") #'dired-create-empty-file)
+       )
+    )
+
+  (add-hook 'prog-mode-hook 'hs-minor-mode) ;折叠模式
+  (global-set-key (kbd "C-c c c") #'hs-toggle-hiding)
+  (global-set-key (kbd "C-c c a") #'hs-hide-all)
+  (global-set-key (kbd "C-c c s") #'hs-show-all)
+  ;; 这里额外启用了 :box t 属性使得提示更加明显
+  ;; (defconst hideshow-folded-face '((t (:inherit 'font-lock-comment-face :box t))))
+  ;; (defun hideshow-folded-overlay-fn (ov)
+  ;;     (when (eq 'code (overlay-get ov 'hs))
+  ;;       (let* ((nlines (count-lines (overlay-start ov) (overlay-end ov)))
+  ;;              (info (format " ... #%d " nlines)))
+  ;;         (overlay-put ov 'display (propertize info 'face hideshow-folded-face)))))
+  ;; (setq hs-set-up-overlay 'hideshow-folded-overlay-fn)
+
+
+					;(setq icomplete-in-buffer t)
+  (setq completion-auto-help 'always)
+					;(setq completions-detailed t)
+  (setq completions-format 'one-column);one-column quickly vertical>slow
+  (setq completion-cycle-threshold 4)
+  (setq completion-preview-ignore-case t)
+  (setq completion-ignore-case t)
+  (setq completions-max-height 15)
+
+  (setq completion-preview-completion-styles '(basic initials file))
+  ;; (setq completion-preview-completion-styles '(orderless basic initials))
+  
+  (global-completion-preview-mode +1)
+  ;;(completion-preview-active-mode)
+  ;; Don't let Emacs hurt my ears.
+  (setq visible-bell nil)
+  (setq ring-bell-function 'ignore)
+
+  (setq scroll-step 1)
+  (setq scroll-margin 2)                  ;set next page margin line
+  (setq scroll-conservatively 101)        ;if value greater than 100, will nerver scroll
+  (setq scroll-preserve-screen-position t)
+  (setq resize-mini-windows t)
+  (setq max-mini-window-height 5)
+  
+
+  ;; Disable fancy features when the file is too large
+  (global-so-long-mode t)
+
+  ;; 增加读取缓冲区
+  (setq process-adaptive-read-buffering t)
+
+  )
+
+
+;; config/ builtin repeat mode
+(use-package emacs
+  :demand t
+  :config
+  (repeat-mode +1)
+  (setq repeat-exit-key (kbd "i"))
+  (defvar buffer-lunch-repeat-map ; C-x <left> 或 <right>
+    (let ((map (make-sparse-keymap)))
+      (define-key map (kbd "n") #'next-line)
+      (define-key map (kbd "p") #'previous-line)
+      (define-key map (kbd "f") #'forward-char)
+      (define-key map (kbd "b") #'backward-char)
+      (define-key map (kbd "e") #'previous-line)
+      (define-key map (kbd "d") #'next-line)
+      (define-key map (kbd "s") #'backward-char)
+      (define-key map (kbd "h") #'backward-char)
+      (define-key map (kbd "l") #'forward-char)
+      (define-key map (kbd "v") #'forward-word)
+      (define-key map (kbd "z") #'backward-word)
+      (define-key map (kbd "a") #'back-to-indentation)
+      (define-key map (kbd "g") #'move-end-of-line)
+      (define-key map (kbd "N") #'next-half-page-lines)
+      (define-key map (kbd "j") #'next-half-page-lines)
+      (define-key map (kbd "P") #'previous-half-page-lines)
+      (define-key map (kbd "k") #'previous-half-page-lines)
+      (define-key map (kbd "4") #'scroll-up-command)
+      (define-key map (kbd "2") #'scroll-down-command)
+      (define-key map (kbd "w") #'scroll-half-page-down)
+      (define-key map (kbd "r") #'scroll-half-page-up)
+      (define-key map (kbd "i") #'repeat-exit)
+      (define-key map (kbd "o") #'other-window)
+      (define-key map (kbd "O") #'other-frame)
+      (define-key map (kbd "m") #'newline)
+      (define-key map (kbd "x") #'delete-char)
+      (define-key map (kbd "t") #'kill-current-buffer)
+      (define-key map (kbd "c") #'comment-line)
+      (define-key map (kbd ".") #'xref-find-definitions)
+      (define-key map (kbd "/") #'xref-find-references)
+      (define-key map (kbd ",") #'xref-go-back)
+      
+      (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-half-page-lines next-half-page-lines scroll-up-command scroll-down-command scroll-half-page-up scroll-half-page-down other-window kill-current-buffer
+			      xref-find-definitions xref-find-references xref-go-back comment-line))
+	(put it 'repeat-map 'buffer-lunch-repeat-map))
+      map)
+    "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
+    )
+  (defvar frame-lunch-repeat-map ; C-x <left> 或 <right>
+    (let ((omap (make-sparse-keymap)))
+      (define-key omap (kbd "O") #'other-frame)
+      
+      (dolist (it '(other-frame))
+	(put it 'repeat-map 'buffer-lunch-repeat-map))
+      omap)
+    "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
+    )
+  
+  )
+
 ;; config/ downcase word -> downcase dwim
 (use-package emacs
   :config
@@ -351,10 +359,35 @@
   (global-set-key (kbd "M-Y") #'(lambda () (interactive) (yank-pop -1)))
   )
 
-;; config undo
-(setq undo-limit (* 100 1024 1024))
-(setq undo-strong-limit (* 200 1024 1024))
-(setq undo-outer-limit (* 50 1024 1024))
+;; config/ builtin undo
+(use-package emacs
+  :demand t
+  :config
+  ;; config undo
+  (setq undo-limit (* 100 1024 1024))
+  (setq undo-strong-limit (* 200 1024 1024))
+  (setq undo-outer-limit (* 50 1024 1024))
+
+  )
+;; ============================== third package
+
+
+;; config/ window move
+;; Use ace-window for quick window navigation
+;; Sorry, `other-window', but you are too weak!
+(use-package ace-window
+  :bind (("C-x o" . ace-window)
+         ;; ("C-x C-o" . ace-window)
+         )  ;; was delete-blank-lines
+  :config
+  (custom-set-faces
+   '(aw-leading-char-face
+     ((t (:inherit ace-jump-face-foreground :height 3.0)))))
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
+        aw-scope 'frame)
+  )
+
+
 (use-package vundo
   :bind
   ("C-x u" . vundo)
@@ -537,6 +570,7 @@
         completion-category-defaults nil
         completion-category-overrides '((file (styles basic partial-completion)))
         )
+  (setq completion-preview-completion-styles '(orderless basic initials))
   )
 
 (use-package diff-hl

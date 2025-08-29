@@ -4,7 +4,7 @@
 
 ;;; code:
 
-(setq visible-cursor nil)
+;;(setq visible-cursor nil)
 ;; restore dumped load-path
 (when (boundp '+saved-load-path-during-dump)
   (message "starting from a dump file ...")
@@ -24,7 +24,7 @@
     (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))))
 
 ;; quick start
-(setq package-quickstart t)
+;;(setq package-quickstart t)
 (setq package-check-signature nil)
 ;(setq package-quickstart-file (expand-file-name "var/package-quickstart.el" user-emacs-directory))
 
