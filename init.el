@@ -11,7 +11,7 @@
 ;(setq gc-cons-threshold most-positive-fixnum) ; gc use big memory
 ;; Packages should have been made available.  Disable it to speed up
 ;; installing packages during initialization.
-(setq package-quickstart nil)
+;;(setq package-quickstart nil)
 ;; ------------------- Common consts
 (defconst l/mac (eq system-type 'darwin))
 (defconst l/windows (eq system-type 'windows-nt))
@@ -1059,7 +1059,7 @@
 (setq file-name-handler-alist +file-name-handler-alist)
 (setq gc-cons-threshold 16777216) ;; 16mb
 ;; Re-enable package-quickstart.
-(setq package-quickstart t)
+;;(setq package-quickstart t)
 
 (use-package server
   :disabled
@@ -1219,10 +1219,6 @@
   ;;(setq treemacs-indent-guide-style 'block)
   ;;(add-hook 'treemacs-mode-hook 'treemacs-indent-guide-mode)
   )
-(add-to-list 'grep-find-ignored-files ".tag*")
-(add-to-list 'grep-find-ignored-files ".TAG*")
-(add-to-list 'grep-find-ignored-files "tag*")
-(add-to-list 'grep-find-ignored-files "TAG*")
 
 (use-package wgrep
   :bind
@@ -1231,6 +1227,11 @@
 	("e" . wgrep-change-to-wgrep-mode)
 	)
   :config
+  (add-to-list 'grep-find-ignored-files ".tag*")
+  (add-to-list 'grep-find-ignored-files ".TAG*")
+  (add-to-list 'grep-find-ignored-files "tag*")
+  (add-to-list 'grep-find-ignored-files "TAG*")
+
   )
 (provide 'init)
 ;;; init.el ends here
