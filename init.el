@@ -1156,6 +1156,12 @@
   :if (or l/linux l/mac)
   :config
   (setq default-input-method "rime")
+  ;; nix 系统安装librime 会导致报错，其他系统也可能这样
+  (setq rime-share-data-dir "~/.local/share/rime")
+  ;; 防止没有文件
+  (unless (file-exists-p rime-share-data-dir)
+    (make-directory rime-share-data-dir)
+    )
   )
 
 (use-package telega
@@ -1220,6 +1226,7 @@
 	)
   (global-set-key (kbd "M-SPC t") #'gt-translate)
   )
+
 (use-package dumb-jump
   :config
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
