@@ -17,6 +17,7 @@
 (defconst l/windows (eq system-type 'windows-nt))
 (defconst l/linux (eq system-type 'gnu/linux))
 (defconst l/wsl2 (string-match-p "WSL2" (shell-command-to-string "uname -r")))
+(defconst l/nix (string-match-p "current-system" (shell-command-to-string "which nix")))
 (defconst l/wsl1 (and
                   (eq system-type 'gnu/linux)
                   (not l/wsl2)
@@ -433,7 +434,9 @@
 
 
 (use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode)
+  :config
+  (add-hook 'prog-mode #'rainbow-delemiters-mode)
+;;  :hook (prog-mode . rainbow-delimiters-mode)
   )
 
 (use-package paren
@@ -465,9 +468,11 @@
   )
 ;; see in url https://emacs-china.org/t/topic/28495/3
 (use-package highlight-parentheses
-;  :straight t
-  :hook ((minibuffer-setup . highlight-parentheses-minibuffer-setup)
-                                        ;         (prog-mode . highlight-parentheses-mode))
+					;  :straight t
+  ;; :disabled
+  :hook (
+	 ;; (minibuffer-setup . highlight-parentheses-minibuffer-setup)
+         ;; (prog-mode . highlight-parentheses-mode))
 ;         (after-init . highlight-parentheses-mode)
          (after-init . global-highlight-parentheses-mode)
          )
@@ -1156,6 +1161,15 @@
 (use-package telega
   ;;  :disabled
   :if (or l/linux l/mac)
+  :init (setq telega-proxies
+	      '((:server "localhost"
+			 :port "7897"
+                         :enable t
+                         ;; :type (:@type "proxyTypeSocks5"))
+                         :type (:@type "proxyTypeHttp"))
+		)
+              ;;telega-chat-show-avatars nil
+	      )
   :config
   ;; comment because homebrew’s tdlib is v1.8.0 less than need version v1.8.4
 ;;  (if nil ;l/linux
