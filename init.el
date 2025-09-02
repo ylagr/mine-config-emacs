@@ -495,16 +495,18 @@
 (setq echo-keystrokes 0.01)
 (use-package embark
   :bind
-  (:map embark-general-map
-        ("e" . embark-export)
-        )
-  ("C-." . embark-act)
-  ("M-SPC ." . embark-dwim)
-  ("C-c h b" . embark-bindings)
-  ("C-c h B" . embark-bindings-at-point)
-  ;;  ("C-h" . embark-prefix-help-command)
-  ;;("M-n" . embark-next-symbol)
-  ;;("M-p" . embark-previous-symbol)
+  (
+   ("C-." . embark-act)
+   ("M-SPC ." . embark-dwim)
+   ("C-c h b" . embark-bindings)
+   ("C-c h B" . embark-bindings-at-point)
+   ;;  ("C-h" . embark-prefix-help-command)
+   ;;("M-n" . embark-next-symbol)
+   ;;("M-p" . embark-previous-symbol)
+   (:map embark-general-map
+         ("e" . embark-export)
+         )
+   )
   :custom
   (embark-quit-after-action nil)
   ;;  (prefix-help-command #'embark-prefix-help-command)
@@ -1146,12 +1148,12 @@
     (progn
       (defun l/repeat-mode-curstate ()
         (when repeat-in-progress
-	  "🅡")
+	  "🅡🅡")
 	)
       (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (l/repeat-mode-curstate))))
       )
   )
-(or repeat-mode)
+
 (use-package rime
   :if (or l/linux l/mac)
   :config
@@ -1254,5 +1256,39 @@
   (add-to-list 'grep-find-ignored-files "TAG*")
 
   )
+
+;;; 
+;;; ui
+(use-package emacs
+  :ensure nil
+  ;;:demand t
+  :config
+  (setq-default
+   header-line-format
+   '("file-path : " (:eval (buffer-file-name)) (:eval ()))
+   )
+  )
+(setq
+ display-buffer-alist
+ '(("^\\*[Hh]elp"                            ;正则匹配buffer name
+    (display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+     display-buffer-in-side-window)
+    (side . bottom)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+    (window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
+    (window-height . 0.35)                   ;同上
+    (slot . 1)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+    (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+    (haha . whatever)                        ;当然随你放什么
+    (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
+     (select . t)                            ;自定义的param
+     (quit . t)                              ;同上
+     (popup . t)                             ;同上
+     (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
+    ;; (no-other-window . t)                   ;随你设置其他的window-parameter，看文档
+     )))
+ )
+
+(setq display-buffer-alist nil)
+;;(info "(use-package)")
 (provide 'init)
 ;;; init.el ends here
