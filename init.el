@@ -161,7 +161,11 @@
   (global-set-key (kbd "C-x C-b") #'ibuffer)
   (global-set-key (kbd "C-,") #'completion-at-point)
   (global-set-key (kbd "M-z") #'zap-up-to-char) ;old func is zap-to-char, diff is with no up del input char.
+  (global-set-key (kbd "C-z") nil)
   (global-set-key (kbd "C-'") #'repeat)
+  (global-set-key (kbd "M-SPC C-M-w") #'append-next-kill)
+  (global-set-key (kbd "C-M-w") #'yank)
+  (global-set-key (kbd "C-M-S-w") #'yank-pop)
   (defun newline-and-indent-up ()
     "回车到上一行."
     (interactive)
@@ -322,9 +326,12 @@
       (define-key map (kbd ".") #'xref-find-definitions)
       (define-key map (kbd "/") #'xref-find-references)
       (define-key map (kbd ",") #'xref-go-back)
+      (define-key map (kbd ">") #'end-of-buffer)
+      (define-key map (kbd "<") #'beginning-of-buffer)
       
       (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-half-page-lines next-half-page-lines scroll-up-command scroll-down-command scroll-half-page-up scroll-half-page-down other-window kill-current-buffer
-			      xref-find-definitions xref-find-references xref-go-back comment-line))
+			      xref-find-definitions xref-find-references xref-go-back comment-line
+			      embark-dwim end-of-buffer beginning-of-buffer ))
 	(put it 'repeat-map 'buffer-lunch-repeat-map))
       map)
     "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
@@ -496,8 +503,10 @@
 (use-package embark
   :bind
   (
-   ("C-." . embark-act)
-   ("M-SPC ." . embark-dwim)
+   ("C-." . embark-dwim)
+   ("M-SPC ." . embark-act)
+   ("C-M->" . embark-act)
+   ("C-z" . embark-act)
    ("C-c h b" . embark-bindings)
    ("C-c h B" . embark-bindings-at-point)
    ;;  ("C-h" . embark-prefix-help-command)
@@ -614,6 +623,7 @@
    )
   :config
   (setq consult-async-refresh-delay 0.5)
+  (global-set-key (kbd "M-y") #'consult-yank-pop)
   )
 (use-package vertico
   :init
@@ -1289,6 +1299,11 @@
  )
 
 (setq display-buffer-alist nil)
+(use-package bufferlo
+  :config
+  (global-set-key (kbd "C-x C-b") #'bufferlo-ibuffer)
+  (global-set-key (kbd "C-x b") #'bufferlo-find-buffer-switch) ;different of bufferlo-find-buffer which this suffix switch is can choose some hide buffer and select it.
+  )
 ;;(info "(use-package)")
 (provide 'init)
 ;;; init.el ends here
