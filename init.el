@@ -179,15 +179,30 @@
     (move-end-of-line 1)
     (newline-and-indent)
     )
-  (defun duplicate-line ()
-    "Duplicate line."
+  (if nil
+      (defun duplicate-line ()
+	"Duplicate line."
+	(interactive)
+	(move-beginning-of-line 1)
+	(kill-line)
+	(yank)
+	(open-line 1)
+	(forward-line 1)
+	(yank)
+	)
+    )
+  (defun l/duplicate-line ()
+    "Duplicate line, but cursor follow."
     (interactive)
-    (move-beginning-of-line 1)
-    (kill-line)
-    (yank)
-    (open-line 1)
-    (forward-line 1)
-    (yank)
+    (let ((column (current-column))
+	  (line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+	  )
+      (end-of-line)
+      (newline)
+      (insert line)
+      (beginning-of-line)
+      (forward-char column)
+      )
     )
   (defun clear-line ()
     "Clear line."
@@ -197,7 +212,7 @@
     )
   (global-set-key (kbd "C-j C-i") #'newline-and-indent-up)
   (global-set-key (kbd "C-j C-o") #'newline-and-indent-down)
-  (global-set-key (kbd "C-j C-d") #'duplicate-line)
+  (global-set-key (kbd "C-j C-d") #'l/duplicate-line)
   (global-set-key (kbd "C-j C-l") #'clear-line)
   (global-set-key (kbd "M-SPC O") #'other-frame)
   (global-set-key (kbd "C-c C-n") #'scratch-buffer)
@@ -452,8 +467,9 @@
                 show-paren-when-point-inside-paren t
                 show-paren-style 'mixed
                 show-paren-delay 0.2
-                ;;              show-paren-context-when-offscreen 'child-frame
-                show-paren-context-when-offscreen t
+                ;; show-paren-context-when-offscreen 'child-frame
+                show-paren-context-when-offscreen 'overlay
+                ;; show-paren-context-when-offscreen t
                 )
   )
 (use-package colorful-mode
@@ -531,7 +547,66 @@
                        'embark-minibuffer-candidates
                        embark-candidate-collectors))
   (delete 'embark-target-flymake-at-point embark-target-finders)
+
+  (defun l/choose-prefix-help-command ()
+    "一个交互式选择器函数。
+它会提示用户从预定义的选项中选择一项，然后执行对应的动作。"
+    (interactive)
+    (let* (;; 定义选项列表，每个元素是一个 (DISPLAY-TEXT . FUNCTION) 的 cons cell
+           (choices (list (cons "打开embark-help (embark-help-prefix-command)" 'embark-prefix-help-command)
+                          (cons "打开emacs-help (describe-prefix-bindings)" 'describe-prefix-bindings)
+			  ))
+           ;; 使用 completing-read 弹出交互式菜单
+           (selection (completing-read 
+                       "选择一个操作: " ; 提示信息
+                       choices           ; 选择列表
+                       nil               ; PREDICATE (可选的过滤函数)
+                       t                 ; REQUIRE-MATCH (必须选择列表中的项)
+                       nil               ; INITIAL-INPUT (初始输入)
+                       'my-choices-history ; HISTORY (历史记录的变量名)
+                       ))
+           ;; 根据用户输入的文本，找到对应的函数
+           (chosen-fn (cdr (assoc selection choices))))
+      ;; 检查是否选择了有效选项并执行
+      (if chosen-fn
+          (progn
+            (call-interactively chosen-fn)) ; 安全地调用交互式命令
+	(message "未选择有效操作"))))
+  (setq prefix-help-command #'l/choose-prefix-help-command)
+  ;; 可选：将这个函数绑定到一个快捷键上，例如 F12
+  ;; (global-set-key (kbd "<f12>") 'my-interactive-selector)
+
+  ;; 可选：将这个函数绑定到一个快捷键上，例如 F12
+  ;; (global-set-key (kbd "<f12>") 'my-interactive-selector)
   )
+  (defun my-interactive-selector ()
+    "一个交互式选择器函数。
+它会提示用户从预定义的选项中选择一项，然后执行对应的动作。"
+    (interactive)
+    (let* (;; 定义选项列表，每个元素是一个 (DISPLAY-TEXT . FUNCTION) 的 cons cell
+           (choices (list (cons "打开文件 (find-file)" 'find-file)
+                          (cons "切换缓冲区 (switch-to-buffer)" 'switch-to-buffer)
+                          (cons "列出缓冲区 (list-buffers)" 'list-buffers)
+                          (cons "保存文件 (save-buffer)" 'save-buffer)
+                          (cons "退出 Emacs (kill-emacs)" 'kill-emacs)))
+           ;; 使用 completing-read 弹出交互式菜单
+           (selection (completing-read 
+                       "选择一个操作: " ; 提示信息
+                       choices           ; 选择列表
+                       nil               ; PREDICATE (可选的过滤函数)
+                       t                 ; REQUIRE-MATCH (必须选择列表中的项)
+                       nil               ; INITIAL-INPUT (初始输入)
+                       'my-choices-history ; HISTORY (历史记录的变量名)
+                       ))
+           ;; 根据用户输入的文本，找到对应的函数
+           (chosen-fn (cdr (assoc selection choices))))
+      ;; 检查是否选择了有效选项并执行
+      (if chosen-fn
+          (progn
+            (message "执行: %s" selection)
+            (call-interactively chosen-fn)) ; 安全地调用交互式命令
+	(message "未选择有效操作"))))
+
 (use-package embark-consult
   :after (embark consult)
   )
@@ -1024,7 +1099,7 @@
       contact)
     )
 
-  (push '((java-mode java-ts-mode) . jdtls-command-contact) eglot-server-programs)
+  ;; (push '((java-mode java-ts-mode) . jdtls-command-contact) eglot-server-programs)
 
   )
 ;;(message "%s" eglot-java-eclipse-jdt-args)
@@ -1154,7 +1229,8 @@
       )
   )
 ;; config/ mode line
-(if (boundp repeat-in-progress)
+(if nil
+    ;;(boundp repeat-in-progress)
     (progn
       (defun l/repeat-mode-curstate ()
         (when repeat-in-progress
@@ -1163,9 +1239,31 @@
       (setq-default mode-line-format (add-to-list 'mode-line-format '(:eval (l/repeat-mode-curstate))))
       )
   )
+(custom-face-attributes-get 'mode-line-active nil)
+(custom-face-attributes-get 'mode-line-inactive nil)
+(custom-face-attributes-get 'mode-line nil)
 
+(if (boundp repeat-in-progress)
+    (progn
+      ;; save current
+      (setq l/store-custom-face-mode-line-active (custom-face-attributes-get 'mode-line-active nil))
+      (defun l/change-custom-face-mode-line-active-by-repeatmap ()
+
+	(if repeat-in-progress
+	    (set-face-attribute 'mode-line-active nil
+				:foreground "grey90"
+				)
+	  (set-face-attribute 'mode-line-active nil
+			      :foreground nil)
+	  )
+	)
+      (add-hook 'post-command-hook #'l/change-custom-face-mode-line-active-by-repeatmap)
+      )
+  
+  )
+;; syntax 
 (use-package rime
-  :if (or l/linux l/mac)
+  :if (or l/wsl2)
   :config
   (setq default-input-method "rime")
   ;; nix 系统安装librime 会导致报错，其他系统也可能这样
@@ -1174,6 +1272,14 @@
   (unless (file-exists-p rime-share-data-dir)
     (make-directory rime-share-data-dir)
     )
+  )
+(use-package phi-search
+  ;; use consult line
+  :disabled
+  :if (or l/wsl2)
+  :config
+  (global-set-key [remap isearch-forward] #'phi-search)
+  (global-set-key [remap isearch-backward] #'phi-search-backward)
   )
 
 (use-package telega
@@ -1219,6 +1325,7 @@
 		     (gt-bing-engine :if '(and not-word))                  ; 只有翻译内容不是单词时启用
 		     ;;(gt-deepl-engine :if 'not-word :cache nil)          ; 只有翻译内容不是单词时启用; 不缓存
 		     (gt-youdao-dict-engine :if '(or src:zh tgt:zh))       ; 只有翻译中文时启用
+		     ;; (gt-deepl-engine :if '(and word))
 		     (gt-youdao-suggest-engine :if '(and word src:en))     ; 只有翻译英文单词时启用
 		     )
                     ;; :render (gt-overlay-render))
@@ -1275,35 +1382,75 @@
   :config
   (setq-default
    header-line-format
-   '("file-path : " (:eval (buffer-file-name)) (:eval ()))
+   '((:eval (buffer-file-name)) )
    )
+  (which-function-mode t)
+  )
+(defun l/clean-window-element (window)
+  "Disable some ui.
+WINDOW use to change"
+  (interactive)
+  (with-selected-window window
+    (setq-local header-line-format nil)
+    (tab-line-mode -1)
+    )
+  window)
+
+(defun l/display-buffer-in-side-window-action (buffer alist)
+  "BUFFER buffer.
+ALIST next list args"
+  (let ((win (display-buffer-in-side-window buffer alist)))
+    (when win
+      (l/clean-window-element win)
+      ;; (with-selected-window win (read-only-mode 1))
+      )
+    win)
+  )
+(defun l/display-buffer-reuse-window-action (buffer alist)
+  "BUFFER buffer.
+ALIST next list args"
+  (let ((win (display-buffer-reuse-window buffer alist)))
+    (when win
+      (l/clean-window-element win)
+      ;; (with-selected-window win (read-only-mode 1))
+      )
+    win)
   )
 (setq
  display-buffer-alist
- '(("^\\*[Hh]elp"                            ;正则匹配buffer name
-    (display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
-     display-buffer-in-side-window)
+ '(("^\\(\\*[Hh]elp.*\\)\\|\\(\\*Messages\\*\\)\\|\\(magit: emacs\\)"                            ;正则匹配buffer name
+    (l/display-buffer-reuse-window-action             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+     l/display-buffer-in-side-window-action)
     (side . bottom)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
-    (window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
-    (window-height . 0.35)                   ;同上
+    ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
+    (window-height . 0.28)                   ;同上
     (slot . 1)                               ;这个会被display-buffer-in-side-window使用，控制window位置
     (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+    ;;(post-command-select-window . visible)
+    ;;(body-function . l/clean-window-element)
     (haha . whatever)                        ;当然随你放什么
     (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
      (select . t)                            ;自定义的param
      (quit . t)                              ;同上
      (popup . t)                             ;同上
      (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
-    ;; (no-other-window . t)                   ;随你设置其他的window-parameter，看文档
+     (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
      )))
  )
 
-(setq display-buffer-alist nil)
+(setq eldoc-echo-area-prefer-doc-buffer t)
+;;(setq eldoc-echo-area-use-multiline-p t)
+(window-no-other-p)
+
 (use-package bufferlo
   :config
   (global-set-key (kbd "C-x C-b") #'bufferlo-ibuffer)
   (global-set-key (kbd "C-x b") #'bufferlo-find-buffer-switch) ;different of bufferlo-find-buffer which this suffix switch is can choose some hide buffer and select it.
   )
+;; (:background "grey75" :foreground "black" :box (:line-width -1 :style released-button))
+;;(custom-face-attributes-get 'mode-line-active (frame-focus))
+;;(custom-face-attributes-get 'mode-line (frame-focus))
+;;(set-face-attribute 'mode-line nil		    :background "blue")
 ;;(info "(use-package)")
 (provide 'init)
 ;;; init.el ends here
