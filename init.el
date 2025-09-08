@@ -243,8 +243,6 @@
   (show-paren-mode +1)                    ;
   ;;(delete-selection-mode +1)              ;选中区域后插入删除选中文字
   (global-auto-revert-mode +1)            ;实时刷新文件
-  ;; avoid kill no selection region, just kill a word, like vim
-  (setq kill-region-dwim 'emacs-word)
 
   (eval-after-load "dired"
     '(progn
@@ -272,7 +270,7 @@
 					;(setq completions-detailed t)
   (setq completions-format 'one-column);one-column quickly vertical>slow
   (setq completion-cycle-threshold 4)
-  (setq completion-preview-ignore-case t)
+  ;; (setq completion-preview-ignore-case t)
   (setq completion-ignore-case t)
   (setq completions-max-height 15)
 
@@ -290,7 +288,7 @@
   (setq scroll-conservatively 101)        ;if value greater than 100, will nerver scroll
   (setq scroll-preserve-screen-position t)
   (setq resize-mini-windows t)
-  (setq max-mini-window-height 5)
+  (setq max-mini-window-height 1)
   
 
   ;; Disable fancy features when the file is too large
@@ -380,6 +378,14 @@
   ;; Reverse yank-pop.  By default, it is C-u M-y, but it's not as
   ;; intuitive.  The "Shift reverse" metaphor seems well established.
   (global-set-key (kbd "M-Y") #'(lambda () (interactive) (yank-pop -1)))
+  ;; avoid select region cannot copy
+  (if l/wsl2
+      (setq select-active-regions nil)
+      )
+  ;; avoid kill no selection region, just kill a word, like vim
+  (setq kill-region-dwim 'emacs-word)
+  
+
   )
 
 ;; config/ builtin undo
@@ -467,8 +473,8 @@
                 show-paren-when-point-inside-paren t
                 show-paren-style 'mixed
                 show-paren-delay 0.2
-                ;; show-paren-context-when-offscreen 'child-frame
-                show-paren-context-when-offscreen 'overlay
+                show-paren-context-when-offscreen 'child-frame
+                ;; show-paren-context-when-offscreen 'overlay
                 ;; show-paren-context-when-offscreen t
                 )
   )
@@ -547,7 +553,7 @@
                        'embark-minibuffer-candidates
                        embark-candidate-collectors))
   (delete 'embark-target-flymake-at-point embark-target-finders)
-
+  :init
   (defun l/choose-prefix-help-command ()
     "一个交互式选择器函数。
 它会提示用户从预定义的选项中选择一项，然后执行对应的动作。"
@@ -652,8 +658,9 @@
   )
 (use-package orderless
   :init
+  (setq orderless-component-separator "[ &]")
   (setq orderless-matching-styles '(orderless-literal
-;;                                  orderless-flex
+				    ;; orderless-flex
                                     orderless-regexp
                                     )
         )
@@ -661,7 +668,15 @@
         completion-category-defaults nil
         completion-category-overrides '((file (styles basic partial-completion)))
         )
+  
   (setq completion-preview-completion-styles '(orderless basic initials))
+  
+  )
+(use-package hotfuzz
+  :after orderless
+  :init
+  (setq completion-styles '(orderless hotfuzz basic))
+  ;; (setq completion-category-defaults nil)
   )
 
 (use-package diff-hl
@@ -708,25 +723,57 @@
   )
 (use-package vertico-posframe
   :after (vertico posframe)
+  :init
+  (vertico-posframe-mode 1)
   )
 ;(vertico-posframe-mode +1)
 
 
 (use-package company
-  :disabled
+  ;; :disabled
   :init
-  (company-mode +1)
+  (add-hook 'after-init-hook 'global-company-mode)
+  (global-completion-preview-mode -1)
+  :config
+  (setq company-idle-delay 0.1)
+  (setq company-minimum-prefix-length 3)
+  (global-set-key (kbd "C-,") #'company-complete)
+  (global-set-key (kbd "C-M-i") #'completion-at-point)
+  (setq company-tooltip-align-annotations t)
+  (setq company-tooltip-offset-display 'lines)
+  (setq company-frontends
+	'(company-preview-frontend company-echo-metadata-frontend company-pseudo-tooltip-frontend)
+	)
+  (define-key company-active-map (kbd "<tab>") #'company-complete-selection)
+  (define-key company-active-map (kbd "RET") #'newline)
+  (define-key company-active-map (kbd "<return>") #'newline)
+  (add-to-list 'company-backends 'company-ispell)
+  
+
+  (setq company-files-exclusions '(".git/" ".DS_Store"))
+  (setq company-abort-manual-when-too-short t)
+  
+  (setq company-transformers '(
+			       ;; delete-consecutive-dups
+			       company-sort-prefer-same-case-prefix
+                               ;; company-sort-by-occurrence
+			       ))
+  (defun insert-black ()
+    (interactive)
+    (insert " ")
+    )
+  (define-key company-active-map (kbd "M-SPC") #'insert-black)
   )
 
 (use-package corfu
-;  :disabled
+  :disabled
   :ensure t
   :hook (after-init . global-corfu-mode)
   :custom
   (corfu-auto t)
   (corfu-auto-deply 0.1)
   (corfu-min-width 3)
-;  (corfu-quit-at-boundary nil)
+					;  (corfu-quit-at-boundary nil)
   :init
   (corfu-history-mode)
   (corfu-popupinfo-mode)
@@ -741,7 +788,7 @@
    )
 
   :config
-;  (keymap-unset corfu-map "RET");配置无效 原因不明
+					;  (keymap-unset corfu-map "RET");配置无效 原因不明
   (progn
     (defun corfu-move-to-minibuffer ()
       (interactive)
@@ -759,6 +806,7 @@
 
 ;; Add extensions
 (use-package cape
+  :after corfu
   ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
   ;; Press C-c p ? to for help.
   :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
@@ -789,172 +837,6 @@
   )
 
 
-;; key bind mode
-(use-package meow
-  :disabled
-  :config
-  (defun meow-setup ()
-    (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
-    (meow-motion-define-key
-  ; '("j" . meow-next)
-  ; '("k" . meow-prev)
-  ; '("<escape>" . ignore)
-   )
-  (meow-leader-define-key
-   ;; Use SPC (0-9) for digit arguments.
-   '("1" . meow-digit-argument)
-   '("2" . meow-digit-argument)
-   '("3" . meow-digit-argument)
-   '("4" . meow-digit-argument)
-   '("5" . meow-digit-argument)
-   '("6" . meow-digit-argument)
-   '("7" . meow-digit-argument)
-   '("8" . meow-digit-argument)
-   '("9" . meow-digit-argument)
-   '("0" . meow-digit-argument)
-   '("/" . meow-keypad-describe-key)
-   '("?" . meow-cheatsheet)
-   )
-  (meow-normal-define-key
-   '("0" . meow-expand-0)
-   '("9" . meow-expand-9)
-   '("8" . meow-expand-8)
-   '("7" . meow-expand-7)
-   '("6" . meow-expand-6)
-   '("5" . meow-expand-5)
-   '("4" . meow-expand-4)
-   '("3" . meow-expand-3)
-   '("2" . meow-expand-2)
-   '("1" . meow-expand-1)
-   '("-" . negative-argument)
-   '(";" . meow-reverse)
-   '("," . meow-inner-of-thing)
-   '("." . meow-bounds-of-thing)
-   '("[" . meow-beginning-of-thing)
-   '("]" . meow-end-of-thing)
-   '("a" . meow-append)
-   '("A" . meow-open-below)
-   '("b" . meow-right)
-   '("B" . clear-line)
-   ;; '("b" . meow-back-word)
-   ;; '("B" . meow-back-symbol)
-   '("c" . meow-change)
-   '("C" . meow-kill)
-   '("d" . meow-next)
-   '("D" . meow-next-expand)
-   ;; '("d" . meow-delete)
-   ;; '("D" . meow-backward-delete)
-   '("e" . meow-prev)
-   '("E" . meow-prev-expand)
-   ;; '("e" . meow-next-word)
-   ;; '("E" . meow-next-symbol)
-   '("f" . meow-right)
-   '("F" . meow-right-expand)
-   ;; '("f" . meow-find)
-   '("g" . meow-cancel-selection)
-   '("G" . meow-grab)
-   '("h" . meow-left)
-   '("H" . meow-left-expand)
-   '("i" . meow-insert)
-   '("I" . meow-open-above)
-   '("j" . meow-next)
-   '("J" . meow-next-expand)
-   '("k" . meow-prev)
-   '("K" . meow-prev-expand)
-   '("l" . meow-right)
-   '("L" . meow-right-expand)
-   '("m" . meow-join)
-   '("n" . meow-next)
-   ;; '("n" . meow-search)
-   '("o" . meow-block)
-   '("O" . meow-to-block)
-   ;; '("p" . meow-yank)
-   '("p" . meow-prev)
-   '("P" . meow-yank)
-   ;; '("q" . meow-quit)
-   '("q" . meow-cancel-selection)
-   '("Q" . meow-quit)
-   ;; '("Q" . meow-goto-line)
-   '("r" . meow-replace)
-   '("R" . meow-swap-grab)
-   '("s" . meow-left)
-   '("S" . meow-left-expand)
-   ;; '("s" . meow-kill)
-   '("t" . meow-find)
-   '("T" . meow-till)
-   '("u" . meow-undo)
-   '("U" . meow-undo-in-selection)
-   '("v" . meow-next-word)
-   '("V" . meow-next-symbol)
-   ;; '("v" . meow-visit)
-   '("w" . meow-mark-word)
-   '("W" . meow-mark-symbol)
-   '("x" . meow-line)
-   '("X" . meow-goto-line)
-   '("y" . meow-save)
-   '("Y" . meow-sync-grab)
-   ;; '("z" . meow-pop-selection)
-   '("`" . meow-pop-selection)
-   '("z" . meow-back-word)
-   '("Z" . meow-back-symbol)
-   '("'" . repeat)
-   '("<escape>" . ignore)
-   '("/" . meow-visit)
-   '("?" . meow-search)
-   '(":" . execute-extended-command)
-   )
-   (setq
-    meow-cursor-type-normal 'hbar
-    meow-cursor-type-insert '(bar . 4)
-    meow-expand-hint-remove-delay 60.0
-    )
-   (add-to-list 'meow-mode-state-list '(ement-room-mode . insert))
-   )
-  (defun meow-setup-modeline ()
-      (setq meow-replace-state-name-list
-        '((normal . "🅝 NORMAL")
-          (beacon . "🅑 BEACON")
-          (insert . "🅘 INSERT")
-          (motion . "🅜 MOTION")
-          (keypad . "🅚 KEYPAD"))
-        )
-    )
-  (meow-setup)
-  (meow-setup-modeline)
-  ;(meow-setup-line-number)
-  (meow-setup-indicator)
-  (meow-global-mode 1)
- 
-  ;; (meow-motion-define-key '("n" . next-line))
-  ;; (meow-motion-define-key '("p" . previous-line))
-  ;; (meow-motion-define-key '("f" . forward-char))
-  ;; (meow-motion-define-key '("b" . backward-char))
-  ;; (meow-motion-define-key `("x" . ,(kbd "C-x")))
-  ;; (meow-motion-define-key `("<escape>" . ,(kbd "<escape>")))
-  ;; (meow-motion-define-key '("q" . meow-motion-mode))
-  ;; (meow-motion-define-key '("i" . meow-motion-mode))
-  ;; (global-set-key (kbd "C-c m") 'meow-motion-mode)
-  ;; (defun meow-motion-enable()
-  ;;   (interactive)
-  ;;   (setq meow-motion-mode t)
-  ;;   (message "Meow-Motion mode enable in current buffer" )
-  ;;   )
-  ;; (global-set-key (kbd "C-'") 'meow-motion-enable)
-  (defun meow-enable ()
-    "Enable meow."
-    (interactive)
-    (meow-global-mode +1)
-    (meow-setup-indicator)
-    )
-  (defun meow-disable ()
-    "Disable meow."
-    (interactive)
-    (meow-global-mode -1)
-    (cursor-type-default)
-    )
-  (global-set-key (kbd "C-'") 'meow-enable)
-  (global-set-key (kbd "C-.") 'meow-disable)
-  )
 (use-package nerd-icons
   ;;:disabled
   :demand t
@@ -1243,21 +1125,27 @@
 (custom-face-attributes-get 'mode-line-inactive nil)
 (custom-face-attributes-get 'mode-line nil)
 
-(if (boundp repeat-in-progress)
+(if (boundp 'repeat-in-progress)
     (progn
       ;; save current
       (setq l/store-custom-face-mode-line-active (custom-face-attributes-get 'mode-line-active nil))
-      (defun l/change-custom-face-mode-line-active-by-repeatmap ()
 
-	(if repeat-in-progress
-	    (set-face-attribute 'mode-line-active nil
-				:foreground "grey90"
-				)
-	  (set-face-attribute 'mode-line-active nil
-			      :foreground nil)
-	  )
+      (defun l/change-mode-line-in-repeat-mode (&rest args)
+	(set-face-attribute 'mode-line-active nil
+			    :foreground "grey90")
 	)
-      (add-hook 'post-command-hook #'l/change-custom-face-mode-line-active-by-repeatmap)
+      (defun l/change-mode-line-not-repeat-mode ()
+	(set-face-attribute 'mode-line-active nil
+			    :foreground "black")
+	)
+      ;; (add-hook 'post-command-hook #'l/change-custom-face-mode-line-active-by-repeatmap)
+      ;;(advice-add 'repeat-get-map :before 'l/change-custom-face-mode-line-active-by-repeatmap)
+      ;;(advice-remove 'repeat-get-map 'l/change-custom-face-mode-line-active-by-repeatmap)
+      ;;(add-hook 'repeat-pre-hook 'l/change-mode-line-in-repeat-mode)
+      (advice-add (symbol-value 'repeat-echo-function) :after 'l/change-mode-line-in-repeat-mode)
+      (advice-add 'repeat-exit :after #'l/change-mode-line-not-repeat-mode)
+      ;; (advice-remove 'repeat-get-map 'l/change-custom-face-mode-line-active-by-repeatmap)
+      
       )
   
   )
@@ -1356,6 +1244,7 @@
   (add-hook 'treemacs-mode-hook #'(lambda ()
 				   (treemacs-git-mode 'deferred))
 	    )
+  (global-set-key (kbd "M-SPC w") #'treemacs-select-window)
   ;;(setq treemacs-indent-guide-style 'block)
   ;;(add-hook 'treemacs-mode-hook 'treemacs-indent-guide-mode)
   )
@@ -1384,6 +1273,7 @@
    header-line-format
    '((:eval (buffer-file-name)) )
    )
+  (setq which-func-display 'header)
   (which-function-mode t)
   )
 (defun l/clean-window-element (window)
@@ -1416,15 +1306,27 @@ ALIST next list args"
       )
     win)
   )
+
+(defun l/display-buffer-at-bottom-window-action (buffer alist)
+  "BUFFER buffer.
+ALIST next list args"
+  (let ((win (display-buffer-at-bottom buffer alist)))
+    (when win
+      (l/clean-window-element win)
+      ;; (with-selected-window win (read-only-mode 1))
+      )
+    win)
+  )
+
 (setq
  display-buffer-alist
- '(("^\\(\\*[Hh]elp.*\\)\\|\\(\\*Messages\\*\\)\\|\\(magit: emacs\\)"                            ;正则匹配buffer name
+ '(("^\\(\\*[Hh]elp.*\\)"                            ;正则匹配buffer name
     (l/display-buffer-reuse-window-action             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
      l/display-buffer-in-side-window-action)
     (side . bottom)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
     ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
-    (window-height . 0.28)                   ;同上
-    (slot . 1)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+    (window-height . 0.2)                   ;同上
+    (slot . 0)                               ;这个会被display-buffer-in-side-window使用，控制window位置
     (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
     ;;(post-command-select-window . visible)
     ;;(body-function . l/clean-window-element)
@@ -1435,12 +1337,76 @@ ALIST next list args"
      (popup . t)                             ;同上
      (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
      (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
-     )))
+     ))
+   ("^\\(magit: emacs\\)"                            ;正则匹配buffer name
+    (l/display-buffer-reuse-window-action             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+     l/display-buffer-in-side-window-action)
+    (side . bottom)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+    ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
+    (window-height . 0.2)                   ;同上
+    (slot . -10)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+    (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+    ;;(post-command-select-window . visible)
+    ;;(body-function . l/clean-window-element)
+    (haha . whatever)                        ;当然随你放什么
+    (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
+     (select . t)                            ;自定义的param
+     (quit . t)                              ;同上
+     (popup . t)                             ;同上
+     (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
+     (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
+     ))
+   ("^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)"
+    (l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action)
+    (side . bottom)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+    (window-width . 0.3)                     ;emacs会自动把这个设置到window-parameter里
+    (window-height . 0.2)                   ;同上
+    (slot . 2)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+    (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+    (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
+     (select . t)                            ;自定义的param
+     (quit . t)                              ;同上
+     (popup . t)                             ;同上
+     (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
+     (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
+     )
+    )
+   ("^\\(\\*gt-result\\*\\)"
+    (l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action)
+    (slot . 10)
+    (post-command-select-window . visible)
+    (window-parameters
+     (quit . t)
+     )
+    )
+   ("^\\(\\*vterm\\*\\)"
+    (display-buffer-reuse-window display-buffer-in-side-window)
+    (side . right)
+    (window-width . 0.3)
+    (post-command-select-window . visible)
+    )
+   ;;fallback
+   ("^\\(\\*.*\\*\\)"
+    (display-buffer-reuse-window display-buffer-in-side-window)
+    (side . right)
+    (window-width . 0.3)
+    )
+   )
+ 
+ 
  )
 
-(setq eldoc-echo-area-prefer-doc-buffer t)
+(setq eldoc-echo-area-prefer-doc-buffer nil)
 ;;(setq eldoc-echo-area-use-multiline-p t)
-(window-no-other-p)
+(use-package eldoc-box
+  :init
+  (add-hook 'prog-mode-hook 'eldoc-box-hover-mode)
+  ;;(eldoc-box-hover-at-point-mode t)
+  
+  :config
+  ;;(setq eldoc-box-hover-display-frame-above-point t)
+  
+  )
 
 (use-package bufferlo
   :config
