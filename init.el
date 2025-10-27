@@ -1079,6 +1079,7 @@
             (last-font (font-spec :family "noto sans sc"))
             (symbol-font (font-spec :family "Segoe UI symbol"))
             (han-font (font-spec :family  "lxgw wenkai"))
+	    (han-font-bak (font-spec :family "文泉驿等宽微米黑"))
             ;;(han-font-sarasa (font-spec :family "sarasa gothic cl"))
             )
         (if (find-font use-font)
@@ -1095,6 +1096,7 @@
           )
         (if (find-font han-font)
             (progn
+	      ;; ’prepend 不生效
               (set-fontset-font "fontset-default" 'han han-font nil 'prepend)
               (setq face-font-rescale-alist '(
                                               ("lxgw" . 1.0)
@@ -1102,13 +1104,24 @@
                                               )
                     )
               (setq line-spacing 0.00)
+	      (message "test1")
               )
           )
+	(if nil
+	(if (find-font han-font-bak)
+	    (progn
+	      ;; (set-fontset-font "fontset-default" 'han han-font-bak nil 'prepend)
+	      ;; (set-fontset-font "fontset-default" 'han han-font-bak nil )
+	      ;; (message "test")
+	      ;; (set-fontset-font "fontset-default" 'han (font-spec :family "文泉驿等宽微米黑") nil 'prepend)
+	      )
+	  )
+	)
         ;;      (if (find-font han-font-sarasa)
         ;;          (set-fontset-font "fontset-default" 'han han-font-sarasa nil 'prepend)
         ;;        )
         )
-      )
+      )  
   )
 ;; config/ mode line
 (if nil
@@ -1418,5 +1431,18 @@ ALIST next list args"
 ;;(custom-face-attributes-get 'mode-line (frame-focus))
 ;;(set-face-attribute 'mode-line nil		    :background "blue")
 ;;(info "(use-package)")
+(defun er-sudo-edit (&optional arg)
+  "Edit currently visited file as root.
+
+With a prefix ARG prompt for a file to visit.
+Will also prompt for a file to visit if current
+buffer is not visiting a file."
+  (interactive "P")
+  (if (or arg (not buffer-file-name))
+      (find-file (concat "/sudo:root@localhost:"
+                         (ido-read-file-name "Find file(as root): ")))
+    (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name))))
+
 (provide 'init)
 ;;; init.el ends here
+
