@@ -1077,6 +1077,7 @@
             (use-font (font-spec :family "ubuntu mono" :size 16))
             (use-font-l (font-spec :family "ubuntu mono Ligaturized" :size 16))
             (last-font (font-spec :family "noto sans sc"))
+	    (last-font-bak (font-spec :family "noto sans"))
             (symbol-font (font-spec :family "Segoe UI symbol"))
             (han-font (font-spec :family  "lxgw wenkai"))
 	    (han-font-bak (font-spec :family "文泉驿等宽微米黑"))
@@ -1089,8 +1090,19 @@
             )
           )
         (if (find-font last-font)
-            (set-fontset-font (frame-parameter nil 'font) nil last-font)
+	    (progn
+	      (set-fontset-font (frame-parameter nil 'font) nil last-font)
+	      (message "test2222")
+	      )
           )
+	
+        (if (find-font last-font-bak)
+	    (progn
+	      (set-fontset-font (frame-parameter nil 'font) nil last-font-bak)
+	      (message "testtest")
+	      )
+          )
+	
         (if (find-font symbol-font)
             (set-fontset-font t nil symbol-font)
           )
@@ -1108,15 +1120,17 @@
               )
           )
 	(if nil
-	(if (find-font han-font-bak)
-	    (progn
-	      ;; (set-fontset-font "fontset-default" 'han han-font-bak nil 'prepend)
-	      ;; (set-fontset-font "fontset-default" 'han han-font-bak nil )
-	      ;; (message "test")
-	      ;; (set-fontset-font "fontset-default" 'han (font-spec :family "文泉驿等宽微米黑") nil 'prepend)
+	    (if (find-font han-font-bak)
+		(progn
+		  ;; (set-fontset-font "fontset-default" 'han han-font-bak nil 'prepend)
+		  ;; (set-fontset-font "fontset-default" 'han han-font-bak nil )
+		  ;; (message "test")
+		  ;; (set-fontset-font "fontset-default" 'han (font-spec :family "文泉驿等宽微米黑") nil 'prepend)
+		  (set-fontset-font "fontset-default" '(#x5c31 . #x5c31) (font-spec :family "SJLishu") nil)
+		  (set-fontset-font "fontset-default" '(#x5c31 . #x5c31) (font-spec :family "FengSSQLS") nil)
+		  )
 	      )
 	  )
-	)
         ;;      (if (find-font han-font-sarasa)
         ;;          (set-fontset-font "fontset-default" 'han han-font-sarasa nil 'prepend)
         ;;        )
