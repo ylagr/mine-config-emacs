@@ -1456,6 +1456,8 @@ buffer is not visiting a file."
       (find-file (concat "/sudo:root@localhost:"
                          (ido-read-file-name "Find file(as root): ")))
     (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name))))
+(setq org-indent-mode-turns-on-hiding-stars nil)
+
 
 (provide 'init)
 ;;; init.el ends here
