@@ -377,7 +377,14 @@
   (setq save-interprogram-paste-before-kill t)  ;; save system copycliboard data into kill ring
   ;; Reverse yank-pop.  By default, it is C-u M-y, but it's not as
   ;; intuitive.  The "Shift reverse" metaphor seems well established.
-  (global-set-key (kbd "M-Y") #'(lambda () (interactive) (yank-pop -1)))
+  (defun yank-pop-last()
+    (interactive)
+    (yank-pop -1)
+    )
+  (global-set-key (kbd "M-Y") #'yank-pop-last)
+  (global-set-key (kbd "C-M-y") #'yank-pop-last)
+  
+  ;; (global-set-key (kbd "M-Y") #'(lambda () (interactive) (yank-pop -1)))
   ;; avoid select region cannot copy
   (if l/wsl2
       (setq select-active-regions nil)
@@ -528,7 +535,7 @@
    ("C-." . embark-dwim)
    ("M-SPC ." . embark-act)
    ("C-M->" . embark-act)
-   ("C-z" . embark-act)
+   ;; ("C-z" . embark-act)
    ("C-c h b" . embark-bindings)
    ("C-c h B" . embark-bindings-at-point)
    ;;  ("C-h" . embark-prefix-help-command)
@@ -722,6 +729,7 @@
 (use-package posframe
   )
 (use-package vertico-posframe
+  :disabled
   :after (vertico posframe)
   :init
   (vertico-posframe-mode 1)
@@ -1036,14 +1044,15 @@
 ;;(setq package-quickstart t)
 
 (use-package server
-  :disabled
-  :if window-system
-;     :commands (server-running-p)
-     :init
+  ;; :disabled
+  :if (or l/linux l/mac)
+;;  window-system
+;;     :commands (server-running-p)
+  :init
   (progn
-      (server-mode +1)
-      (message "Emacs Server …DONE")
-      )
+    (server-mode +1)
+    (message "Emacs Server …DONE")
+    )
   )
 
 ;;; config/ message window always in last
@@ -1409,14 +1418,14 @@ ALIST next list args"
    ("^\\(\\*vterm\\*\\)"
     (display-buffer-reuse-window display-buffer-in-side-window)
     (side . right)
-    (window-width . 0.3)
+    (window-width . 0.5)
     (post-command-select-window . visible)
     )
    ;;fallback
    ("^\\(\\*.*\\*\\)"
     (display-buffer-reuse-window display-buffer-in-side-window)
     (side . right)
-    (window-width . 0.3)
+    (window-width . 0.5)
     )
    )
  
