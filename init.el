@@ -1,4 +1,4 @@
-;; init.el --- Initialization file for Emacs  -*- lexical-binding: t; -*-
+; init.el --- Initialization file for Emacs  -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Emacs Startup File --- initialization for Emacs
 
@@ -246,8 +246,9 @@
 
   (eval-after-load "dired"
     '(progn
-       (define-key dired-mode-map (kbd "b") #'dired-up-directory)
+       ;; (define-key dired-mode-map (kbd "b") #'dired-up-directory)
        (define-key dired-mode-map (kbd "F") #'dired-create-empty-file)
+       (define-key dired-mode-map (kbd "b") #'(lambda () (interactive) (find-alternate-file "..")))
        )
     )
 
@@ -306,6 +307,15 @@
   :config
   (repeat-mode +1)
   (setq repeat-exit-key (kbd "i"))
+  (defun l/tab-line-switch-next-tab ()
+    (interactive)
+    (tab-line-switch-to-next-tab)
+    )
+  (defun l/tab-line-switch-prev-tab ()
+    (interactive)
+    (tab-line-switch-to-prev-tab)
+    )
+  
   (defvar buffer-lunch-repeat-map ; C-x <left> 或 <right>
     (let ((map (make-sparse-keymap)))
       (define-key map (kbd "n") #'next-line)
@@ -341,10 +351,14 @@
       (define-key map (kbd ",") #'xref-go-back)
       (define-key map (kbd ">") #'end-of-buffer)
       (define-key map (kbd "<") #'beginning-of-buffer)
+      (define-key map (kbd "0") #'delete-window)
+      (define-key map (kbd "[") #'l/tab-line-switch-prev-tab)
+      (define-key map (kbd "]") #'l/tab-line-switch-next-tab)
       
       (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-half-page-lines next-half-page-lines scroll-up-command scroll-down-command scroll-half-page-up scroll-half-page-down other-window kill-current-buffer
 			      xref-find-definitions xref-find-references xref-go-back comment-line
-			      embark-dwim end-of-buffer beginning-of-buffer ))
+			      embark-dwim end-of-buffer beginning-of-buffer ace-window delete-window
+			      l/tab-line-switch-next-tab l/tab-line-switch-prev-tab))
 	(put it 'repeat-map 'buffer-lunch-repeat-map))
       map)
     "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
@@ -413,6 +427,7 @@
 ;; Sorry, `other-window', but you are too weak!
 (use-package ace-window
   :bind (("C-x o" . ace-window)
+	 ("C-x M-0" . ace-delete-window)
          ;; ("C-x C-o" . ace-window)
          )  ;; was delete-blank-lines
   :config
@@ -725,6 +740,13 @@
 (use-package vertico
   :init
   (vertico-mode +1)
+  (setq vertico-multiform-commands
+	'((consult-imenu buffer indexed)
+	  (consult-line buffer)
+	  (consult-line-multi buffer)))
+  (setq vertico-multiform-categories
+	'((consult-grep buffer)))
+  (vertico-multiform-mode t)
   )
 (use-package posframe
   )
@@ -1310,7 +1332,8 @@
    '((:eval (buffer-file-name)) )
    )
   (setq which-func-display 'header)
-  (which-function-mode t)
+  (add-hook 'prog-mode-hook #'which-function-mode)
+  ;; (which-function-mode t)
   )
 (defun l/clean-window-element (window)
   "Disable some ui.
@@ -1418,14 +1441,14 @@ ALIST next list args"
    ("^\\(\\*vterm\\*\\)"
     (display-buffer-reuse-window display-buffer-in-side-window)
     (side . right)
-    (window-width . 0.5)
+    (window-width . 0.4)
     (post-command-select-window . visible)
     )
    ;;fallback
    ("^\\(\\*.*\\*\\)"
     (display-buffer-reuse-window display-buffer-in-side-window)
     (side . right)
-    (window-width . 0.5)
+    (window-width . 0.4)
     )
    )
  
