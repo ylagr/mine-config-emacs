@@ -775,6 +775,8 @@
 	'(company-preview-frontend company-echo-metadata-frontend company-pseudo-tooltip-frontend)
 	)
   (define-key company-active-map (kbd "<tab>") #'company-complete-selection)
+  (define-key company-active-map (kbd "TAB") #'company-complete-selection)
+
   (define-key company-active-map (kbd "RET") #'newline)
   (define-key company-active-map (kbd "<return>") #'newline)
   (add-to-list 'company-backends 'company-ispell)
@@ -1068,15 +1070,17 @@
 (use-package server
   ;; :disabled
   :if (or l/linux l/mac)
-;;  window-system
-;;     :commands (server-running-p)
+  ;;  window-system
+  ;;     :commands (server-running-p)
+  :commands (server-running-p)
   :init
-  (progn
-    (server-mode +1)
-    (message "Emacs Server …DONE")
+  (unless (server-running-p) 
+    (progn
+      (server-mode +1)
+      (message "Emacs Server …DONE")
+      )
     )
   )
-
 ;;; config/ message window always in last
 (use-package emacs
   :config
@@ -1490,7 +1494,85 @@ buffer is not visiting a file."
     (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name))))
 (setq org-indent-mode-turns-on-hiding-stars nil)
 
+(keymap-unset org-mode-map "C-j")
+(keymap-set org-mode-map "C-j C-j" #'org-return-and-maybe-indent)
+
+(add-hook 'tty-setup-hook #'xterm-mouse-mode)
+
+(use-package xclip
+  :disabled
+  :init
+  (add-hook 'tty-setup-hook #'xclip-mode)
+  )
+(use-package clipetty
+  :ensure t
+  ;; :hook (after-init . global-clipetty-mode)
+  :config
+
+  (defun l/clipetty-copy ()
+    (interactive)
+    (if (display-graphic-p)
+	(clipboard-kill-ring-save (region-beginning) (region-end))
+      (kill-ring-save (region-beginning) (region-end))
+      )
+    )
+  (defun l/clipetty-cut ()
+    (interactive)
+    (if (display-graphic-p)
+	(clipboard-kill-region (region-beginning) (region-end))
+      (kill-region (region-beginning) (region-end))
+      )
+    )
+  (defun l/clipetty-kill()
+    (interactive)
+    
+    (when (use-region-p)
+      (if clipetty-mode
+	  (l/clipetty-cut)
+	(clipetty-mode)
+	(l/clipetty-cut)
+	(clipetty-mode 0)
+	)
+      )
+    )
+  (defun l/clipetty-kill-ring-save ()
+    (interactive)
+    (when (use-region-p)
+      (if clipetty-mode
+          (l/clipetty-copy)
+	(clipetty-mode)
+	(l/clipetty-copy)
+	(clipetty-mode 0)))
+    )
+  (global-set-key (kbd "C-w") #'l/clipetty-kill)
+  (global-set-key (kbd "M-w") #'l/clipetty-kill-ring-save)
+  (global-set-key (kbd "C-y") #'clipboard-yank)
+  
+  (setq x-select-enable-clipboard nil)
+  )
+(use-package run-stuff
+  )
+(use-package drag-stuff
+  :config
+  (global-set-key (kbd "M-<up>") #'drag-stuff-up)
+  (global-set-key (kbd "M-<down>") #'drag-stuff-down)
+  )
+
+
+(setq fringes-outside-margins t)
+(setq kill-whole-line nil)
+(setq indicate-buffer-boundaries 'right)
+(setq delete-by-moving-to-trash t)
+(setq window-combination-resize t)
+(setq x-stretch-cursor t)
+(setq track-eol t)
+(setq next-line-add-newlines nil)
+(setq dired-listing-switches "-vhal")
+(save-place-mode t) 			;保存上次光标位置
+
+
 
 (provide 'init)
 ;;; init.el ends here
 
+(put 'dired-find-alternate-file 'disabled nil)
