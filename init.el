@@ -139,6 +139,7 @@
     )
 
   ;; ======================       keybind
+  (global-set-key (kbd "C-x 4 o") #'display-buffer)
   (global-set-key (kbd "M-<f3>") #'open-init-file)
   (global-set-key (kbd "C-x ,") #'open-init-file)
   (global-set-key (kbd "C-x ，") #'open-init-file)
@@ -549,7 +550,8 @@
   (
    ("C-." . embark-dwim)
    ("M-SPC ." . embark-act)
-   ("C-M->" . embark-act)
+   ;; ("C-M->" . embark-act)
+   ("C-M-?" . 'embark-act)
    ;; ("C-z" . embark-act)
    ("C-c h b" . embark-bindings)
    ("C-c h B" . embark-bindings-at-point)
@@ -607,33 +609,35 @@
   ;; 可选：将这个函数绑定到一个快捷键上，例如 F12
   ;; (global-set-key (kbd "<f12>") 'my-interactive-selector)
   )
-  (defun my-interactive-selector ()
-    "一个交互式选择器函数。
+
+(defun my-interactive-selector ()
+  "一个交互式选择器函数。
 它会提示用户从预定义的选项中选择一项，然后执行对应的动作。"
-    (interactive)
-    (let* (;; 定义选项列表，每个元素是一个 (DISPLAY-TEXT . FUNCTION) 的 cons cell
-           (choices (list (cons "打开文件 (find-file)" 'find-file)
-                          (cons "切换缓冲区 (switch-to-buffer)" 'switch-to-buffer)
-                          (cons "列出缓冲区 (list-buffers)" 'list-buffers)
-                          (cons "保存文件 (save-buffer)" 'save-buffer)
-                          (cons "退出 Emacs (kill-emacs)" 'kill-emacs)))
-           ;; 使用 completing-read 弹出交互式菜单
-           (selection (completing-read 
-                       "选择一个操作: " ; 提示信息
-                       choices           ; 选择列表
-                       nil               ; PREDICATE (可选的过滤函数)
-                       t                 ; REQUIRE-MATCH (必须选择列表中的项)
-                       nil               ; INITIAL-INPUT (初始输入)
-                       'my-choices-history ; HISTORY (历史记录的变量名)
-                       ))
-           ;; 根据用户输入的文本，找到对应的函数
-           (chosen-fn (cdr (assoc selection choices))))
-      ;; 检查是否选择了有效选项并执行
-      (if chosen-fn
-          (progn
-            (message "执行: %s" selection)
-            (call-interactively chosen-fn)) ; 安全地调用交互式命令
-	(message "未选择有效操作"))))
+  (interactive)
+  (let* (;; 定义选项列表，每个元素是一个 (DISPLAY-TEXT . FUNCTION) 的 cons cell
+         (choices (list (cons "打开文件 (find-file)" 'find-file)
+                        (cons "切换缓冲区 (switch-to-buffer)" 'switch-to-buffer)
+                        (cons "列出缓冲区 (list-buffers)" 'list-buffers)
+                        (cons "保存文件 (save-buffer)" 'save-buffer)
+                        (cons "退出 Emacs (kill-emacs)" 'kill-emacs)))
+         ;; 使用 completing-read 弹出交互式菜单
+         (selection (completing-read 
+                     "选择一个操作: " ; 提示信息
+                     choices           ; 选择列表
+                     nil               ; PREDICATE (可选的过滤函数)
+                     t                 ; REQUIRE-MATCH (必须选择列表中的项)
+                     nil               ; INITIAL-INPUT (初始输入)
+                     'my-choices-history ; HISTORY (历史记录的变量名)
+                     ))
+         ;; 根据用户输入的文本，找到对应的函数
+         (chosen-fn (cdr (assoc selection choices))))
+    ;; 检查是否选择了有效选项并执行
+    (if chosen-fn
+        (progn
+          (message "执行: %s" selection)
+          (call-interactively chosen-fn)) ; 安全地调用交互式命令
+      (message "未选择有效操作")))
+  )
 
 (use-package embark-consult
   :after (embark consult)
@@ -1264,6 +1268,8 @@
   :bind ("S-M-<down-mouse-1>" . mc/add-cursor-on-click)
   :bind ("C->" . 'mc/mark-next-like-this)
   :bind ("C-<" . 'mc/mark-previous-like-this)
+  :bind ("C-M->" . 'mc/mark-next-like-this)
+  :bind ("C-M-<" . 'mc/mark-previous-like-this)
   )
 
 ;; translate
@@ -1575,8 +1581,12 @@ buffer is not visiting a file."
 (setq next-line-add-newlines nil)
 (setq dired-listing-switches "-vhal")
 (save-place-mode t) 			;保存上次光标位置
-
-
+(global-set-key (kbd "<f5>") #'redraw-display)
+(use-package kkp
+  :ensure t
+  :config
+  ;; (setq kkp-alt-modifier 'alt) ;; use this if you want to map the Alt keyboard modifier to Alt in Emacs (and not to Meta)
+  (global-kkp-mode +1))
 
 (provide 'init)
 ;;; init.el ends here
