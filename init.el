@@ -429,12 +429,13 @@
 (use-package ace-window
   :bind (("C-x o" . ace-window)
 	 ("C-x M-0" . ace-delete-window)
+	 ("C-x M-o" . ace-delete-window)
          ;; ("C-x C-o" . ace-window)
          )  ;; was delete-blank-lines
   :config
   (custom-set-faces
    '(aw-leading-char-face
-     ((t (:inherit ace-jump-face-foreground :height 3.0)))))
+     ((t (:inherit ace-jump-face-foreground :height 3.0 :background "yellow")))))
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
         aw-scope 'frame)
   )
@@ -587,7 +588,7 @@
                           (cons "打开emacs-help (describe-prefix-bindings)" 'describe-prefix-bindings)
 			  ))
            ;; 使用 completing-read 弹出交互式菜单
-           (selection (completing-read 
+           (selection (completing-read
                        "选择一个操作: " ; 提示信息
                        choices           ; 选择列表
                        nil               ; PREDICATE (可选的过滤函数)
@@ -984,8 +985,10 @@
 (use-package magit
   ;; :disabled
   :defer t
+  :bind
+  ("C-j g" . #'magit)
   :config
-  (global-set-key (kbd "C-j g") #'magit)
+  ;; (global-set-key (kbd "C-j g") #'magit)
   )
 (use-package eglot
   :ensure nil
@@ -1120,11 +1123,13 @@
 	    (last-font-bak (font-spec :family "noto sans"))
             (symbol-font (font-spec :family "Segoe UI symbol"))
             (han-font (font-spec :family  "lxgw wenkai"))
-	    (han-font-bak (font-spec :family "文泉驿等宽微米黑"))
+	    (han-font-bak (font-spec :family "文泉驿微米黑"))
             ;;(han-font-sarasa (font-spec :family "sarasa gothic cl"))
             )
-	;; (set-face-attribute 'default nil :font (font-spec :family "Fantasque Sans Mono" :size 16))
+	(set-face-attribute 'default nil :font (font-spec :family "Fantasque Sans Mono" :size 16 ))
 	;; (set-face-attribute 'default nil :font (font-spec :family "ubuntu mono" :size 16))
+	;; (set-face-attribute 'default nil :font (font-spec :family "neko mono" :size 16))
+	;; (default-line-height)
         (if (find-font use-font-new)
             (set-face-attribute 'default nil :font use-font-new )
 	  (if (find-font use-font)
@@ -1163,14 +1168,21 @@
               (setq line-spacing 0.00)
 	      (message "test1")
               )
+	  (if (find-font han-font-bak)
+	      (set-fontset-font "fontset-default" 'han han-font-bak nil 'prepend)
+	      )
           )
 	(if nil
 	    (if (find-font han-font-bak)
 		(progn
 		  ;; (set-fontset-font "fontset-default" 'han han-font-bak nil 'prepend)
 		  ;; (set-fontset-font "fontset-default" 'han han-font-bak nil )
-		  ;; (message "test")
-		  ;; (set-fontset-font "fontset-default" 'han (font-spec :family "文泉驿等宽微米黑") nil 'prepend)
+		  ;; (message "test")(frame-parameter nil 'font)
+		  ;; (set-fontset-font "fontset-default" 'han (font-spec :family "文泉驿微米黑") nil 'prepend)
+		  ;; (set-fontset-font (frame-parameter nil 'font) 'han (font-spec :family "文泉驿微米黑") nil 'prepend)
+		  ;; (set-fontset-font t 'han (font-spec :family "文泉驿微米黑") nil 'prepend)
+		  ;; (set-fontset-font "fontset-default" 'han (font-spec :family "文泉驿等宽微米黑") nil 'append)(default-line-height)(frame-parameter nil 'font)
+		  ;; (set-face-attribute 'default nil :font (font-spec :family "文泉驿等宽微米黑") )
 		  (set-fontset-font "fontset-default" '(#x5c31 . #x5c31) (font-spec :family "SJLishu") nil)
 		  (set-fontset-font "fontset-default" '(#x5c31 . #x5c31) (font-spec :family "FengSSQLS") nil)
 		  )
@@ -1343,12 +1355,9 @@
   :ensure nil
   ;;:demand t
   :config
-  (setq-default
-   header-line-format
-   '((:eval (buffer-file-name)) )
-   )
+  ;; (setq-default   header-line-format   '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)))) )   )
   (setq which-func-display 'header)
-  (add-hook 'prog-mode-hook #'which-function-mode)
+  ;; (add-hook 'prog-mode-hook #'which-function-mode)
   ;; (which-function-mode t)
   )
 (defun l/clean-window-element (window)
@@ -1360,12 +1369,28 @@ WINDOW use to change"
     (tab-line-mode -1)
     )
   window)
+(defun l/clean-window-element-clean-header_line (window)
+  "Test.  WINDOW is use to change.  CLEAN-FUNC-LIST is CHANGE window func."
+  (interactive)
+  (with-selected-window window
+    (setq-local header-line-format nil)
+    )
+  )
+(defun l/display-buffer-in-side-window-action-clean-header_line (buffer alist)
+  "BUFFER.  ALIST."
+  (let ((win (display-buffer-in-side-window buffer alist)))
+    (when win
+      (l/clean-window-element-clean-header_line win)
+      )
+    win)
+  )
 
 (defun l/display-buffer-in-side-window-action (buffer alist)
   "BUFFER buffer.
 ALIST next list args"
   (let ((win (display-buffer-in-side-window buffer alist)))
     (when win
+      ;; (l/clean-window-elementa win '((lambda () (setq-local header-line-format nil))))
       (l/clean-window-element win)
       ;; (with-selected-window win (read-only-mode 1))
       )
@@ -1395,12 +1420,28 @@ ALIST next list args"
 
 (setq
  display-buffer-alist
- '(("^\\(\\*[Hh]elp.*\\)"                            ;正则匹配buffer name
-    (l/display-buffer-reuse-window-action             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
-     l/display-buffer-in-side-window-action)
-    (side . bottom)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+ '(   
+   ("^\\(magit-process.*\\)"                            ;正则匹配buffer name
+    (display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+     display-buffer-in-side-window)
+    (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+    (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
+    ;; (window-height . 0.3)                   ;同上
+    (slot . -10)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+    (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+    (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
+     (select . t)                            ;自定义的param
+     (quit . t)                              ;同上
+     (popup . t)                             ;同上
+     (mode-line . none)
+     ;; (no-other-window . t)
+     ))
+   ("^\\(magit-diff.*\\)"                            ;正则匹配buffer name
+    (display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+     display-buffer-use-some-window)
+    (side . left)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
     ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
-    (window-height . 0.2)                   ;同上
+    ;; (window-height . 0.2)                   ;同上
     (slot . 0)                               ;这个会被display-buffer-in-side-window使用，控制window位置
     (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
     ;;(post-command-select-window . visible)
@@ -1410,16 +1451,35 @@ ALIST next list args"
      (select . t)                            ;自定义的param
      (quit . t)                              ;同上
      (popup . t)                             ;同上
-     (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
-     (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
+     ;; (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
+     ;; (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
      ))
-   ("^\\(magit: emacs\\)"                            ;正则匹配buffer name
-    (l/display-buffer-reuse-window-action             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
-     l/display-buffer-in-side-window-action)
-    (side . bottom)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
-    ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
-    (window-height . 0.2)                   ;同上
+   ("^\\(magit.*\\)"                            ;正则匹配buffer name
+    (display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+     display-buffer-in-side-window)
+    (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+    (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
+    (window-height . 0.6)                   ;同上
     (slot . -10)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+    (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+    ;;(post-command-select-window . visible)
+    ;;(body-function . l/clean-window-element)
+    (haha . whatever)                        ;当然随你放什么
+    (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
+     (select . t)                            ;自定义的param
+     (quit . t)                              ;同上
+     (popup . t)                             ;同上
+     ;; (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
+     ;; (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
+     ))
+   ("^\\(\\*[Hh]elp.*\\)"                            ;正则匹配buffer name
+    (l/display-buffer-reuse-window-action             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+     l/display-buffer-in-side-window-action-clean-header_line)
+    (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+    ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
+    (window-width . 0.4)
+    (window-height . 0.3)                   ;同上
+    (slot . 2)                               ;这个会被display-buffer-in-side-window使用，控制window位置
     (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
     ;;(post-command-select-window . visible)
     ;;(body-function . l/clean-window-element)
@@ -1432,10 +1492,10 @@ ALIST next list args"
      (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
      ))
    ("^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)"
-    (l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action)
-    (side . bottom)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
-    (window-width . 0.3)                     ;emacs会自动把这个设置到window-parameter里
-    (window-height . 0.2)                   ;同上
+    (l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action-clean-header_line)
+    (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+    (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
+    (window-height . 0.3)                   ;同上
     (slot . 2)                               ;这个会被display-buffer-in-side-window使用，控制window位置
     (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
     (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
@@ -1467,10 +1527,15 @@ ALIST next list args"
     (window-width . 0.4)
     )
    )
- 
- 
+  
  )
 
+
+(defun redisplay-buffer-bottom ()
+  (display-buffer "*Messages*")
+  (display-buffer "*Help*")
+  )
+;; (redisplay-buffer-bottom)
 (setq eldoc-echo-area-prefer-doc-buffer nil)
 ;;(setq eldoc-echo-area-use-multiline-p t)
 (use-package eldoc-box
@@ -1587,8 +1652,99 @@ buffer is not visiting a file."
   :config
   ;; (setq kkp-alt-modifier 'alt) ;; use this if you want to map the Alt keyboard modifier to Alt in Emacs (and not to Meta)
   (global-kkp-mode +1))
+(defun what-face (pos)
+  (interactive "d")
+  (let ((face (or (get-char-property (pos) 'read-face-name) (get-char-property (pos) 'face)))) (if face (message "Face: %s" face) (message "No face at %d" pos)))
+  )
+(use-package emacs
+  :load-path nil
+  :ensure nil
+  :config
+  ;; (set-char-table-range char-width-table ?\uFE0F 0)
+  ;; (set-char-table-range char-width-table ?⚡ 2)
+  (set-char-table-range char-width-table ?’ 1)
+  (set-char-table-range char-width-table ?‘ 1)
+  (set-char-table-range char-width-table ?“ 1)
+  (set-char-table-range char-width-table ?” 1)
+  (set-char-table-range char-width-table ?° 1)
+  (set-char-table-range char-width-table ?— 1)
+  (set-char-table-range char-width-table ?… 1)
+
+  ;; (tty-type)
+  ;; (or standard-display-tableq
+  ;; (setq standard-display-table (make-display-table)))
+  ;; (aset standard-display-table
+  ;; #xAD (vector (make-glyph-code ?- 'escape-glyph)))
+  ;; (aset standard-display-table
+  ;; #x1f64f (vector (make-glyph-code #xFFFD 'escape-glyph)))
+  ;; (setq auto-composition-mode (tty-type))
+  ;; (global-auto-composition-mode -1)
+  ;; (add-hook 'auto-composition-mode-hook #'(lambda ()
+  ;; (if (and (not (display-graphic-p)) (symbol-value auto-composition-mode))
+  ;; (auto-composition-mode -1)
+  ;; )
+  ;; ))
+  (add-hook 'tty-setup-hook #'(lambda () (global-auto-composition-mode -1)))
+
+  )
+
+;; (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b"))))
+(use-package breadcrumb
+  :init
+  (breadcrumb-mode 1)
+  :config
+  ;; (add-to-list 'tab-bar-format '(:eval (breadcrumb--header-line)) t)
+  ;; (add-to-list 'tab-bar-format 'breadcrumb--header-line t)
+  )
+(defun tab-bar-local-format ()
+  "A."
+  (let ((name (buffer-file-name)))
+    (if name
+	(propertize (abbreviate-file-name name) 'face (list :foreground "blue"))
+      (buffer-name)
+      )
+    )
+  )
+(defun tab-bar-local-sperator()
+  "A."
+  "    ["
+  )
+(defun tab-bar-local-sperator-2()
+  "A."
+  "]      "
+  )
+(defun tab-bar-mode-line ()
+  "A."
+  ;; (format-mode-line mode-line-format)
+  (let ((ml-str (format-mode-line mode-line-format))
+	)
+    ;; (propertize " "
+    ;; 'display `(margin right-margin			  
+    ;; ,
+    ;; (concat 
+    (propertize
+     ;; (concat
+		 ;; (propertize " " 'display `((space :align-to (-  (+ right right-margin right-fringe 1)  ,(string-width ml-str)))))
+		 ml-str
+		 ;; )
+		'face (list :background "gray75"
+			    :foreground "black")
+		)
+    ;; spacer
+    ;; )
+    
+    ;; (face-attribute 'mode-line :background)
+    ;; (face-attribute 'mode-line :foreground)
+    )
+  )
+
+(add-to-list 'tab-bar-format 'tab-bar-local-sperator t)
+(add-to-list 'tab-bar-format 'tab-bar-local-format t)
+(add-to-list 'tab-bar-format 'tab-bar-local-sperator-2 t)
+(add-to-list 'tab-bar-format 'tab-bar-mode-line t)
+
 
 (provide 'init)
 ;;; init.el ends here
 
-(put 'dired-find-alternate-file 'disabled nil)
+;; (put 'dired-find-alternate-file 'disabled nil)
