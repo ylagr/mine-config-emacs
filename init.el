@@ -137,6 +137,16 @@
 
 	)
     )
+  (if t
+      (progn
+	(defun refresh-buffer()
+	  "A."
+	  (interactive)
+	  (message "Refresh buffer...")
+	  (revert-buffer t)
+	  )
+	(global-set-key (kbd "<f8>") #'refresh-buffer)
+	))
 
   ;; ======================       keybind
   (global-set-key (kbd "C-x 4 o") #'display-buffer)
@@ -612,7 +622,7 @@
   )
 
 (defun my-interactive-selector ()
-  "一个交互式选择器函数。
+  "一个交互式选择器函数.
 它会提示用户从预定义的选项中选择一项，然后执行对应的动作。"
   (interactive)
   (let* (;; 定义选项列表，每个元素是一个 (DISPLAY-TEXT . FUNCTION) 的 cons cell
@@ -622,7 +632,7 @@
                         (cons "保存文件 (save-buffer)" 'save-buffer)
                         (cons "退出 Emacs (kill-emacs)" 'kill-emacs)))
          ;; 使用 completing-read 弹出交互式菜单
-         (selection (completing-read 
+         (selection (completing-read
                      "选择一个操作: " ; 提示信息
                      choices           ; 选择列表
                      nil               ; PREDICATE (可选的过滤函数)
@@ -1081,7 +1091,7 @@
   ;;     :commands (server-running-p)
   :commands (server-running-p)
   :init
-  (unless (server-running-p) 
+  (unless (server-running-p)
     (progn
       (server-mode +1)
       (message "Emacs Server …DONE")
@@ -1192,7 +1202,7 @@
         ;;          (set-fontset-font "fontset-default" 'han han-font-sarasa nil 'prepend)
         ;;        )
         )
-      )  
+      )
   )
 ;; config/ mode line
 (if nil
@@ -1209,7 +1219,7 @@
 (custom-face-attributes-get 'mode-line-inactive nil)
 (custom-face-attributes-get 'mode-line nil)
 
-(if (boundp 'repeat-in-progress)
+(if (and (boundp 'repeat-in-progress) nil)
     (progn
       ;; save current
       (setq l/store-custom-face-mode-line-active (custom-face-attributes-get 'mode-line-active nil))
@@ -1233,7 +1243,7 @@
       )
   
   )
-;; syntax 
+;; syntax
 (use-package rime
   :if (or l/wsl2)
   :config
@@ -1420,7 +1430,7 @@ ALIST next list args"
 
 (setq
  display-buffer-alist
- '(   
+ '(
    ("^\\(magit-process.*\\)"                            ;正则匹配buffer name
     (display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
      display-buffer-in-side-window)
@@ -1454,7 +1464,7 @@ ALIST next list args"
      ;; (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
      ;; (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
      ))
-   ("^\\(magit.*\\)"                            ;正则匹配buffer name
+   ("^\\(magit.*\\)\\|\\(\\*xref.*\\)"                            ;正则匹配buffer name
     (display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
      display-buffer-in-side-window)
     (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
@@ -1472,26 +1482,26 @@ ALIST next list args"
      ;; (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
      ;; (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
      ))
-   ("^\\(\\*[Hh]elp.*\\)"                            ;正则匹配buffer name
-    (l/display-buffer-reuse-window-action             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
-     l/display-buffer-in-side-window-action-clean-header_line)
-    (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
-    ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
-    (window-width . 0.4)
-    (window-height . 0.3)                   ;同上
-    (slot . 2)                               ;这个会被display-buffer-in-side-window使用，控制window位置
-    (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
-    ;;(post-command-select-window . visible)
-    ;;(body-function . l/clean-window-element)
-    (haha . whatever)                        ;当然随你放什么
-    (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
-     (select . t)                            ;自定义的param
-     (quit . t)                              ;同上
-     (popup . t)                             ;同上
-     (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
-     (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
-     ))
-   ("^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)"
+   ;; ("^\\(\\*[Hh]elp.*\\)"                            ;正则匹配buffer name
+   ;;  (l/display-buffer-reuse-window-action             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+   ;;   l/display-buffer-in-side-window-action-clean-header_line)
+   ;;  (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+   ;;  ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
+   ;;  (window-width . 0.4)
+   ;;  (window-height . 0.3)                   ;同上
+   ;;  (slot . 2)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+   ;;  (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+   ;;  ;;(post-command-select-window . visible)
+   ;;  ;;(body-function . l/clean-window-element)
+   ;;  (haha . whatever)                        ;当然随你放什么
+   ;;  (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
+   ;;   (select . t)                            ;自定义的param
+   ;;   (quit . t)                              ;同上
+   ;;   (popup . t)                             ;同上
+   ;;   (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
+   ;;   (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
+   ;;   ))
+   ("^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\(\\*[Hh]elp\\*\\)"
     (l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action-clean-header_line)
     (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
     (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
@@ -1520,6 +1530,17 @@ ALIST next list args"
     (window-width . 0.4)
     (post-command-select-window . visible)
     )
+   ("^\\(\\*eldoc.*\\)"
+    (display-buffer-reuse-window  l/display-buffer-in-side-window-action-clean-header_line)
+    (side . right)
+    (slot . 100)
+    ;; (window-width . 0.4)
+    (window-height . 0.1)
+    (window-parameters
+     (mode-line-format . none)
+     (no-other-window . t)
+     )
+    )
    ;;fallback
    ("^\\(\\*.*\\*\\)"
     (display-buffer-reuse-window display-buffer-in-side-window)
@@ -1527,25 +1548,54 @@ ALIST next list args"
     (window-width . 0.4)
     )
    )
-  
+ 
  )
 
 
 (defun redisplay-buffer-bottom ()
+  "A."
   (display-buffer "*Messages*")
   (display-buffer "*Help*")
   )
 ;; (redisplay-buffer-bottom)
-(setq eldoc-echo-area-prefer-doc-buffer nil)
+
+
 ;;(setq eldoc-echo-area-use-multiline-p t)
+(global-eldoc-mode-enable-in-buffer)
+(global-eldoc-mode)
+(setq eldoc-echo-area-prefer-doc-buffer t)
+(setq eldoc-display-functions '(eldoc-display-in-buffer))
+(global-set-key (kbd "C-h C-j") #'eldoc-print-current-symbol-info)
 (use-package eldoc-box
+  :disabled
   :init
+  (setq eldoc-echo-area-prefer-doc-buffer nil)
   (add-hook 'prog-mode-hook 'eldoc-box-hover-mode)
   ;;(eldoc-box-hover-at-point-mode t)
   
   :config
   ;;(setq eldoc-box-hover-display-frame-above-point t)
-  
+
+  )
+
+;; (use-package sideline-lsp)
+(use-package sideline-blame)
+(use-package sideline-flymake)
+;; (use-package sideline-eros)
+(use-package sideline-eglot)
+(use-package sideline
+  :init
+  (setq sideline-backends-left '(
+				 ;; sideline-lsp       ; `lsp-ui-sideline.el'
+                                 ;; sideline-flycheck  ; `lsp-mode' uses `flycheck' by default
+                                 sideline-eglot     ; `eglot'
+                                 sideline-flymake   ; `eglot' uses `flymake' by default
+                                 sideline-blame     ; For `blamer'
+                                 ;; sideline-eros     ; For `eros'
+				 )
+	)
+  (setq sideline-backends-right nil)
+  (add-hook 'prog-mode-hook #'sideline-mode)
   )
 
 (use-package bufferlo
@@ -1553,6 +1603,7 @@ ALIST next list args"
   (global-set-key (kbd "C-x C-b") #'bufferlo-ibuffer)
   (global-set-key (kbd "C-x b") #'bufferlo-find-buffer-switch) ;different of bufferlo-find-buffer which this suffix switch is can choose some hide buffer and select it.
   )
+;; (eglot-java-eclipse-jdt)
 ;; (:background "grey75" :foreground "black" :box (:line-width -1 :style released-button))
 ;;(custom-face-attributes-get 'mode-line-active (frame-focus))
 ;;(custom-face-attributes-get 'mode-line (frame-focus))
@@ -1653,6 +1704,7 @@ buffer is not visiting a file."
   ;; (setq kkp-alt-modifier 'alt) ;; use this if you want to map the Alt keyboard modifier to Alt in Emacs (and not to Meta)
   (global-kkp-mode +1))
 (defun what-face (pos)
+  "A.  POS."
   (interactive "d")
   (let ((face (or (get-char-property (pos) 'read-face-name) (get-char-property (pos) 'face)))) (if face (message "Face: %s" face) (message "No face at %d" pos)))
   )
@@ -1696,22 +1748,23 @@ buffer is not visiting a file."
   ;; (add-to-list 'tab-bar-format '(:eval (breadcrumb--header-line)) t)
   ;; (add-to-list 'tab-bar-format 'breadcrumb--header-line t)
   )
+(setq tab-bar-local-format-color "blue")
 (defun tab-bar-local-format ()
   "A."
   (let ((name (buffer-file-name)))
     (if name
-	(propertize (abbreviate-file-name name) 'face (list :foreground "blue"))
-      (buffer-name)
+	(propertize (abbreviate-file-name name) 'face (list :foreground tab-bar-local-format-color))
+      (propertize (buffer-name) 'face (list :foreground tab-bar-local-format-color))
       )
     )
   )
 (defun tab-bar-local-sperator()
   "A."
-  "    ["
+  "  ["
   )
 (defun tab-bar-local-sperator-2()
   "A."
-  "]      "
+  "]"
   )
 (defun tab-bar-mode-line ()
   "A."
@@ -1719,16 +1772,17 @@ buffer is not visiting a file."
   (let ((ml-str (format-mode-line mode-line-format))
 	)
     ;; (propertize " "
-    ;; 'display `(margin right-margin			  
+    ;; 'display `(margin right-margin
     ;; ,
-    ;; (concat 
+    ;; (concat
     (propertize
      ;; (concat
 		 ;; (propertize " " 'display `((space :align-to (-  (+ right right-margin right-fringe 1)  ,(string-width ml-str)))))
 		 ml-str
 		 ;; )
 		'face (list :background "gray75"
-			    :foreground "black")
+			    ;; :foreground "black"
+			    )
 		)
     ;; spacer
     ;; )
@@ -1737,12 +1791,54 @@ buffer is not visiting a file."
     ;; (face-attribute 'mode-line :foreground)
     )
   )
+(setq mode-line-format-my mode-line-format)
+(defun toggle-mode-line ()
+  "A."
+  (interactive)
+  (if (default-value mode-line-format)
+      (setq-default mode-line-format nil)
+    (setq-default mode-line-format mode-line-format-my)
+    )
+  )
+(defun local-toggle-mode-line ()
+  "A."
+  (interactive)
+  (if mode-line-format
+      (setq mode-line-format nil)
+    (setq mode-line-format mode-line-format-my)
+    )
+  )
+(setq-default mode-line-format nil)
+(defun tab-bar-mode-line ()
+  "A."
+  (let ((ml (format-mode-line mode-line-format-my)))
+    ;; (message (format "%s" (string-width ml)))
+    ;; (concat ml (propertize "-" 'display `((space :align-to (- (left left-margin left-fringe) (- 120 ,(string-width ml) ))))))
+    (concat ml (make-string (- 120 (string-width ml)) ?-))
+    )
+  )
 
 (add-to-list 'tab-bar-format 'tab-bar-local-sperator t)
 (add-to-list 'tab-bar-format 'tab-bar-local-format t)
 (add-to-list 'tab-bar-format 'tab-bar-local-sperator-2 t)
-(add-to-list 'tab-bar-format 'tab-bar-mode-line t)
-
+(add-to-list 'tab-bar-format 'tab-bar-mode-line)
+(if (and (boundp 'repeat-in-progress) t)
+    (progn
+      (defun l/repeat-mode-show-in-tab-bar (&rest args)
+	(set-face-attribute 'hl-line nil :background "red")
+	(setq tab-bar-local-format-color "yellow")
+	""
+	)
+      (defun l/repeat-mode-hide-in-tab-bar ()
+	(set-face-attribute 'hl-line nil :background "darkseagreen2")
+	(setq tab-bar-local-format-color "blue")
+	""
+	)
+      (advice-add (symbol-value 'repeat-echo-function) :after 'l/repeat-mode-show-in-tab-bar)
+      (advice-add 'repeat-exit :after #'l/repeat-mode-hide-in-tab-bar)
+      )
+  )
+(display-buffer (messages-buffer))
 
 (provide 'init)
 ;;; init.el ends here
