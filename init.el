@@ -45,6 +45,7 @@
 
 ;; ============================  benchmark
 (use-package benchmark-init
+  :disabled
   :demand t                             ;立刻加载
   :config (benchmark-init/activate)
   :hook (after-init . benchmark-init/deactivate)
@@ -148,6 +149,7 @@
 	(global-set-key (kbd "<f8>") #'refresh-buffer)
 	))
 
+
   ;; ======================       keybind
   (global-set-key (kbd "C-x 4 o") #'display-buffer)
   (global-set-key (kbd "M-<f3>") #'open-init-file)
@@ -155,7 +157,7 @@
   (global-set-key (kbd "C-x ，") #'open-init-file)
   (global-set-key (kbd "C-c C-_") #'comment-or-uncomment-region)
   (global-set-key (kbd "C-c C-/") #'comment-or-uncomment-region)
-  (global-set-key (kbd "C-x C-k") #'kill-current-buffer)
+  (global-set-key (kbd "C-c C-k") #'kill-current-buffer)
   ;; leader key
   (global-set-key (kbd "M-SPC") nil) ;修改默认keybind M-SPC -> nil, 作为leader使用，用于各种命令替代
   (global-set-key (kbd "M-ESC") #'keyboard-quit)
@@ -1427,7 +1429,14 @@ ALIST next list args"
       )
     win)
   )
-
+(defun l/display-buffer-in-side-window-action_show_tab-line (buffer alist)
+  "A. BUFFER.  ALIST."
+  (let ((win (display-buffer-in-side-window buffer alist)))
+    (when win
+      (tab-line-mode t)
+      )
+    )
+  )
 (setq
  display-buffer-alist
  '(
@@ -1501,7 +1510,7 @@ ALIST next list args"
    ;;   (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
    ;;   (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
    ;;   ))
-   ("^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\(\\*[Hh]elp\\*\\)"
+   ("^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\|\\(\\*[Hh]elp\\*\\)"
     (l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action-clean-header_line)
     (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
     (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
@@ -1517,7 +1526,7 @@ ALIST next list args"
      )
     )
    ("^\\(\\*gt-result\\*\\)"
-    (l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action)
+    (l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action_show_tab-line)
     (slot . 10)
     (post-command-select-window . visible)
     (window-parameters
@@ -1594,8 +1603,19 @@ ALIST next list args"
                                  ;; sideline-eros     ; For `eros'
 				 )
 	)
-  (setq sideline-backends-right nil)
+  ;; (setq sideline-backends-left nil)
+  ;; (setq sideline-backends-right '(
+  ;; 				 ;; sideline-lsp       ; `lsp-ui-sideline.el'
+  ;;                                ;; sideline-flycheck  ; `lsp-mode' uses `flycheck' by default
+  ;;                                sideline-eglot     ; `eglot'
+  ;;                                sideline-flymake   ; `eglot' uses `flymake' by default
+  ;;                                sideline-blame     ; For `blamer'
+  ;;                                ;; sideline-eros     ; For `eros'
+  ;; 				 ))
+  ;; (setq sideline-backends-right nil)
   (add-hook 'prog-mode-hook #'sideline-mode)
+  ;; (setq sideline-format-right "%s\t")
+  (setq sideline-format-left "%s\t")
   )
 
 (use-package bufferlo
@@ -1691,7 +1711,7 @@ buffer is not visiting a file."
 (setq kill-whole-line nil)
 (setq indicate-buffer-boundaries 'right)
 (setq delete-by-moving-to-trash t)
-(setq window-combination-resize t)
+;; (setq window-combination-resize t)
 (setq x-stretch-cursor t)
 (setq track-eol t)
 (setq next-line-add-newlines nil)

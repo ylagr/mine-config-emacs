@@ -10,6 +10,7 @@ share
 *
 !early-init.el
 !init.el
+!init-builtin-mini.el
 !tmp.el
 !lib/
 !lib/*/
