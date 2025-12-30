@@ -6,7 +6,11 @@
 ;; first load config
 (load-file (expand-file-name "init-builtin-mini.el" user-emacs-directory))
 
+;; (unless (daemonp)
+;;   (normal-font)
+;;  )
 
 
+;; (mini-frame)
 
 

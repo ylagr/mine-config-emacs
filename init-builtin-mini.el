@@ -29,6 +29,7 @@
 ;; (setq eldoc-display-functions '(eldoc-display-in-buffer))
 (global-tab-line-mode 1)
 (global-display-line-numbers-mode 1)
+(global-visual-line-mode 1)
 (column-number-mode 1)
 
 ;; --------------------BEHAVIOR-emacs--------------------
@@ -81,9 +82,12 @@
 (global-set-key (kbd "C-h C-j") #'eldoc-print-current-symbol-info)
 (define-key isearch-mode-map [remap isearch-delete-char] #'isearch-del-char)
 (keymap-set minibuffer-local-completion-map "M-n" #'minibuffer-next-completion)
+(keymap-set completion-in-region-mode-map "M-n" #'minibuffer-next-completion)
 (keymap-set minibuffer-local-completion-map "M-p" #'minibuffer-previous-completion)
+(keymap-set completion-in-region-mode-map "M-p" #'minibuffer-previous-completion)
 (global-set-key "\C-x\ c" #'kill-current-buffer)
 (global-set-key "\M-o" #'other-window)
+(global-set-key "\C-x\ \C-b" #'ibuffer)
 (eval-after-load "dired"
   '(progn
      ;; (define-key dired-mode-map (kbd "b") #'dired-up-directory)
@@ -428,23 +432,21 @@ ALIST next list args"
       (window-width . 0.4)
       )
      )
-
    )
   )
 
 ;; --------------------frame-emacs--------------------
 (when t
-    
+  (global-set-key (kbd "<f12>") #'normal-frame)
+  (global-set-key (kbd "<f9>") #'mini-frame)
   )
 
 (defun l/after-make-frame-func(frame)
   (select-frame frame)
   (message "test-after-make-frame")
   ;; (if eldoc-mode (eldoc-doc-buffer))
-
   (set-frame-height frame (- (/ (display-pixel-height) (frame-char-height)) 5))
   (set-frame-width frame (- (/ (display-pixel-width) (frame-char-width)) 5))
-
   (raise-frame frame)
   )
 ;; (add-hook 'after-make-frame-functions #'l/after-make-frame-func)
