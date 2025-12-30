@@ -8,10 +8,14 @@ straight/
 tree-sitter/
 share
 *
+!early-init.elbak
 !early-init.el
 !init.el
+!init.elbak
 !init-builtin-mini.el
 !tmp.el
+!test.el
+!temp/**
 !lib/
 !lib/*/
 !lib/*

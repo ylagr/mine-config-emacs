@@ -1,0 +1,67 @@
+;;; early-init.el --- Initialization file for Emacs  -*- lexical-binding: t; -*-
+;;; Commentary:
+;;; Emacs early Startup File --- initialization for Emacs before init.el
+
+;;; code:
+
+;;(setq visible-cursor nil)
+;; restore dumped load-path
+(when (boundp '+saved-load-path-during-dump)
+  (message "starting from a dump file ...")
+  (setq load-path +saved-load-path-during-dump)
+  (message "%s" +saved-load-path-during-dump)
+  )
+(defun font-installed-p (font-name)
+  "Check if font with FONT-NAME is available."
+  (find-font (font-spec :name font-name)))
+
+;; set package archives. possibly set mirrors
+(defconst +i-am-in-china +1)
+
+(with-eval-after-load 'package
+  (if +i-am-in-china
+      (setq package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
+                               ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")
+                               ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")))
+    (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))))
+
+;; quick start
+;;(setq package-quickstart t)
+(setq package-check-signature nil)
+;(setq package-quickstart-file (expand-file-name "var/package-quickstart.el" user-emacs-directory))
+
+;; set frame parameters early to prevent flickering.
+(setq default-frame-alist
+      '((height . 48)
+	(width . 120)
+	(left . 8)
+	(top . 10)
+	(vertical-scroll-bars . +1)
+	(horizontal-scroll-bars . +1)
+	(tool-bar-mode . +1)
+	)
+      )
+
+;; (set-face-attribute 'default nil :font (font-spec :family "Fantasque Sans Mono" :size 16 ))
+;; (if (font-installed-p "Fantasque Sans Mono")
+;;     (progn
+;;       ;; (set-face-attribute 'default nil :font (font-spec :family "Fantasque Sans Mono" :size 16 ))
+
+;;       )
+;;   )
+;; (add-to-list 'default-frame-alist '(font .  "Fantasque Sans Mono-16"))
+;; (add-to-list 'default-frame-alist `(font .  ,(font-spec :family "Fantasque Sans Mono" :size 16)))
+
+;; (set-frame-font "Fantasque Sans Mono" 16 nil t)
+;; must be set before loading use-package
+(setq use-package-enable-imenu-support +1)
+
+;; customization file
+
+(setq default-directory "~/" )
+(message "set default dir = %s" default-directory)
+;; (set-face-attribute 'default nil :height 140)
+
+
+(provide 'early-init)
+;;; early-init.el ends here
