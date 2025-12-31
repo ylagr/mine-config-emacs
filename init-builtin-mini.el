@@ -4,6 +4,7 @@
 ;;; code:
 
 ;; --------------------UI-emacs-------------------------
+(setq mode-line-collapse-minor-modes '(eldoc-mode))
 (icomplete-mode 1) ;;内置补全功能
 (setq icomplete-in-buffer t) ;; ???
 ;;(load-file (expand-file-name "init-core.el" user-emacs-directory))
@@ -13,10 +14,12 @@
 (setq recenter-positions '(top 0.3 bottom)) ;;中心点
 (setq confirm-kill-emacs 'yes-or-no-p)
 (setq use-short-answers t)
-(set-face-attribute 'default nil :background "grey94" :foreground "black")
+(set-face-attribute 'default nil :background "grey94" :foreground "black" )
+;; asdfasdfĵƣ
 (setq echo-keystrokes 0.01) ;;fast echo key sequence
 (setq isearch-lazy-count t
-      lazy-count-prefix-format "%s/%s ")
+      ;; lazy-count-prefix-format "%s/%s " ;; 默认配置就是这个
+      )
 (symbol-value 'mode-line-format)
 (set-face-attribute 'mode-line-inactive nil
 		    :background (face-attribute 'default :background)
@@ -34,6 +37,8 @@
 
 ;; --------------------BEHAVIOR-emacs--------------------
 (setq delete-by-moving-to-trash t)
+(setq minibuffer-follows-selected-frame nil) ;; 让minibuffer只在启动minibuffer的frame生效
+(setq enable-recursive-minibuffers t)	     ;;让minibuffer能递归使用
 (delete-selection-mode +1)   ;;选中区域后插入删除选中文字
 (global-auto-revert-mode +1) ;;实时刷新文件
 (setq scroll-step 1)
@@ -42,6 +47,22 @@
 (setq scroll-preserve-screen-position t)
 (global-so-long-mode t)	;; Disable fancy features when the file is too large
 (setq kill-region-dwim 'emacs-word)
+
+
+(setq org-indent-mode-turns-on-hiding-stars nil)
+(use-package wgrep
+  :bind
+  (:map grep-mode-map
+	("C-c C-p" . wgrep-change-to-wgrep-mode)
+	("e" . wgrep-change-to-wgrep-mode)
+	)
+  :config
+  (add-to-list 'grep-find-ignored-files ".tag*")
+  (add-to-list 'grep-find-ignored-files ".TAG*")
+  (add-to-list 'grep-find-ignored-files "tag*")
+  (add-to-list 'grep-find-ignored-files "TAG*")
+
+  )
 
 (when t
   (defvar autosaves-dir (expand-file-name "autosaves/" user-emacs-directory))
@@ -73,11 +94,34 @@
 	)
   )
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(defun sudo-edit (&optional arg)
+  "Edit currently visited file as root.
+With a prefix ARG prompt for a file to visit.  Will also prompt for a
+file to visit if current buffer is not visiting a file."
+  (interactive "P")
+  (if (or arg (not buffer-file-name))
+      (find-file (concat "/sudo:root@localhost:"
+                         (ido-read-file-name "Find file(as root): ")))
+    (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name)))
+  )
 
 ;; --------------------INPUT-emacs--------------------
 (setq completion-styles '(basic flex partial-completion emacs22))
 
 ;; --------------------keybind-emacs--------------------
+
+;; ----leader key----
+(keymap-global-unset "C-j")
+(keymap-global-set "C-j C-j" #'electric-newline-and-maybe-indent)
+(keymap-unset lisp-interaction-mode-map "C-j")
+(keymap-set lisp-interaction-mode-map "C-j C-j" #'eval-print-last-sexp)
+(eval-after-load "org" `(progn (keymap-unset org-mode-map "C-j") (keymap-set org-mode-map "C-j C-j" #'org-return-and-maybe-indent) ))
+(keymap-global-unset "M-SPC")
+(keymap-global-set "M-]" #'cycle-spacing)
+;;(keymap-global-set "M-SPC ")
+;; ----leader key----end
+
+;;(keymap-unset org-mode-map "C-j")
 (global-set-key (kbd "<f5>") #'redraw-display)
 (global-set-key (kbd "C-h C-j") #'eldoc-print-current-symbol-info)
 (define-key isearch-mode-map [remap isearch-delete-char] #'isearch-del-char)
@@ -100,7 +144,11 @@
      (define-key dired-mode-map (kbd "b") #'l/alternate-back-dir)
      )
   )
-
+(when t
+  (defun l/scroll-half-page-up()
+    
+    )
+  )
 (when t
   (defun l/open-init-file()
     "Open Emacs config file."
@@ -440,7 +488,7 @@ ALIST next list args"
   (global-set-key (kbd "<f12>") #'normal-frame)
   (global-set-key (kbd "<f9>") #'mini-frame)
   )
-
+(unless (daemonp)  (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b") ) ) )  )
 (defun l/after-make-frame-func(frame)
   (select-frame frame)
   (message "test-after-make-frame")

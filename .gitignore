@@ -15,6 +15,7 @@ share
 !init-builtin-mini.el
 !tmp.el
 !test.el
+!temp/*
 !temp/**
 !lib/
 !lib/*/

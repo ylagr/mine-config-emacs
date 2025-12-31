@@ -1189,20 +1189,6 @@
   ;;(add-hook 'treemacs-mode-hook 'treemacs-indent-guide-mode)
   )
 
-(use-package wgrep
-  :bind
-  (:map grep-mode-map
-	("C-c C-p" . wgrep-change-to-wgrep-mode)
-	("e" . wgrep-change-to-wgrep-mode)
-	)
-  :config
-  (add-to-list 'grep-find-ignored-files ".tag*")
-  (add-to-list 'grep-find-ignored-files ".TAG*")
-  (add-to-list 'grep-find-ignored-files "tag*")
-  (add-to-list 'grep-find-ignored-files "TAG*")
-
-  )
-
 ;;; 
 ;;; ui
 (use-package emacs
@@ -1215,15 +1201,6 @@
   ;; (which-function-mode t)
   )
  
-
-
-(defun redisplay-buffer-bottom ()
-  "A."
-  (display-buffer "*Messages*")
-  (display-buffer "*Help*")
-  )
-;; (redisplay-buffer-bottom)
-
 
 ;;(setq eldoc-echo-area-use-multiline-p t)
 (global-eldoc-mode-enable-in-buffer)
@@ -1282,18 +1259,7 @@
 ;;(custom-face-attributes-get 'mode-line (frame-focus))
 ;;(set-face-attribute 'mode-line nil		    :background "blue")
 ;;(info "(use-package)")
-(defun er-sudo-edit (&optional arg)
-  "Edit currently visited file as root.
 
-With a prefix ARG prompt for a file to visit.
-Will also prompt for a file to visit if current
-buffer is not visiting a file."
-  (interactive "P")
-  (if (or arg (not buffer-file-name))
-      (find-file (concat "/sudo:root@localhost:"
-                         (ido-read-file-name "Find file(as root): ")))
-    (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name))))
-(setq org-indent-mode-turns-on-hiding-stars nil)
 
 ;; (keymap-unset org-mode-map "C-j")
 ;; (keymap-set org-mode-map "C-j C-j" #'org-return-and-maybe-indent)
@@ -1403,7 +1369,6 @@ buffer is not visiting a file."
 
   )
 
-;; (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b"))))
 (use-package breadcrumb
   :init
   (breadcrumb-mode 1)

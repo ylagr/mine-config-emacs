@@ -2,7 +2,7 @@
 ;;; Commentary:
 ;;; Emacs Startup File --- initialization for Emacs
 ;;; code:
-
+(setq package-i)
 ;; ui
 ;;(setq default-frame-alist '((height . 48) (width . 100)))
 (setq default-frame-alist
@@ -67,8 +67,6 @@
      (round (* l/display-pixel-width 0.1));;15
      (round (* l/display-pixel-height 0.01));;10
      t)
-    (raise-frame frame)
-    (select-frame frame)
     "mini-frame"
     )
   )
@@ -85,4 +83,9 @@
   (select-frame-set-input-focus (selected-frame))
   )
 (add-hook 'server-after-make-frame-hook #'focus-frame)
-
+(defun tty-fix()
+  (unless (display-graphic-p)
+   (global-auto-composition-mode -1))
+  )
+(add-hook 'server-after-make-frame-hook #'tty-fix)
+;; early-init.el ends here.
