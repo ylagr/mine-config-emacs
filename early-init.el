@@ -2,7 +2,7 @@
 ;;; Commentary:
 ;;; Emacs Startup File --- initialization for Emacs
 ;;; code:
-(setq package-i)
+(setq package-enable-at-startup nil)
 ;; ui
 ;;(setq default-frame-alist '((height . 48) (width . 100)))
 (setq default-frame-alist
@@ -18,29 +18,29 @@
       )
 
 
-(defun normal-font ()
+(defun l/normal-font ()
   (interactive)
   (set-face-attribute 'default nil :font (font-spec :family "Fantasque Sans Mono" :size 16))
   )
 
-(defun resize-frame(frame width height position-x position-y &optional pixel-wise)
+(defun l/resize-frame(frame width height position-x position-y &optional pixel-wise)
   (interactive)
   (set-frame-position frame position-x position-y)
   (set-frame-size frame width height pixel-wise)
   )
-(defun normal-frame-action (&optional frame)
-  (unless frame
-    (setq-local frame (selected-frame))
+(defun l/normal-frame-action (&optional l/frame)
+  (unless l/frame
+    (setq-local l/frame (selected-frame))
     )
   (when (display-graphic-p)
-    (select-frame frame)
-    (normal-font)
+    (select-frame l/frame)
+    (l/normal-font)
     (setq-local attrs (frame-monitor-attributes (selected-frame)))
-    (setq-local geometry (alist-get 'geometry attrs))
+    (setq-local l/geometry (alist-get 'geometry attrs))
     (setq-local l/display-pixel-width (nth 2 geometry))
     (setq-local l/display-pixel-height (nth 3 geometry))
-    (resize-frame
-     (selected-frame)
+    (l/resize-frame
+     l/frame
      (round (* l/display-pixel-width 0.9));;(- (/ (display-pixel-width) (frame-char-width)) 20) ;;220
      (round (* l/display-pixel-height 0.80));;(- (/ (display-pixel-height) (frame-char-height)) 20)
      (round (* l/display-pixel-width 0.02));;15
@@ -49,19 +49,19 @@
     "normal-frame"
     )
   )
-(defun mini-frame-action(&optional frame)
-  (unless frame
-    (setq-local frame (selected-frame))
+(defun l/mini-frame-action(&optional l/frame)
+  (unless l/frame
+    (setq-local l/frame (selected-frame))
     )
   (when (display-graphic-p)
-    (select-frame frame)
-    (normal-font)
+    (select-frame l/frame)
+    (l/normal-font)
     (setq-local attrs (frame-monitor-attributes (selected-frame)))
-    (setq-local geometry (alist-get 'geometry attrs))
+    (setq-local l/geometry (alist-get 'geometry attrs))
     (setq-local l/display-pixel-width (nth 2 geometry))
     (setq-local l/display-pixel-height (nth 3 geometry))
-    (resize-frame
-     frame
+    (l/resize-frame
+     l/frame
      (round (* l/display-pixel-width 0.75));;(- (/ (display-pixel-width) (frame-char-width)) 20) ;;220
      (round (* l/display-pixel-height 0.8));;(- (/ (display-pixel-height) (frame-char-height)) 20)
      (round (* l/display-pixel-width 0.1));;15
@@ -70,22 +70,22 @@
     "mini-frame"
     )
   )
-(defun normal-frame()
+(defun l/normal-frame()
   (interactive)
-  (normal-frame-action (selected-frame))
+  (l/normal-frame-action (selected-frame))
   )
-(defun mini-frame()
+(defun l/mini-frame()
   (interactive)
-  (mini-frame-action (selected-frame))
+  (l/mini-frame-action (selected-frame))
   )
 
-(defun focus-frame()
+(defun l/focus-frame()
   (select-frame-set-input-focus (selected-frame))
   )
-(add-hook 'server-after-make-frame-hook #'focus-frame)
-(defun tty-fix()
+(add-hook 'server-after-make-frame-hook #'l/focus-frame)
+(defun l/tty-fix()
   (unless (display-graphic-p)
    (global-auto-composition-mode -1))
   )
-(add-hook 'server-after-make-frame-hook #'tty-fix)
+(add-hook 'server-after-make-frame-hook #'l/tty-fix)
 ;; early-init.el ends here.

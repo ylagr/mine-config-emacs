@@ -89,9 +89,6 @@
 
 
   ;; ======================       keybind
-  (global-set-key (kbd "C-x 4 o") #'display-buffer)
-  (global-set-key (kbd "C-c C-_") #'comment-or-uncomment-region)
-  (global-set-key (kbd "C-c C-/") #'comment-or-uncomment-region)
   (global-set-key (kbd "C-c C-k") #'kill-current-buffer)
   ;; leader key
   (global-set-key (kbd "M-SPC") nil) ;修改默认keybind M-SPC -> nil, 作为leader使用，用于各种命令替代
@@ -104,7 +101,7 @@
   (global-set-key (kbd "C-j c") #'comment-line)
   (keymap-unset lisp-interaction-mode-map "C-j")
   (keymap-set lisp-interaction-mode-map "C-j C-j" #'eval-print-last-sexp)
-  (global-set-key (kbd "C-j C-k") #'kill-whole-line)
+  
   (global-set-key (kbd "C-x C-b") #'ibuffer)
   (global-set-key (kbd "C-,") #'completion-at-point)
   (global-set-key (kbd "M-z") #'zap-up-to-char) ;old func is zap-to-char, diff is with no up del input char.
@@ -113,19 +110,6 @@
   (global-set-key (kbd "M-SPC C-M-w") #'append-next-kill)
   (global-set-key (kbd "C-M-w") #'yank)
   (global-set-key (kbd "C-M-S-w") #'yank-pop)
-  (defun newline-and-indent-up ()
-    "回车到上一行."
-    (interactive)
-    (forward-line -1)
-    (move-end-of-line 1)
-    (newline-and-indent)
-    )
-  (defun newline-and-indent-down ()
-    "回车到下一行."
-    (interactive)
-    (move-end-of-line 1)
-    (newline-and-indent)
-    )
   (if nil
       (defun duplicate-line ()
 	"Duplicate line."
@@ -138,31 +122,8 @@
 	(yank)
 	)
     )
-  (defun l/duplicate-line ()
-    "Duplicate line, but cursor follow."
-    (interactive)
-    (let ((column (current-column))
-	  (line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
-	  )
-      (end-of-line)
-      (newline)
-      (insert line)
-      (beginning-of-line)
-      (forward-char column)
-      )
-    )
-  (defun clear-line ()
-    "Clear line."
-    (interactive)
-    (move-beginning-of-line 1)
-    (kill-line)
-    )
-  (global-set-key (kbd "C-j C-i") #'newline-and-indent-up)
-  (global-set-key (kbd "C-j C-o") #'newline-and-indent-down)
-  (global-set-key (kbd "C-j C-d") #'l/duplicate-line)
-  (global-set-key (kbd "C-j C-l") #'clear-line)
-  (global-set-key (kbd "M-SPC O") #'other-frame)
-  (global-set-key (kbd "C-c C-n") #'scratch-buffer)
+ (global-set-key (kbd "M-SPC O") #'other-frame)
+
   ;; ======================      config ui
 
   (defun cursor-type-default ()
@@ -277,19 +238,6 @@
 ;; config/ window move
 ;; Use ace-window for quick window navigation
 ;; Sorry, `other-window', but you are too weak!
-(use-package ace-window
-  :bind (("C-x o" . ace-window)
-	 ("C-x M-0" . ace-delete-window)
-	 ("C-x M-o" . ace-delete-window)
-         ;; ("C-x C-o" . ace-window)
-         )  ;; was delete-blank-lines
-  :config
-  (custom-set-faces
-   '(aw-leading-char-face
-     ((t (:inherit ace-jump-face-foreground :height 3.0 :background "yellow")))))
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
-        aw-scope 'frame)
-  )
 
 
 (use-package vundo

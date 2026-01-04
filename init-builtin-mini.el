@@ -2,6 +2,17 @@
 ;;; Commentary:
 ;;; Emacs Startup File --- initialization for Emacs
 ;;; code:
+;; --------------------pkg-emacs--------------------
+;; set package archives. possibly set mirrors
+(defconst +i-am-in-china +1)
+
+(with-eval-after-load 'package
+  (if +i-am-in-china
+      (setq package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
+                               ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")
+                               ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")))
+    (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))))
+
 
 ;; --------------------UI-emacs-------------------------
 (setq mode-line-collapse-minor-modes '(eldoc-mode))
@@ -36,6 +47,7 @@
 (column-number-mode 1)
 
 ;; --------------------BEHAVIOR-emacs--------------------
+(put 'dired-find-alternate-file 'disabled nil) ;; 设置取消疑惑的命令警告
 (setq delete-by-moving-to-trash t)
 (setq minibuffer-follows-selected-frame nil) ;; 让minibuffer只在启动minibuffer的frame生效
 (setq enable-recursive-minibuffers t)	     ;;让minibuffer能递归使用
@@ -94,7 +106,7 @@
 	)
   )
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-(defun sudo-edit (&optional arg)
+(defun l/sudo-edit (&optional arg)
   "Edit currently visited file as root.
 With a prefix ARG prompt for a file to visit.  Will also prompt for a
 file to visit if current buffer is not visiting a file."
@@ -121,17 +133,75 @@ file to visit if current buffer is not visiting a file."
 ;;(keymap-global-set "M-SPC ")
 ;; ----leader key----end
 
-;;(keymap-unset org-mode-map "C-j")
-(global-set-key (kbd "<f5>") #'redraw-display)
-(global-set-key (kbd "C-h C-j") #'eldoc-print-current-symbol-info)
+(keymap-global-set "C-j C-i" #'newline-and-indent-up)
+(keymap-global-set "C-j C-o" #'newline-and-indent-down)
+(keymap-global-set "C-j D" #'duplicate-dwim)
+(keymap-global-set "C-j C-d" #'l/duplicate-line)
+(keymap-global-set "C-j d" #'l/duplicate-line)
+(keymap-global-set "C-j C-k" #'kill-whole-line) ;; save in kill-ring
+(keymap-global-set "C-j C-l" #'l/kill-current-line)	;; save in kill-ring
+(keymap-global-set "C-j C-f" #'l/delete-whole-line)	;; not save in kill-ring
+(keymap-global-set "C-j w" #'l/delete-whole-line)	;; not save
+(keymap-global-set "C-j h" #'l/delete-line)	;; not save in kill-ring
+(keymap-global-set "C-c C-_" #'comment-or-uncomment-region)
+(keymap-global-set "C-c C-/" #'comment-or-uncomment-region)
+
+(keymap-global-set "C-c C-n" #'scratch-buffer)
+(keymap-global-set "C-x 4 o" #'display-buffer)
+
+(keymap-global-set"<f5>" #'redraw-display)
+(keymap-global-set "C-h C-j" #'eldoc-print-current-symbol-info)
 (define-key isearch-mode-map [remap isearch-delete-char] #'isearch-del-char)
 (keymap-set minibuffer-local-completion-map "M-n" #'minibuffer-next-completion)
 (keymap-set completion-in-region-mode-map "M-n" #'minibuffer-next-completion)
 (keymap-set minibuffer-local-completion-map "M-p" #'minibuffer-previous-completion)
 (keymap-set completion-in-region-mode-map "M-p" #'minibuffer-previous-completion)
-(global-set-key "\C-x\ c" #'kill-current-buffer)
-(global-set-key "\M-o" #'other-window)
-(global-set-key "\C-x\ \C-b" #'ibuffer)
+(keymap-global-set "C-x t" #'kill-current-buffer)
+(keymap-global-set "M-o" #'other-window)
+(keymap-global-set "C-x B" #'ibuffer)
+
+(defun l/kill-current-line ()
+  "Clear line."
+  (interactive)
+  (move-beginning-of-line 1)
+  (kill-line)
+  )
+(defun l/delete-whole-line()
+  (interactive)
+  (delete-line)
+  )
+(defun l/delete-line()
+  (interactive)
+  (delete-region (line-beginning-position) (line-end-position))
+  )
+(defun l/duplicate-line ()
+  "Duplicate line, but cursor follow."
+  (interactive)
+  (let ((column (current-column))
+	(line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+	)
+    (end-of-line)
+    (newline)
+    (insert line)
+    (beginning-of-line)
+    (forward-char column)
+    )
+  )
+
+(defun newline-and-indent-up ()
+  "回车到上一行."
+  (interactive)
+  (forward-line -1)
+  (move-end-of-line 1)
+  (newline-and-indent)
+  )
+(defun newline-and-indent-down ()
+  "回车到下一行."
+  (interactive)
+  (move-end-of-line 1)
+  (newline-and-indent)
+  )
+
 (eval-after-load "dired"
   '(progn
      ;; (define-key dired-mode-map (kbd "b") #'dired-up-directory)
@@ -144,11 +214,10 @@ file to visit if current buffer is not visiting a file."
      (define-key dired-mode-map (kbd "b") #'l/alternate-back-dir)
      )
   )
-(when t
   (defun l/scroll-half-page-up()
     
     )
-  )
+
 (when t
   (defun l/open-init-file()
     "Open Emacs config file."
@@ -160,28 +229,28 @@ file to visit if current buffer is not visiting a file."
   (global-set-key (kbd "M-<f3>") #'l/open-init-file)
   )
 (when t
-  (defun refresh-buffer()
+  (defun l/refresh-buffer()
     "A."
     (interactive)
     (message "Refresh buffer...")
     (revert-buffer t)
     )
-  (global-set-key (kbd "<f8>") #'refresh-buffer)
+  (global-set-key (kbd "<f8>") #'l/refresh-buffer)
   )
 (when t
-  (defun next-half-page-lines()
+  (defun l/next-half-page-lines()
     "Move cursor to next half-page lines."
     (interactive)
     (forward-line (/ (window-body-height) 2)))
-  (defun previous-half-page-lines()
+  (defun l/previous-half-page-lines()
     "Move cursor to previous half-page lines."
     (interactive)
     (forward-line (/ (window-body-height) -2)))
-  (global-set-key "\M-N" 'next-half-page-lines) ;; 光标向下移动 屏幕一半行
-  (global-set-key "\M-P" 'previous-half-page-lines) ;; 光标向上移动屏幕一半行
+  (global-set-key "\M-N" 'l/next-half-page-lines) ;; 光标向下移动 屏幕一半行
+  (global-set-key "\M-P" 'l/previous-half-page-lines) ;; 光标向上移动屏幕一半行
   )
 (when t
-  (defun load-config(config-file-name)
+  (defun l/load-config(config-file-name)
     (load-file (expand-file-name config-file-name user-emacs-directory))
     )
   )
@@ -214,14 +283,14 @@ file to visit if current buffer is not visiting a file."
       (define-key map (kbd "z") #'backward-word)
       (define-key map (kbd "a") #'back-to-indentation)
       (define-key map (kbd "g") #'move-end-of-line)
-      (define-key map (kbd "N") #'next-half-page-lines)
-      (define-key map (kbd "j") #'next-half-page-lines)
-      (define-key map (kbd "P") #'previous-half-page-lines)
-      (define-key map (kbd "k") #'previous-half-page-lines)
+      (define-key map (kbd "N") #'l/next-half-page-lines)
+      (define-key map (kbd "j") #'l/next-half-page-lines)
+      (define-key map (kbd "P") #'l/previous-half-page-lines)
+      (define-key map (kbd "k") #'l/previous-half-page-lines)
       (define-key map (kbd "4") #'scroll-up-command)
       (define-key map (kbd "2") #'scroll-down-command)
-      (define-key map (kbd "w") #'scroll-half-page-down)
-      (define-key map (kbd "r") #'scroll-half-page-up)
+      (define-key map (kbd "w") #'l/scroll-half-page-down)
+      (define-key map (kbd "r") #'l/scroll-half-page-up)
       (define-key map (kbd "i") #'repeat-exit)
       (define-key map (kbd "o") #'other-window)
       (define-key map (kbd "O") #'other-frame)
@@ -229,6 +298,7 @@ file to visit if current buffer is not visiting a file."
       (define-key map (kbd "x") #'delete-char)
       (define-key map (kbd "t") #'kill-current-buffer)
       (define-key map (kbd "c") #'comment-line)
+      ;; (define-key map (kbd "") #'backward-delete-char-untabify)
       (define-key map (kbd ".") #'xref-find-definitions)
       (define-key map (kbd "/") #'xref-find-references)
       (define-key map (kbd ",") #'xref-go-back)
@@ -237,7 +307,7 @@ file to visit if current buffer is not visiting a file."
       (define-key map (kbd "0") #'delete-window)
       (define-key map (kbd "[") #'l/tab-line-switch-prev-tab)
       (define-key map (kbd "]") #'l/tab-line-switch-next-tab)      
-      (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word previous-half-page-lines next-half-page-lines scroll-up-command scroll-down-command scroll-half-page-up scroll-half-page-down other-window kill-current-buffer
+      (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word l/previous-half-page-lines l/next-half-page-lines scroll-up-command scroll-down-command l/scroll-half-page-up l/scroll-half-page-down other-window kill-current-buffer   delete-char move-end-of-line
 			      xref-find-definitions xref-find-references xref-go-back comment-line
 			      embark-dwim end-of-buffer beginning-of-buffer ace-window delete-window
 			      l/tab-line-switch-next-tab l/tab-line-switch-prev-tab))
@@ -256,7 +326,7 @@ file to visit if current buffer is not visiting a file."
   
   (setq mode-line-default-color (face-attribute 'mode-line :background))
   (defun l/repeat-mode-show-in-mode-line (&rest args)
-    (set-face-attribute 'mode-line-active nil :background "red")
+    (set-face-attribute 'mode-line-active nil :background "firebrick4")
     ;; (set-face-attribute 'hl-line nil :background "red")
     ;; (setq tab-bar-local-format-color "yellow")
     ""
@@ -482,6 +552,28 @@ ALIST next list args"
      )
    )
   )
+;; --------------------thirdpkg-emacs--------------------
+(defun l/ace-window()
+  (interactive)
+  (package-initialize t)
+  (use-package ace-window
+    :ensure t
+    :demand t
+    :bind (("C-x o" . ace-window)
+	   ("C-x M-0" . ace-delete-window)
+	   ("C-x M-o" . ace-delete-window)
+           ;; ("C-x C-o" . ace-window)
+           )  ;; was delete-blank-lines
+    :config
+    (custom-set-faces
+     '(aw-leading-char-face
+       ((t (:inherit ace-jump-face-foreground :height 3.0 :background "yellow")))))
+    (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
+          aw-scope 'frame)
+    ;; (ace-window arg)
+    )
+  )
+(keymap-global-set "C-x o" #'l/ace-window)
 
 ;; --------------------frame-emacs--------------------
 (when t
@@ -509,7 +601,10 @@ ALIST next list args"
   (set-char-table-range char-width-table ?— 1)
   (set-char-table-range char-width-table ?… 1)
   )
-
+(when (and (not (daemonp)) (not (display-graphic-p)))
+  (message "tty-fix")
+  (global-completion-preview-mode -1)
+  )
 ;; (require 'cl-lib)
 (provide 'init-builtin-mini)
 ;;; init-builtin-mini.el ends here

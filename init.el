@@ -6,12 +6,12 @@
 ;; first load config
 (load-file (expand-file-name "init-builtin-mini.el" user-emacs-directory))
 
+;; 使用default-frame-alist设置了默认字体了
 ;; (unless (daemonp)
-;;   (normal-font)
+;;   (l/normal-font)
 ;;  )
 
 
 ;; (mini-frame)
 
 
-(put 'dired-find-alternate-file 'disabled nil)
