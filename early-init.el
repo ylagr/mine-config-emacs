@@ -2,7 +2,7 @@
 ;;; Commentary:
 ;;; Emacs Startup File --- initialization for Emacs
 ;;; code:
-(setq package-enable-at-startup nil)
+(setq package-enable-at-startup nil)	;; 禁止package 自动初始化
 ;; ui
 ;;(setq default-frame-alist '((height . 48) (width . 100)))
 (setq default-frame-alist
@@ -11,8 +11,8 @@
 	(left . 220)
 	(top . 50)
 	(font . "Fantasque Sans Mono")
-;;	(vertical-scroll-bars . +1)
-	(horizontal-scroll-bars . +1)
+	(vertical-scroll-bars . -1)
+	(horizontal-scroll-bars . -1)
 ;;	(tool-bar-mode . +1)
 	)
       )
@@ -37,8 +37,8 @@
     (l/normal-font)
     (setq-local attrs (frame-monitor-attributes (selected-frame)))
     (setq-local l/geometry (alist-get 'geometry attrs))
-    (setq-local l/display-pixel-width (nth 2 geometry))
-    (setq-local l/display-pixel-height (nth 3 geometry))
+    (setq-local l/display-pixel-width (nth 2 l/geometry))
+    (setq-local l/display-pixel-height (nth 3 l/geometry))
     (l/resize-frame
      l/frame
      (round (* l/display-pixel-width 0.9));;(- (/ (display-pixel-width) (frame-char-width)) 20) ;;220
@@ -58,8 +58,8 @@
     (l/normal-font)
     (setq-local attrs (frame-monitor-attributes (selected-frame)))
     (setq-local l/geometry (alist-get 'geometry attrs))
-    (setq-local l/display-pixel-width (nth 2 geometry))
-    (setq-local l/display-pixel-height (nth 3 geometry))
+    (setq-local l/display-pixel-width (nth 2 l/geometry))
+    (setq-local l/display-pixel-height (nth 3 l/geometry))
     (l/resize-frame
      l/frame
      (round (* l/display-pixel-width 0.75));;(- (/ (display-pixel-width) (frame-char-width)) 20) ;;220

@@ -6,12 +6,10 @@
 ;; first load config
 (load-file (expand-file-name "init-builtin-mini.el" user-emacs-directory))
 
-;; 使用default-frame-alist设置了默认字体了
-;; (unless (daemonp)
-;;   (l/normal-font)
-;;  )
+;; 使用default-frame-alist设置了默认字体
 
 
 ;; (mini-frame)
+;;(l/plugin-start)
 
-
+(setq eldoc-help-at-pt t)

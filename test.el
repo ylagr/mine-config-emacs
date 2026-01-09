@@ -271,12 +271,14 @@
 	    `(menu-item "h4" my-test-func
 		        :help "say hello"
 			;; :image ,my-hello-icon
-			:image nil
+			:image (lambda () nil)
 			)
 	    )
 )
+(setq tool-bar-style 'image)
 (setq tool-bar-style 'both-horiz)
 (setq tool-bar-style 'text)
+(setq tool-bar-style nil)
 (setq tool-bar-style 'text-image-horiz)
 
 

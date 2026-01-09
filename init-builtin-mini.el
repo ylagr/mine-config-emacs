@@ -2,10 +2,12 @@
 ;;; Commentary:
 ;;; Emacs Startup File --- initialization for Emacs
 ;;; code:
+;; --------------------const-emacs -----------------
+(defconst +only-tty  (and (not (daemonp)) (not (display-graphic-p))))
 ;; --------------------pkg-emacs--------------------
 ;; set package archives. possibly set mirrors
 (defconst +i-am-in-china +1)
-
+(setq use-package-expand-minimally t)
 (with-eval-after-load 'package
   (if +i-am-in-china
       (setq package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
@@ -20,18 +22,30 @@
 (setq icomplete-in-buffer t) ;; ???
 ;;(load-file (expand-file-name "init-core.el" user-emacs-directory))
 (global-completion-preview-mode 1) ;;全局补全预览
-(electric-pair-mode 1)
+(electric-pair-mode 1)		   ;; 自动补全括号
 (add-hook 'tty-setup-hook #'xterm-mouse-mode)
 (setq recenter-positions '(top 0.3 bottom)) ;;中心点
 (setq confirm-kill-emacs 'yes-or-no-p)
 (setq use-short-answers t)
-(set-face-attribute 'default nil :background "grey94" :foreground "black" )
-;; asdfasdfĵƣ
+(defvar default-background-color "grey94")
+(set-face-attribute 'default nil :background default-background-color :foreground "black" )
+
+(setq show-paren-when-point-in-periphery t
+      show-paren-when-point-inside-paren t
+      show-paren-style 'mixed
+      show-paren-delay 0.2
+      ;; show-paren-context-when-offscreen 'child-frame
+      show-paren-context-when-offscreen 'overlay
+      ;; show-paren-context-when-offscreen t
+      )
+
 (setq echo-keystrokes 0.01) ;;fast echo key sequence
 (setq isearch-lazy-count t
       ;; lazy-count-prefix-format "%s/%s " ;; 默认配置就是这个
       )
-(symbol-value 'mode-line-format)
+(setq whitespace-line-column 880) ;; whitespace-line-mode show ugly, set this can set line large this num show ugly ui.
+(eval-after-load "whitespace" `(set-face-attribute 'whitespace-space nil :background default-background-color))
+
 (set-face-attribute 'mode-line-inactive nil
 		    :background (face-attribute 'default :background)
 		    ;; :foreground (face-attribute 'default :background)
@@ -43,10 +57,13 @@
 ;; (setq eldoc-display-functions '(eldoc-display-in-buffer))
 (global-tab-line-mode 1)
 (global-display-line-numbers-mode 1)
-(global-visual-line-mode 1)
+;; (global-visual-line-mode 1)
 (column-number-mode 1)
 
 ;; --------------------BEHAVIOR-emacs--------------------
+(setq x-select-enable-clipboard nil)	 ;; 关闭和系统剪贴板的交互
+(setq truncate-partial-width-windows 10) ;; 截断行判断窗口宽度调整，默认50
+(setq compile-command "")
 (put 'dired-find-alternate-file 'disabled nil) ;; 设置取消疑惑的命令警告
 (setq delete-by-moving-to-trash t)
 (setq minibuffer-follows-selected-frame nil) ;; 让minibuffer只在启动minibuffer的frame生效
@@ -59,20 +76,31 @@
 (setq scroll-preserve-screen-position t)
 (global-so-long-mode t)	;; Disable fancy features when the file is too large
 (setq kill-region-dwim 'emacs-word)
+;; Mark
+(setq global-mark-ring-max 50)
+(setq mark-ring-max 50)
+(setq set-mark-command-repeat-pop t)
 
-
+;; (add-hook 'after-init-hook #'(lambda () (recentf-mode +1)))
+;; (use-package emacs :defer t :config (recentf-mode +1))
 (setq org-indent-mode-turns-on-hiding-stars nil)
+
+(eval-after-load "grep"
+  `(progn
+     (add-to-list 'grep-find-ignored-files ".tag*")
+     (add-to-list 'grep-find-ignored-files ".TAG*")
+     (add-to-list 'grep-find-ignored-files "tag*")
+     (add-to-list 'grep-find-ignored-files "TAG*")
+     ))
+
 (use-package wgrep
+  :load-path "lib/wgrep/"
   :bind
   (:map grep-mode-map
 	("C-c C-p" . wgrep-change-to-wgrep-mode)
 	("e" . wgrep-change-to-wgrep-mode)
 	)
   :config
-  (add-to-list 'grep-find-ignored-files ".tag*")
-  (add-to-list 'grep-find-ignored-files ".TAG*")
-  (add-to-list 'grep-find-ignored-files "tag*")
-  (add-to-list 'grep-find-ignored-files "TAG*")
 
   )
 
@@ -143,22 +171,69 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-j C-f" #'l/delete-whole-line)	;; not save in kill-ring
 (keymap-global-set "C-j w" #'l/delete-whole-line)	;; not save
 (keymap-global-set "C-j h" #'l/delete-line)	;; not save in kill-ring
+(keymap-global-set "C-j m" #'l/push-mark)
+(keymap-global-set "M-k" #'l/move-forward-of-bounds-of-thing-at-point)
+(keymap-global-set "M-K" #'kill-sentence)
+(keymap-global-set "M-l" #'downcase-dwim)
+(keymap-global-set "M-u" #'upcase-dwim)
+(keymap-global-set "M-c" #'capitalize-dwim)
+
+(keymap-global-set "C-S-v" #'clipboard-yank)
+(keymap-global-set "C-M-]" #'undo-only)
+(keymap-global-set "C-j c" #'comment-line)
+
 (keymap-global-set "C-c C-_" #'comment-or-uncomment-region)
 (keymap-global-set "C-c C-/" #'comment-or-uncomment-region)
+;; ----edit ----end
+(keymap-global-set "C-j r" #'compile) 	;; run shell command
 
+;; ----code ----end
+(keymap-global-set "C-x F" #'set-fill-column)
+(keymap-global-set "C-x f" #'find-file-at-point)
 (keymap-global-set "C-c C-n" #'scratch-buffer)
 (keymap-global-set "C-x 4 o" #'display-buffer)
 
 (keymap-global-set"<f5>" #'redraw-display)
+
+(keymap-global-set "C-M-i" #'completion-at-point)
+;;(global-set-key (kbd "C-M-i") #'completion-symbol)
 (keymap-global-set "C-h C-j" #'eldoc-print-current-symbol-info)
 (define-key isearch-mode-map [remap isearch-delete-char] #'isearch-del-char)
 (keymap-set minibuffer-local-completion-map "M-n" #'minibuffer-next-completion)
 (keymap-set completion-in-region-mode-map "M-n" #'minibuffer-next-completion)
 (keymap-set minibuffer-local-completion-map "M-p" #'minibuffer-previous-completion)
 (keymap-set completion-in-region-mode-map "M-p" #'minibuffer-previous-completion)
-(keymap-global-set "C-x t" #'kill-current-buffer)
+(keymap-global-set "C-j t" #'kill-current-buffer)
+(keymap-global-set "C-j v" #'view-mode)
 (keymap-global-set "M-o" #'other-window)
 (keymap-global-set "C-x B" #'ibuffer)
+
+(defun l/push-mark()
+  "Interactive."
+  (interactive)
+  (push-mark)
+  )
+;; region移动 C-x C-x
+(defun l/move-forward-of-bounds-of-thing-at-point ()
+  "Base on `'isearch-forward-thing-at-point ."
+  (interactive)
+  (require 'cl-generic)
+  (let ((bounds (seq-some (lambda (thing) (bounds-of-thing-at-point thing))
+			  ;; `isearch-forward-thing-at-point
+			  '(url symbol sexp)
+			  )))
+    (cond
+     (bounds
+      (when (use-region-p)
+        (deactivate-mark))
+      (when (< (car bounds) (point))
+	(goto-char (car bounds)))
+      )
+     (t
+      ))
+    )
+
+  )
 
 (defun l/kill-current-line ()
   "Clear line."
@@ -202,9 +277,22 @@ file to visit if current buffer is not visiting a file."
   (newline-and-indent)
   )
 
+(add-to-list 'save-some-buffers-action-alist
+	     '(?~ (lambda (buf)
+		    (with-current-buffer buf
+		      (set-buffer-modified-p nil))
+		    ;; Return t so we don't ask about BUF again.
+		    t)
+		  "skip this buffer and mark it unmodified")
+	     )
+(eval-after-load "project"
+  `(progn
+     (add-to-list 'project-switch-commands '(magit "Magit") t)
+     (keymap-set project-prefix-map "m" #'magit)
+     ))
 (eval-after-load "dired"
   '(progn
-     ;; (define-key dired-mode-map (kbd "b") #'dired-up-directory)
+     (define-key dired-mode-map (kbd "z") #'dired-up-directory)
      (define-key dired-mode-map (kbd "F") #'dired-create-empty-file)
      (defun l/alternate-back-dir()
        "Back to up dir alternate."
@@ -214,9 +302,16 @@ file to visit if current buffer is not visiting a file."
      (define-key dired-mode-map (kbd "b") #'l/alternate-back-dir)
      )
   )
-  (defun l/scroll-half-page-up()
-    
-    )
+(defun l/scroll-half-page-up()
+  "Scroll up half the page."
+  (interactive)
+  (scroll-up (/ (window-body-height) 2))
+  )
+(defun l/scroll-half-page-down()
+  "Scroll down half the page."
+  (interactive)
+  (scroll-down (/ (window-body-height) 2))
+  )
 
 (when t
   (defun l/open-init-file()
@@ -224,9 +319,9 @@ file to visit if current buffer is not visiting a file."
     (interactive)
     (find-file (concat user-emacs-directory "init.el"))
     )
-  (global-set-key "\C-x\ ," #'l/open-init-file)
-  (global-set-key "\C-x\ ，" #'l/open-init-file)
-  (global-set-key (kbd "M-<f3>") #'l/open-init-file)
+  (keymap-global-set "C-x ," #'l/open-init-file)
+  (keymap-global-set "C-x ，" #'l/open-init-file)
+  (keymap-global-set "M-<f3>" #'l/open-init-file)
   )
 (when t
   (defun l/refresh-buffer()
@@ -235,7 +330,7 @@ file to visit if current buffer is not visiting a file."
     (message "Refresh buffer...")
     (revert-buffer t)
     )
-  (global-set-key (kbd "<f8>") #'l/refresh-buffer)
+  (keymap-global-set  "<f8>" #'l/refresh-buffer)
   )
 (when t
   (defun l/next-half-page-lines()
@@ -246,15 +341,27 @@ file to visit if current buffer is not visiting a file."
     "Move cursor to previous half-page lines."
     (interactive)
     (forward-line (/ (window-body-height) -2)))
-  (global-set-key "\M-N" 'l/next-half-page-lines) ;; 光标向下移动 屏幕一半行
-  (global-set-key "\M-P" 'l/previous-half-page-lines) ;; 光标向上移动屏幕一半行
+  (keymap-global-set "M-N" 'l/next-half-page-lines) ;; 光标向下移动 屏幕一半行
+  (keymap-global-set "M-P" 'l/previous-half-page-lines) ;; 光标向上移动屏幕一半行
   )
 (when t
   (defun l/load-config(config-file-name)
     (load-file (expand-file-name config-file-name user-emacs-directory))
     )
   )
-
+(use-package drag-stuff
+  :load-path "lib/drag-stuff/"
+  ;;:ensure t
+  :bind
+  ("M-<up>"  . drag-stuff-up)
+  ("M-<down>" . drag-stuff-down)
+  )
+(use-package praise
+  :after async
+  :load-path "lib/praise"
+  ;;:bind
+  
+  )
 ;; --------------------repeat-emacs--------------------
 (when t
   (repeat-mode +1)
@@ -267,7 +374,16 @@ file to visit if current buffer is not visiting a file."
     (interactive)
     (tab-line-switch-to-prev-tab)
     )
-
+  (defun l/backward-kill-word()
+    "Avoid M-DEL in repeat-progress."
+    (interactive)
+    (backward-kill-word 1)
+    )
+  (defun l/delete-char()
+    "Avoid C-d in repeat-progress."
+    (interactive)
+    (delete-char 1)
+    )
   (defvar l/buffer-lunch-repeat-map ; C-x <left> 或 <right>
     (let ((map (make-sparse-keymap)))
       (define-key map (kbd "n") #'next-line)
@@ -281,21 +397,31 @@ file to visit if current buffer is not visiting a file."
       (define-key map (kbd "l") #'forward-char)
       (define-key map (kbd "v") #'forward-word)
       (define-key map (kbd "z") #'backward-word)
+      (define-key map (kbd "3") #'move-beginning-of-line)
       (define-key map (kbd "a") #'back-to-indentation)
       (define-key map (kbd "g") #'move-end-of-line)
-      (define-key map (kbd "N") #'l/next-half-page-lines)
-      (define-key map (kbd "j") #'l/next-half-page-lines)
-      (define-key map (kbd "P") #'l/previous-half-page-lines)
+      
       (define-key map (kbd "k") #'l/previous-half-page-lines)
+      (define-key map (kbd "j") #'l/next-half-page-lines)
+
       (define-key map (kbd "4") #'scroll-up-command)
       (define-key map (kbd "2") #'scroll-down-command)
       (define-key map (kbd "w") #'l/scroll-half-page-down)
       (define-key map (kbd "r") #'l/scroll-half-page-up)
+
+      (define-key map (kbd "P") #'tab-previous)
+      (define-key map (kbd "N") #'tab-next)
+      (define-key map (kbd "{") #'tab-previous)
+      (define-key map (kbd "}") #'tab-next)
+      (define-key map (kbd "'") #'tab-switcher)
+      (define-key map (kbd "y") #'tab-switcher)
+      
+      (define-key map (kbd "q") #'quit-window)
       (define-key map (kbd "i") #'repeat-exit)
       (define-key map (kbd "o") #'other-window)
       (define-key map (kbd "O") #'other-frame)
-      (define-key map (kbd "m") #'newline)
-      (define-key map (kbd "x") #'delete-char)
+      (define-key map (kbd "m") #'l/push-mark)
+      (define-key map (kbd "x") #'l/backward-kill-word)
       (define-key map (kbd "t") #'kill-current-buffer)
       (define-key map (kbd "c") #'comment-line)
       ;; (define-key map (kbd "") #'backward-delete-char-untabify)
@@ -305,11 +431,23 @@ file to visit if current buffer is not visiting a file."
       (define-key map (kbd ">") #'end-of-buffer)
       (define-key map (kbd "<") #'beginning-of-buffer)
       (define-key map (kbd "0") #'delete-window)
+      (define-key map (kbd "9") #'ace-window)
       (define-key map (kbd "[") #'l/tab-line-switch-prev-tab)
-      (define-key map (kbd "]") #'l/tab-line-switch-next-tab)      
-      (dolist (it '(next-line previous-line forward-char backward-char forward-word backward-word back-to-indentation move-end-of-line left-word right-word l/previous-half-page-lines l/next-half-page-lines scroll-up-command scroll-down-command l/scroll-half-page-up l/scroll-half-page-down other-window kill-current-buffer   delete-char move-end-of-line
-			      xref-find-definitions xref-find-references xref-go-back comment-line
-			      embark-dwim end-of-buffer beginning-of-buffer ace-window delete-window
+      (define-key map (kbd "]") #'l/tab-line-switch-next-tab)
+      (dolist (it '(next-line previous-line
+			      forward-char backward-char forward-word backward-word
+			      back-to-indentation left-word right-word
+			      l/previous-half-page-lines l/next-half-page-lines
+			      scroll-up-command scroll-down-command
+			      l/scroll-half-page-up l/scroll-half-page-down
+			      other-window kill-current-buffer quit-window ace-window delete-window
+			      l/delete-char l/backward-kill-word
+			      find-file find-file-at-point find-file--read-only view-mode-enter view-mode-enable view-mode view-mode-exit View-exit
+			      switch-to-buffer project-find-file-in
+			      move-end-of-line move-beginning-of-line end-of-visual-line end-of-visible-line beginning-of-visual-line
+			      tab-previous tab-next tab-switcher tab-switcher-select
+			      xref-find-definitions xref-find-references xref-go-back comment-line 
+			      embark-dwim end-of-buffer beginning-of-buffer l/push-mark
 			      l/tab-line-switch-next-tab l/tab-line-switch-prev-tab))
 	(put it 'repeat-map 'l/buffer-lunch-repeat-map))
       map)
@@ -317,13 +455,13 @@ file to visit if current buffer is not visiting a file."
     )
   (defvar l/frame-lunch-repeat-map ; C-x <left> 或 <right>
     (let ((omap (make-sparse-keymap)))
-      (define-key omap (kbd "O") #'other-frame)      
+      (define-key omap (kbd "O") #'other-frame)
       (dolist (it '(other-frame))
 	(put it 'repeat-map 'l/buffer-lunch-repeat-map))
       omap)
     "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
     )
-  
+
   (setq mode-line-default-color (face-attribute 'mode-line :background))
   (defun l/repeat-mode-show-in-mode-line (&rest args)
     (set-face-attribute 'mode-line-active nil :background "firebrick4")
@@ -354,6 +492,7 @@ file to visit if current buffer is not visiting a file."
 
 
 ;; --------------------window-emacs--------------------
+(setq window-min-height 1)
 (when t
   (defun l/clean-window-element (window)
     "Disable some ui.
@@ -364,77 +503,13 @@ WINDOW use to change"
       (tab-line-mode -1)
       )
     window)
-  (defun l/clean-window-element-clean-header_line (window)
-    "Test.  WINDOW is use to change.  CLEAN-FUNC-LIST is CHANGE window func."
-    (interactive)
-    (with-selected-window window
-      (setq-local header-line-format nil)
-      )
-    )
-  (defun l/display-buffer-in-side-window-action-clean-header_line (buffer alist)
-    "BUFFER.  ALIST."
-    (let ((win (display-buffer-in-side-window buffer alist)))
-      (when win
-	(l/clean-window-element-clean-header_line win)
-	)
-      win)
-    )
-
-  (defun l/display-buffer-in-side-window-action (buffer alist)
-    "BUFFER buffer.
-ALIST next list args"
-    (let ((win (display-buffer-in-side-window buffer alist)))
-      (when win
-	;; (l/clean-window-elementa win '((lambda () (setq-local header-line-format nil))))
-	(l/clean-window-element win)
-	;; (with-selected-window win (read-only-mode 1))
-	)
-      win)
-    )
-  (defun l/display-buffer-reuse-window-action (buffer alist)
-    "BUFFER buffer.
-ALIST next list args"
-    (let ((win (display-buffer-reuse-window buffer alist)))
-      (when win
-	(l/clean-window-element win)
-	;; (with-selected-window win (read-only-mode 1))
-	)
-      win)
-    )
-  (defun l/display-buffer-reuse-window-action-clean-header_line (buffer alist)
-    "BUFFER buffer.
-ALIST next list args"
-    (let ((win (display-buffer-reuse-window buffer alist)))
-      (when win
-	(l/clean-window-element win)
-	;; (with-selected-window win (read-only-mode 1))
-	)
-      win)
-    )
-  (defun l/display-buffer-at-bottom-window-action (buffer alist)
-    "BUFFER buffer.
-ALIST next list args"
-    (let ((win (display-buffer-at-bottom buffer alist)))
-      (when win
-	(l/clean-window-element win)
-	;; (with-selected-window win (read-only-mode 1))
-	)
-      win)
-    )
-  (defun l/display-buffer-in-side-window-action_show_tab-line (buffer alist)
-    "A. BUFFER.  ALIST."
-    (let ((win (display-buffer-in-side-window buffer alist)))
-      (when win
-	(tab-line-mode t)
-	)
-      )
-    )
+  
   (setq
    display-buffer-alist
-   '(
+   `(
      ("^\\(magit-process.*\\)"                            ;正则匹配buffer name
-      (display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
-       display-buffer-in-side-window)
+      ;;(display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+      (display-buffer-in-side-window)
       (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
       (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
       ;; (window-height . 0.3)                   ;同上
@@ -444,12 +519,12 @@ ALIST next list args"
        (select . t)                            ;自定义的param
        (quit . t)                              ;同上
        (popup . t)                             ;同上
-       (mode-line . none)
+       (mode-line . nil)
        ;; (no-other-window . t)
        ))
      ("^\\(magit-diff.*\\)"                            ;正则匹配buffer name
-      (display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
-       display-buffer-use-some-window)
+      ;;(display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+      (display-buffer-use-some-window)
       (side . left)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
       ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
       ;; (window-height . 0.2)                   ;同上
@@ -466,8 +541,8 @@ ALIST next list args"
        ;; (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
        ))
      ("^\\(magit.*\\)\\|\\(\\*xref.*\\)"                            ;正则匹配buffer name
-      (display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
-       display-buffer-in-side-window)
+      ;;(display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+      (display-buffer-in-side-window)
       (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
       (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
       (window-height . 0.6)                   ;同上
@@ -503,23 +578,25 @@ ALIST next list args"
      ;;   (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
      ;;   ))
      ("^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\|\\(\\*[Hh]elp\\*\\)\\|\\(\\*Metahelp\\*\\)"
-      (display-buffer-reuse-window l/display-buffer-in-side-window-action-clean-header_line)
+      ;;(display-buffer-reuse-window l/display-buffer-in-side-window-action-clean-header_line)
+      (display-buffer-in-side-window)
       ;; (l/display-buffer-reuse-window-action-clean-header_line l/display-buffer-in-side-window-action-clean-header_line)
       (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
       (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
-      (window-height . 0.3)                   ;同上
+      (window-height . 0.4)                   ;同上
       (slot . 2)                               ;这个会被display-buffer-in-side-window使用，控制window位置
       (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
       (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
        (select . t)                            ;自定义的param
        (quit . t)                              ;同上
        (popup . t)                             ;同上
-       (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
+       (mode-line-format . nil)               ;emacs version > 25， none会隐藏mode line，nil会显示...
        (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
        )
       )
      ("^\\(\\*gt-result\\*\\)"
-      (l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action_show_tab-line)
+      ;;(l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action_show_tab-line)
+      (display-buffer-in-side-window)
       (slot . 10)
       (post-command-select-window . visible)
       (window-parameters
@@ -527,25 +604,37 @@ ALIST next list args"
        )
       )
      ("^\\(\\*vterm\\*\\)"
-      (display-buffer-reuse-window display-buffer-in-side-window)
+      ;;      (display-buffer-reuse-window display-buffer-in-side-window)
+      (display-buffer-in-side-window)
       (side . right)
       (window-width . 0.4)
       (post-command-select-window . visible)
       )
      ("^\\(\\*eldoc.*\\)"
-      (display-buffer-reuse-window  l/display-buffer-in-side-window-action-clean-header_line)
-      (side . right)
+      ;;      (display-buffer-reuse-window  l/display-buffer-in-side-window-action-clean-header_line)
+      ;; (display-buffer-in-side-window)
+      ;; (display-buffer-at-bottom)
+      (display-buffer-in-side-window)
+      ;; (side . bottom)
+      (side . top)
       (slot . 100)
       ;; (window-width . 0.4)
-      (window-height . 0.1)
+      ;;(window-height . shrink-window-if-larger-than-buffer)
+      (window-min-height . 1)
+      ;; (window-height . fit-window-to-buffer)
+      (window-height . 2)
+      ;; (window-height . 0.05)
       (window-parameters
        (mode-line-format . none)
        (no-other-window . t)
+       (tab-line-format . none)
+       (header-line-format . none)
        )
       )
      ;;fallback
      ("^\\(\\*.*\\*\\)"
-      (display-buffer-reuse-window display-buffer-in-side-window)
+      ;;(display-buffer-reuse-window display-buffer-in-side-window)
+      (display-buffer-in-side-window)
       (side . right)
       (window-width . 0.4)
       )
@@ -553,43 +642,45 @@ ALIST next list args"
    )
   )
 ;; --------------------thirdpkg-emacs--------------------
-(defun l/ace-window()
+(defun l/plugin-start()
+  "Start plugin."
   (interactive)
-  (package-initialize t)
-  (use-package ace-window
-    :ensure t
-    :demand t
-    :bind (("C-x o" . ace-window)
-	   ("C-x M-0" . ace-delete-window)
-	   ("C-x M-o" . ace-delete-window)
-           ;; ("C-x C-o" . ace-window)
-           )  ;; was delete-blank-lines
-    :config
-    (custom-set-faces
-     '(aw-leading-char-face
-       ((t (:inherit ace-jump-face-foreground :height 3.0 :background "yellow")))))
-    (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
-          aw-scope 'frame)
-    ;; (ace-window arg)
-    )
+  (l/load-config "init-package.el")
   )
-(keymap-global-set "C-x o" #'l/ace-window)
+(unless (boundp 'l/plugin-start)
+  (keymap-global-set "C-j 9" #'l/plugin-start)
+  (keymap-global-set "C-j g" #'l/plugin-start)
+  (keymap-global-set "C-x u" #'l/plugin-start)
+  (keymap-global-set "C-x o" #'l/plugin-start)
+  (keymap-global-set "C-j j" #'l/plugin-start)
+  (keymap-global-set "C-x c u" #'l/plugin-start)
+  (keymap-global-set "C-x c p" #'l/plugin-start)
+  (keymap-global-set "C-x c ;" #'l/plugin-start)
+  (keymap-global-set "C-x c j" #'l/plugin-start)
+  (keymap-global-set "M-SPC t" #'l/plugin-start)
+  (keymap-global-set "M-SPC s" #'l/plugin-start)
+  (keymap-global-set "C-j s" #'l/plugin-start)
+  (keymap-global-set "M-SPC m" #'l/plugin-start)
+  (keymap-global-set "M-SPC g m" #'l/plugin-start)
+  (keymap-global-set "M-SPC g i" #'l/plugin-start)
+  (keymap-global-set "M-SPC b" #'l/plugin-start)
+  (keymap-global-set "M-SPC i" #'l/plugin-start)
+  (keymap-global-set "M-SPC e" #'l/plugin-start)
+  (keymap-global-set "M-SPC r r" #'l/plugin-start)
+  (keymap-global-set "M-SPC r s" #'l/plugin-start)
+  (keymap-global-set "M-SPC r l" #'l/plugin-start)
+  )
+
 
 ;; --------------------frame-emacs--------------------
-(when t
-  (global-set-key (kbd "<f12>") #'normal-frame)
-  (global-set-key (kbd "<f9>") #'mini-frame)
+(unless  +only-tty
+  (keymap-global-set  "<f12>" #'l/normal-frame)
+  (keymap-global-set  "<f9>" #'l/mini-frame)
   )
-(unless (daemonp)  (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b") ) ) )  )
-(defun l/after-make-frame-func(frame)
-  (select-frame frame)
-  (message "test-after-make-frame")
-  ;; (if eldoc-mode (eldoc-doc-buffer))
-  (set-frame-height frame (- (/ (display-pixel-height) (frame-char-height)) 5))
-  (set-frame-width frame (- (/ (display-pixel-width) (frame-char-width)) 5))
-  (raise-frame frame)
-  )
-;; (add-hook 'after-make-frame-functions #'l/after-make-frame-func)
+;;(unless (daemonp)
+  (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b") ) ) )
+;;  )
+
 
 ;; --------------------char-emacs--------------------
 (when t
@@ -601,9 +692,8 @@ ALIST next list args"
   (set-char-table-range char-width-table ?— 1)
   (set-char-table-range char-width-table ?… 1)
   )
-(when (and (not (daemonp)) (not (display-graphic-p)))
-  (message "tty-fix")
-  (global-completion-preview-mode -1)
+(when +only-tty
+  (global-auto-composition-mode -1)	;; fix only emacs run in terminal command
   )
 ;; (require 'cl-lib)
 (provide 'init-builtin-mini)

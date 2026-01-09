@@ -192,13 +192,11 @@
 (use-package emacs
   :config
   ;; dwim
-  (global-set-key (kbd "M-l") #'downcase-dwim)
-  (global-set-key (kbd "M-u") #'upcase-dwim)
-  (global-set-key (kbd "M-c") #'capitalize-dwim)
-  ;; Mark
-  (setq global-mark-ring-max 50)
-  (setq mark-ring-max 50)
-  (setq set-mark-command-repeat-pop t)
+
+  (global-set-key (kbd "M-l") #'downcase-word)
+  (global-set-key (kbd "M-u") #'upcase-word)
+  (global-set-key (kbd "M-c") #'capitalize-word)
+
   ;; Kill
   (setq kill-do-not-save-duplicates t)  ; not save same kill ring
   (setq save-interprogram-paste-before-kill t)  ;; save system copycliboard data into kill ring
@@ -240,10 +238,7 @@
 ;; Sorry, `other-window', but you are too weak!
 
 
-(use-package vundo
-  :bind
-  ("C-x u" . vundo)
-  )
+
 (use-package undohist
   :init
   (add-hook 'after-init-hook
@@ -782,14 +777,7 @@
 (use-package projection
 ;;  :disabled
   )
-(use-package magit
-  ;; :disabled
-  :defer t
-  :bind
-  ("C-j g" . #'magit)
-  :config
-  ;; (global-set-key (kbd "C-j g") #'magit)
-  )
+
 (use-package eglot
   :ensure nil
                                         ;  :hook (prog-mode . eglot-ensure)
@@ -1086,41 +1074,7 @@
   :bind ("C-M-<" . 'mc/mark-previous-like-this)
   )
 
-;; translate
-(use-package gt
-  :config
-  (setq gt-preset-translators
-	`((ts-1 . ,(gt-translator
-                    ;; :taker (gt-taker :langs '(en zh) :text 'word :prompt 'buffer)
-                    :taker (gt-taker :langs '(en zh) :text 'word :prompt nil)
-                    ;; :engines (gt-youdao-dict-engine)
-		    :engines
-		    (list
-		     ;;(gt-google-engine :if 'word)                        ; 只有当翻译内容为单词时启用
-                     ;; (gt-bing-engine :if '(and not-word parts))            ; 只有翻译内容不是单词且是多个段落时启用
-		     (gt-bing-engine :if '(and not-word))                  ; 只有翻译内容不是单词时启用
-		     ;;(gt-deepl-engine :if 'not-word :cache nil)          ; 只有翻译内容不是单词时启用; 不缓存
-		     (gt-youdao-dict-engine :if '(or src:zh tgt:zh))       ; 只有翻译中文时启用
-		     ;; (gt-deepl-engine :if '(and word))
-		     (gt-youdao-suggest-engine :if '(and word src:en))     ; 只有翻译英文单词时启用
-		     )
-                    ;; :render (gt-overlay-render))
-		    :render (gt-buffer-render)
-		    ;; :render (gt-posframe-pop-render)
-		    )
-		)
-          (ts-2 . ,(gt-translator
-                    :taker (gt-taker :langs '(en fr ru) :text 'sentence)
-                    :engines (gt-google-engine)
-                    :render (gt-insert-render)))
-          (ts-3 . ,(gt-translator
-                    :taker (gt-taker :langs '(en zh) :text 'buffer
-                                     :pick 'word :pick-pred (lambda (w) (length> w 6)))
-                    :engines (gt-google-engine)
-                    :render (gt-overlay-render :type 'help-echo))))
-	)
-  (global-set-key (kbd "M-SPC t") #'gt-translate)
-  )
+
 
 (use-package dumb-jump
   :config
@@ -1265,11 +1219,7 @@
   )
 (use-package run-stuff
   )
-(use-package drag-stuff
-  :config
-  (global-set-key (kbd "M-<up>") #'drag-stuff-up)
-  (global-set-key (kbd "M-<down>") #'drag-stuff-down)
-  )
+
 
 
 (setq fringes-outside-margins t)
