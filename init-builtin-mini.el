@@ -94,7 +94,7 @@
      ))
 
 (use-package wgrep
-  :load-path "lib/wgrep/"
+  :load-path "user-lisp/wgrep/"
   :bind
   (:map grep-mode-map
 	("C-c C-p" . wgrep-change-to-wgrep-mode)
@@ -149,6 +149,24 @@ file to visit if current buffer is not visiting a file."
 (setq completion-styles '(basic flex partial-completion emacs22))
 
 ;; --------------------keybind-emacs--------------------
+;; fix tty-key
+(defun l/quoted-insert-with-read-key (arg)
+  "Insert the next character using read-key, not read-char."
+  (interactive "*p")
+  (let ((char (read-key))
+	)
+    ;; Ensure char is treated as a character code for insertion
+    (if (eq char 67108896)
+	(insert-and-inherit ?\0)
+      (unless (characterp char)
+	(user-error "%s is not a valid character"
+                    (key-description (vector char))))
+      (when (numberp char)
+	(while (> arg 0)
+          (insert-and-inherit char)
+          (setq arg (1- arg))))))
+  )
+(keymap-global-set "C-q" #'l/quoted-insert-with-read-key)
 
 ;; ----leader key----
 (keymap-global-unset "C-j")
@@ -350,7 +368,7 @@ file to visit if current buffer is not visiting a file."
     )
   )
 (use-package drag-stuff
-  :load-path "lib/drag-stuff/"
+  :load-path "user-lisp/drag-stuff/"
   ;;:ensure t
   :bind
   ("M-<up>"  . drag-stuff-up)

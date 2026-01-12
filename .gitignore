@@ -13,6 +13,7 @@ share
 !init.el
 !init.elbak
 !init-builtin-mini.el
+!init-package.el
 !tmp.el
 !test.el
 !temp/*
@@ -21,3 +22,7 @@ share
 !lib/*/
 !lib/*
 !lib/**/*
+!user-lisp/
+!user-lisp/**
+*.elc
+.*
