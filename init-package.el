@@ -3,7 +3,14 @@
 ;;; Emacs Startup File --- initialization for Emacs
 ;;; code:
 
-(package-initialize)
+;;(setq package-quickstart t)
+;; 只有在 quickstart 文件存在时才跳过初始化
+
+(unless (file-exists-p package-quickstart-file)
+  (package-initialize))
+(if +only-tty
+    (package-initialize)
+    )
 
 (defvar l/plugin-start nil)
 
@@ -15,6 +22,18 @@
   ("C-j g" . #'magit)
   :config
   ;; (global-set-key (kbd "C-j g") #'magit)
+  )
+(use-package prescient
+  :ensure t
+  :config
+  (setq completion-styles '(basic prescient partial-completion emacs22))
+  (prescient-persist-mode)
+  )
+(use-package hotfuzz
+  :after prescient
+  :ensure t
+  :config
+  (setq completion-styles '(basic prescient hotfuzz partial-completion emacs22))
   )
 
 (use-package ace-window
@@ -154,6 +173,7 @@
 			       company-sort-prefer-same-case-prefix
                                ;; company-sort-by-occurrence
 			       ))
+ (setq company-backends `(company-capf company-files (company-dabbrev-code company-gtags company-etags company-keywords) company-dabbrev))
   )
 
 (use-package consult
@@ -179,17 +199,28 @@
   )
 
 (use-package vertico
-  :disabled ;; 有点卡
+  ;;:disabled ;; 有点卡
+  :defer
   :init
   (vertico-mode +1)
-  (icomplete-mode -1)
-  (setq vertico-multiform-commands
-	'((consult-imenu buffer indexed)
-	  (consult-line buffer)
-	  (consult-line-multi buffer)))
-  (setq vertico-multiform-categories
-	'((consult-grep buffer)))
-  (vertico-multiform-mode t)
+  ;;  (icomplete-mode 1)
+  ;; (setq vertico-multiform-commands
+  ;; 	'((consult-imenu buffer indexed)
+  ;; 	  (describe-variable buffer indexed)
+  ;; 	  (describe-bindings buffer indexed)
+  ;; 	  (describe-function buffer indexed)
+  ;; 	  (describe- buffer indexed)
+  ;; 	  (describe-variable buffer indexed)
+  ;; 	  (describe-variable buffer indexed)
+  ;; 	  (execute-extended-command buffer indexed)
+  ;; 	  (consult-line buffer)
+  ;; 	  (consult-global-mark buffer indexed)
+  ;; 	  (consult-mark buffer indexed)
+  ;; 	  (consult-line-multi buffer)))
+  ;;  (setq vertico-multiform-categories
+  ;;	'((consult-grep buffer)))
+  ;;  (vertico-multiform-mode t)
+  (vertico-buffer-mode t)
   )
 
 (use-package clipetty
@@ -253,9 +284,14 @@
 (use-package async
   :ensure t
   )
+(use-package kkp
+  :ensure t
+  :config
+  ;; (setq kkp-alt-modifier 'alt) ;; use this if you want to map the Alt keyboard modifier to Alt in Emacs (and not to Meta)
+  (global-kkp-mode +1)
+  )
 
 (setq l/plugin-start t)
-
 
 
 

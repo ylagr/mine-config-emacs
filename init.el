@@ -3,6 +3,7 @@
 ;;; Emacs Startup File --- initialization for Emacs
 ;;; code:
 
+(defvar l/init-plugin t)
 ;; first load config
 (load-file (expand-file-name "init-builtin-mini.el" user-emacs-directory))
 
@@ -13,3 +14,5 @@
 ;;(l/plugin-start)
 
 (setq eldoc-help-at-pt t)
+
+

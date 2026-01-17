@@ -2,7 +2,9 @@
 ;;; Commentary:
 ;;; Emacs Startup File --- initialization for Emacs
 ;;; code:
-(setq package-enable-at-startup nil)	;; 禁止package 自动初始化
+(setq user-lisp-auto-scrape nil)
+(setq package-quickstart t) ;; 使用quickstart 文件来处理初始化
+;;(setq package-enable-at-startup nil)	;; 禁止package 自动初始化
 ;; ui
 ;;(setq default-frame-alist '((height . 48) (width . 100)))
 (setq default-frame-alist
@@ -11,11 +13,12 @@
 	(left . 220)
 	(top . 50)
 	(font . "Fantasque Sans Mono")
-	(vertical-scroll-bars . -1)
-	(horizontal-scroll-bars . -1)
+	(vertical-scroll-bars . nil)
+	(horizontal-scroll-bars . nil)
 ;;	(tool-bar-mode . +1)
 	)
       )
+(setq use-package-compute-statistics t) ;; use-package计算耗时
 
 
 (defun l/normal-font ()

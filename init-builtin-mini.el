@@ -3,6 +3,8 @@
 ;;; Emacs Startup File --- initialization for Emacs
 ;;; code:
 ;; --------------------const-emacs -----------------
+(setq package-quickstart t)
+(setq gc-cons-threshold 16000000)
 (defconst +only-tty  (and (not (daemonp)) (not (display-graphic-p))))
 ;; --------------------pkg-emacs--------------------
 ;; set package archives. possibly set mirrors
@@ -179,6 +181,7 @@ file to visit if current buffer is not visiting a file."
 ;;(keymap-global-set "M-SPC ")
 ;; ----leader key----end
 
+(keymap-global-set "C-M-w" #'yank)
 (keymap-global-set "C-j C-i" #'newline-and-indent-up)
 (keymap-global-set "C-j C-o" #'newline-and-indent-down)
 (keymap-global-set "C-j D" #'duplicate-dwim)
@@ -195,6 +198,7 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "M-l" #'downcase-dwim)
 (keymap-global-set "M-u" #'upcase-dwim)
 (keymap-global-set "M-c" #'capitalize-dwim)
+(keymap-global-set "M-\"" #'l/choose-inner)
 
 (keymap-global-set "C-S-v" #'clipboard-yank)
 (keymap-global-set "C-M-]" #'undo-only)
@@ -226,16 +230,50 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "M-o" #'other-window)
 (keymap-global-set "C-x B" #'ibuffer)
 
+(keymap-global-set "C-SPC" #'l/set-marker)
+(keymap-global-set "C-@" #'l/set-marker)
+(keymap-global-set "C-c C-@" #'set-mark-command)
+(keymap-global-set "C-c C-SPC" #'set-mark-command)
+;;(keymap-global-set "C-@" #'set-mark-command)
+(defun l/choose-inner (char)
+  (interactive (list
+		;;(prefix-numeric-value current-prefix-arg)
+		(read-char-from-minibuffer "Around to char: " nil 'read-char-history)
+		))
+  ;;  (message "%s" (type-of char))
+  (when (use-region-p)
+        (deactivate-mark)
+	)
+  (let ((cur-pos (point)))
+    (re-search-forward (string char))
+    (set-marker (mark-marker) (- (point) 1))
+    (goto-char cur-pos)
+    (re-search-backward (string char))
+    (forward-char)
+    (setq mark-active t)
+    )
+  )
+
+(defun l/set-marker()
+  (interactive)
+  (set-marker (mark-marker) (point))
+  (setq mark-active t)
+  )
+
 (defun l/push-mark()
   "Interactive."
   (interactive)
   (push-mark)
   )
+
 ;; region移动 C-x C-x
+
+;; (require 'cl-generic)
 (defun l/move-forward-of-bounds-of-thing-at-point ()
   "Base on `'isearch-forward-thing-at-point ."
   (interactive)
   (require 'cl-generic)
+  (back-to-indentation)
   (let ((bounds (seq-some (lambda (thing) (bounds-of-thing-at-point thing))
 			  ;; `isearch-forward-thing-at-point
 			  '(url symbol sexp)
@@ -243,12 +281,16 @@ file to visit if current buffer is not visiting a file."
     (cond
      (bounds
       (when (use-region-p)
-        (deactivate-mark))
-      (when (< (car bounds) (point))
-	(goto-char (car bounds)))
+        (deactivate-mark)
+	)
+      ;;(when (< (car bounds) (point))
+      (goto-char (cdr bounds))
+      ;;	(set-mark (cdr bounds))
+      (set-marker (mark-marker) (cdr bounds))
+      (goto-char (car bounds))
+      (setq mark-active t)
       )
-     (t
-      ))
+     )
     )
 
   )
@@ -665,7 +707,12 @@ WINDOW use to change"
   (interactive)
   (l/load-config "init-package.el")
   )
+(if (boundp 'l/init-plugin)
+    (l/plugin-start)
+  )
+
 (unless (boundp 'l/plugin-start)
+  (keymap-global-set "C-," #'l/plugin-start)
   (keymap-global-set "C-j 9" #'l/plugin-start)
   (keymap-global-set "C-j g" #'l/plugin-start)
   (keymap-global-set "C-x u" #'l/plugin-start)
