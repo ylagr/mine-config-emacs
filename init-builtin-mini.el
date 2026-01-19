@@ -552,7 +552,7 @@ file to visit if current buffer is not visiting a file."
 
 
 ;; --------------------window-emacs--------------------
-(setq window-min-height 1)
+(setq window-min-height 2)
 (when t
   (defun l/clean-window-element (window)
     "Disable some ui.
@@ -739,8 +739,8 @@ WINDOW use to change"
 
 ;; --------------------frame-emacs--------------------
 (unless  +only-tty
-  (keymap-global-set  "<f12>" #'l/normal-frame)
-  (keymap-global-set  "<f9>" #'l/mini-frame)
+  (keymap-global-set  "M-<f12>" #'l/normal-frame)
+  (keymap-global-set  "M-<f9>" #'l/mini-frame)
   )
 ;;(unless (daemonp)
   (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b") ) ) )
