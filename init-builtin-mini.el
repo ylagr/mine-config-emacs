@@ -31,6 +31,12 @@
 (setq use-short-answers t)
 (defvar default-background-color "grey94")
 (set-face-attribute 'default nil :background default-background-color :foreground "black" )
+(setq default-modeline-box-face (face-attribute 'mode-line :box))
+(set-face-attribute 'mode-line nil  :box '(:line-width 1 :color "#a1afc9"))
+;; (setq fringe-styles "default") ;; fringe 在终端没用 fringe
+(setq-default left-margin-width 1)
+(setq-default right-margin-width 1)
+
 
 (setq show-paren-when-point-in-periphery t
       show-paren-when-point-inside-paren t
@@ -58,11 +64,16 @@
 (setq eldoc-echo-area-prefer-doc-buffer t)
 ;; (setq eldoc-display-functions '(eldoc-display-in-buffer))
 (global-tab-line-mode 1)
-(global-display-line-numbers-mode 1)
+;; (global-display-line-numbers-mode 1)
 ;; (global-visual-line-mode 1)
 (column-number-mode 1)
 
 ;; --------------------BEHAVIOR-emacs--------------------
+(add-hook 'find-file-hook #'view-mode)
+(defun l/change-buffer-in-view-when-editable()
+  (selected-window)
+  )
+;;(setq window-buffer-change-functions )
 (setq x-select-enable-clipboard nil)	 ;; 关闭和系统剪贴板的交互
 (setq truncate-partial-width-windows 10) ;; 截断行判断窗口宽度调整，默认50
 (setq compile-command "")
@@ -181,6 +192,7 @@ file to visit if current buffer is not visiting a file."
 ;;(keymap-global-set "M-SPC ")
 ;; ----leader key----end
 
+(keymap-global-set "M-L" #'global-display-line-numbers-mode)
 (keymap-global-set "C-M-w" #'yank)
 (keymap-global-set "C-j C-i" #'newline-and-indent-up)
 (keymap-global-set "C-j C-o" #'newline-and-indent-down)
@@ -444,6 +456,11 @@ file to visit if current buffer is not visiting a file."
     (interactive)
     (delete-char 1)
     )
+  ;;  (setq repeat-check-key t)
+  (keymap-global-set "C-c [" #'l/tab-line-switch-prev-tab)
+  (keymap-global-set "C-c ]" #'l/tab-line-switch-next-tab)
+  (keymap-global-set "C-x <left>" #'l/tab-line-switch-prev-tab)
+  (keymap-global-set "C-x <right>" #'l/tab-line-switch-next-tab)
   (defvar l/buffer-lunch-repeat-map ; C-x <left> 或 <right>
     (let ((map (make-sparse-keymap)))
       (define-key map (kbd "n") #'next-line)
@@ -502,7 +519,8 @@ file to visit if current buffer is not visiting a file."
 			      l/scroll-half-page-up l/scroll-half-page-down
 			      other-window kill-current-buffer quit-window ace-window delete-window
 			      l/delete-char l/backward-kill-word
-			      find-file find-file-at-point find-file--read-only view-mode-enter view-mode-enable view-mode view-mode-exit View-exit
+			      ;; find-file find-file-at-point
+			      find-file--read-only view-mode-enter view-mode-enable view-mode view-mode-exit View-exit
 			      switch-to-buffer project-find-file-in
 			      move-end-of-line move-beginning-of-line end-of-visual-line end-of-visible-line beginning-of-visual-line
 			      tab-previous tab-next tab-switcher tab-switcher-select
@@ -701,6 +719,7 @@ WINDOW use to change"
      )
    )
   )
+;;^
 ;; --------------------thirdpkg-emacs--------------------
 (defun l/plugin-start()
   "Start plugin."

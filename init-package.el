@@ -150,12 +150,15 @@
   (setq company-minimum-prefix-length 3)
   (keymap-global-set "C-," #'company-complete)
   ;;(keymap-global-set "C-j j" #'company-complete)
+  ;; fringe
   
-  (setq company-tooltip-align-annotations t)
+  (setq company-dabbrev-code-everywhere t)
+    (setq company-tooltip-align-annotations t)
   (setq company-tooltip-offset-display 'lines)
   (setq company-frontends
 	'(company-preview-frontend company-echo-metadata-frontend company-pseudo-tooltip-frontend)
 	)
+  
   ;; 默认的 tab 是 循环选项,替换成补全
   (define-key company-active-map (kbd "<tab>") #'company-complete-selection)
   (define-key company-active-map (kbd "TAB") #'company-complete-selection)

@@ -13,7 +13,6 @@
 ;; (mini-frame)
 ;;(l/plugin-start)
 
-
 (setq eldoc-help-at-pt t) 		;;
 (setq view-lossage-auto-refresh t) ;; C-h l auto refresh
 
@@ -33,3 +32,4 @@
 (setq ibuffer-human-readable-size t)
 (setq Buffer-menu-human-readable-sizes t)
 (setq even-window-heights nil)
+
