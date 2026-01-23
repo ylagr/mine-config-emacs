@@ -6,6 +6,7 @@
 (setq package-quickstart t)
 (setq gc-cons-threshold 16000000)
 (defconst +only-tty  (and (not (daemonp)) (not (display-graphic-p))))
+
 ;; --------------------pkg-emacs--------------------
 ;; set package archives. possibly set mirrors
 (defconst +i-am-in-china +1)
@@ -17,7 +18,7 @@
                                ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")))
     (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))))
 
-
+
 ;; --------------------UI-emacs-------------------------
 (setq mode-line-collapse-minor-modes '(eldoc-mode))
 (icomplete-mode 1) ;;内置补全功能
@@ -62,14 +63,32 @@
 (save-place-mode t) ;;保存上次光标位置
 (global-eldoc-mode)
 (setq eldoc-echo-area-prefer-doc-buffer t)
+(setq eldoc-help-at-pt t) 		;; help key at point
 ;; (setq eldoc-display-functions '(eldoc-display-in-buffer))
 (global-tab-line-mode 1)
 ;; (global-display-line-numbers-mode 1)
 ;; (global-visual-line-mode 1)
 (column-number-mode 1)
 
+
+;;;; behavior
 ;; --------------------BEHAVIOR-emacs--------------------
-(add-hook 'find-file-hook #'view-mode)
+(setq hs-display-lines-hidden t)
+(setq hs-show-indicators t)
+(setq hs-indicator-type nil)
+(setq ibuffer-use-header-line 'title)
+(setq ibuffer-human-readable-size t)
+(setq Buffer-menu-human-readable-sizes t)
+(setq even-window-heights nil)
+
+(setq recentf-auto-cleanup 'never)
+(setq recentf-max-menu-items 50)
+(setq recentf-max-saved-items 50)
+(recentf-mode)
+;; Kill
+(setq kill-ring-max 300)
+
+;;(add-hook 'find-file-hook #'read-only-mode)
 (defun l/change-buffer-in-view-when-editable()
   (selected-window)
   )
@@ -90,12 +109,10 @@
 (global-so-long-mode t)	;; Disable fancy features when the file is too large
 (setq kill-region-dwim 'emacs-word)
 ;; Mark
-(setq global-mark-ring-max 50)
-(setq mark-ring-max 50)
+(setq global-mark-ring-max 300)
+(setq mark-ring-max 500)
 (setq set-mark-command-repeat-pop t)
 
-;; (add-hook 'after-init-hook #'(lambda () (recentf-mode +1)))
-;; (use-package emacs :defer t :config (recentf-mode +1))
 (setq org-indent-mode-turns-on-hiding-stars nil)
 
 (eval-after-load "grep"
@@ -111,7 +128,7 @@
   :bind
   (:map grep-mode-map
 	("C-c C-p" . wgrep-change-to-wgrep-mode)
-	("e" . wgrep-change-to-wgrep-mode)
+	;; ("e" . wgrep-change-to-wgrep-mode) ;; e有默认的grep-change-to-grep-edit-mode
 	)
   :config
 
@@ -154,13 +171,14 @@ file to visit if current buffer is not visiting a file."
   (interactive "P")
   (if (or arg (not buffer-file-name))
       (find-file (concat "/sudo:root@localhost:"
-                         (ido-read-file-name "Find file(as root): ")))
+			 (ido-read-file-name "Find file(as root): ")))
     (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name)))
   )
 
 ;; --------------------INPUT-emacs--------------------
 (setq completion-styles '(basic flex partial-completion emacs22))
-
+
+;;;; keybind
 ;; --------------------keybind-emacs--------------------
 ;; fix tty-key
 (defun l/quoted-insert-with-read-key (arg)
@@ -191,6 +209,9 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "M-]" #'cycle-spacing)
 ;;(keymap-global-set "M-SPC ")
 ;; ----leader key----end
+(eval-after-load "hideshow"
+  `(keymap-set hs-minor-mode-map "C-." #'hs-cycle)
+  )
 
 (keymap-global-set "M-L" #'global-display-line-numbers-mode)
 (keymap-global-set "C-M-w" #'yank)
@@ -204,13 +225,18 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-j C-f" #'l/delete-whole-line)	;; not save in kill-ring
 (keymap-global-set "C-j w" #'l/delete-whole-line)	;; not save
 (keymap-global-set "C-j h" #'l/delete-line)	;; not save in kill-ring
+(keymap-global-set "C-c h" #'l/delete-line)	;; not save in kill-ring
 (keymap-global-set "C-j m" #'l/push-mark)
+(keymap-global-set "C-c m" #'l/push-mark)
 (keymap-global-set "M-k" #'l/move-forward-of-bounds-of-thing-at-point)
 (keymap-global-set "M-K" #'kill-sentence)
 (keymap-global-set "M-l" #'downcase-dwim)
 (keymap-global-set "M-u" #'upcase-dwim)
 (keymap-global-set "M-c" #'capitalize-dwim)
 (keymap-global-set "M-\"" #'l/choose-inner)
+(keymap-global-set "C-M-;" #'l/choose-inner)
+(keymap-global-set "C-M-'" #'l/choose-outer)
+
 
 (keymap-global-set "C-S-v" #'clipboard-yank)
 (keymap-global-set "C-M-]" #'undo-only)
@@ -220,7 +246,16 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-c C-/" #'comment-or-uncomment-region)
 ;; ----edit ----end
 (keymap-global-set "C-j r" #'compile) 	;; run shell command
-
+(keymap-global-set "C-c c c" #'compile)
+(use-package outline
+  :bind (("C-j o" . #'outline-minor-mode)
+	 (:map outline-minor-mode-map
+	       ("C-c TAB" . #'outline-show-subtree)
+	       ("<backtab>" . #'outline-cycle)
+	       ("C-j p" . #'outline-show-entry)
+	     )
+	 )
+  )
 ;; ----code ----end
 (keymap-global-set "C-x F" #'set-fill-column)
 (keymap-global-set "C-x f" #'find-file-at-point)
@@ -238,6 +273,7 @@ file to visit if current buffer is not visiting a file."
 (keymap-set minibuffer-local-completion-map "M-p" #'minibuffer-previous-completion)
 (keymap-set completion-in-region-mode-map "M-p" #'minibuffer-previous-completion)
 (keymap-global-set "C-j t" #'kill-current-buffer)
+(keymap-global-set "C-c t" #'kill-current-buffer)
 (keymap-global-set "C-j v" #'view-mode)
 (keymap-global-set "M-o" #'other-window)
 (keymap-global-set "C-x B" #'ibuffer)
@@ -247,24 +283,78 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-c C-@" #'set-mark-command)
 (keymap-global-set "C-c C-SPC" #'set-mark-command)
 ;;(keymap-global-set "C-@" #'set-mark-command)
+
+(defvar l/bracket-pairs
+  '((?\( . ?\))   ; 圆括号
+    (?\[ . ?\])   ; 方括号  
+    (?{ . ?})     ; 花括号
+    (?< . ?>)     ; 尖括号
+;;    (?' . ?')     ; 单引号
+;;    (?\" . ?\")   ; 双引号
+;;    (?` . ?`)     ; 反引号
+    (?« . ?»)     ; 书名号
+    (?『 . ?』)   ; 中文方括号
+    (?「 . ?」)   ; 中文引号
+    (?（ . ?）)   ; 中文圆括号
+    (?【 . ?】)   ; 中文六角括号
+    (?〖 . ?〗)   ; 中文方头括号
+    (?〔 . ?〕)   ; 中文方头括号
+    (?［ . ?］)   ; 中文方头括号
+    (?〚 . ?〛)   ; 中文方头括号
+    (?〘 . ?〙)   ; 中文方头括号
+    (?｛ . ?｝)   ; 中文方头括号
+    (?《 . ?》)   ; 中文方头括号
+    (?〈 . ?〉)   ; 中文方头括号
+    (?‹ . ?›)   ; 中文方头括号
+    (?⟨ . ?⟩)   ; 中文方头括号
+    (?˂ . ?˃)   ; 中文方头括号
+    (?˱ . ?˲)   ; 中文方头括号
+    )
+  "List of bracket pairs for matching.")
+
+(defun l/choose(inner outer char)
+  (when (use-region-p) (deactivate-mark) )
+  (let ((cur-pos (point))
+	(pair (assoc char l/bracket-pairs))
+	(pair-match (rassoc char l/bracket-pairs))
+	)
+    (let ((forward-char (cond
+			 (pair (cdr pair))
+			 (pair-match (cdr pair-match))
+			 (t char)
+			 ))
+	  (backward-char (cond
+			  (pair (car pair))
+			  (pair-match (car pair-match))
+			  (t char)
+			  ))
+	  )
+      (search-forward (string forward-char))
+      (if outer (forward-char))
+      (set-marker (mark-marker) (- (point) 1))
+      (goto-char cur-pos)
+      (search-backward (string backward-char))
+      (if inner (forward-char))
+      (setq mark-active t)
+      )
+    )
+  
+  )
+
 (defun l/choose-inner (char)
   (interactive (list
 		;;(prefix-numeric-value current-prefix-arg)
-		(read-char-from-minibuffer "Around to char: " nil 'read-char-history)
+		(read-char-from-minibuffer "Inner to char: " nil 'read-char-history)
 		))
-  ;;  (message "%s" (type-of char))
-  (when (use-region-p)
-        (deactivate-mark)
-	)
-  (let ((cur-pos (point)))
-    (re-search-forward (string char))
-    (set-marker (mark-marker) (- (point) 1))
-    (goto-char cur-pos)
-    (re-search-backward (string char))
-    (forward-char)
-    (setq mark-active t)
-    )
+  (l/choose t nil char)
   )
+(defun l/choose-outer (char)
+  (interactive (list
+		(read-char-from-minibuffer "Outer to char: " nil 'read-char-history)
+		))
+  (l/choose nil t char)
+  )
+
 
 (defun l/set-marker()
   (interactive)
@@ -325,15 +415,18 @@ file to visit if current buffer is not visiting a file."
   "Duplicate line, but cursor follow."
   (interactive)
   (let ((column (current-column))
+;;	(point (point))
 	(line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
 	)
     (end-of-line)
     (newline)
     (insert line)
     (beginning-of-line)
-    (forward-char column)
+    ;;    (goto-char point)
+    (move-to-column column)
     )
   )
+
 
 (defun newline-and-indent-up ()
   "回车到上一行."
@@ -359,13 +452,15 @@ file to visit if current buffer is not visiting a file."
 	     )
 (eval-after-load "project"
   `(progn
-     (add-to-list 'project-switch-commands '(magit "Magit") t)
-     (keymap-set project-prefix-map "m" #'magit)
+     (add-to-list 'project-switch-commands '(magit-project-status "Magit") t)
+     (keymap-set project-prefix-map "m" #'magit-project-status)
      ))
 (eval-after-load "dired"
   '(progn
      (define-key dired-mode-map (kbd "z") #'dired-up-directory)
      (define-key dired-mode-map (kbd "F") #'dired-create-empty-file)
+     (keymap-set dired-mode-map "_" #'dired-create-empty-file)
+     (keymap-set dired-mode-map "—" #'dired-create-empty-file)
      (defun l/alternate-back-dir()
        "Back to up dir alternate."
        (interactive)
@@ -434,6 +529,8 @@ file to visit if current buffer is not visiting a file."
   ;;:bind
   
   )
+
+
 ;; --------------------repeat-emacs--------------------
 (when t
   (repeat-mode +1)
@@ -459,8 +556,8 @@ file to visit if current buffer is not visiting a file."
   ;;  (setq repeat-check-key t)
   (keymap-global-set "C-c [" #'l/tab-line-switch-prev-tab)
   (keymap-global-set "C-c ]" #'l/tab-line-switch-next-tab)
-  (keymap-global-set "C-x <left>" #'l/tab-line-switch-prev-tab)
-  (keymap-global-set "C-x <right>" #'l/tab-line-switch-next-tab)
+  ;; (keymap-global-set "C-x <left>" #'l/tab-line-switch-prev-tab)
+  ;; (keymap-global-set "C-x <right>" #'l/tab-line-switch-next-tab)
   (defvar l/buffer-lunch-repeat-map ; C-x <left> 或 <right>
     (let ((map (make-sparse-keymap)))
       (define-key map (kbd "n") #'next-line)
@@ -520,7 +617,8 @@ file to visit if current buffer is not visiting a file."
 			      other-window kill-current-buffer quit-window ace-window delete-window
 			      l/delete-char l/backward-kill-word
 			      ;; find-file find-file-at-point
-			      find-file--read-only view-mode-enter view-mode-enable view-mode view-mode-exit View-exit
+			      find-file--read-only
+			      view-mode-enter view-mode-enable view-mode view-mode-exit View-exit
 			      switch-to-buffer project-find-file-in
 			      move-end-of-line move-beginning-of-line end-of-visual-line end-of-visible-line beginning-of-visual-line
 			      tab-previous tab-next tab-switcher tab-switcher-select
@@ -568,7 +666,7 @@ file to visit if current buffer is not visiting a file."
 
   )
 
-
+
 ;; --------------------window-emacs--------------------
 (setq window-min-height 2)
 (when t
@@ -600,7 +698,7 @@ WINDOW use to change"
        (mode-line . nil)
        ;; (no-other-window . t)
        ))
-     ("^\\(magit-diff.*\\)"                            ;正则匹配buffer name
+     ("^\\(magit-.*\\)"                            ;正则匹配buffer name
       ;;(display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
       (display-buffer-use-some-window)
       (side . left)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
@@ -719,7 +817,7 @@ WINDOW use to change"
      )
    )
   )
-;;^
+
 ;; --------------------thirdpkg-emacs--------------------
 (defun l/plugin-start()
   "Start plugin."
@@ -755,7 +853,7 @@ WINDOW use to change"
   (keymap-global-set "M-SPC r l" #'l/plugin-start)
   )
 
-
+
 ;; --------------------frame-emacs--------------------
 (unless  +only-tty
   (keymap-global-set  "M-<f12>" #'l/normal-frame)

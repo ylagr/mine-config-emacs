@@ -13,7 +13,13 @@
     )
 
 (defvar l/plugin-start nil)
-
+(use-package multiple-cursors
+  :bind (
+	 ("C-M--" . #'mc/mark-next-like-this)
+	 ("C-M-0" . #'mc/skip-to-next-like-this)
+	 ("C-M-=" . #'mc/mark-all-in-region)
+	 )
+  )
 (use-package magit
   ;; :disabled
   :defer t
@@ -23,17 +29,55 @@
   :config
   ;; (global-set-key (kbd "C-j g") #'magit)
   )
+
+(use-package diff-hl
+  :ensure t
+  :defer t
+  :commands find-file
+  :hook
+  (dired-mode . diff-hl-dired-mode)
+  :init
+  (global-diff-hl-mode)
+  :config
+  ;;(global-diff-hl-mode 1)
+  ;;(global-diff-hl-mode 1)
+  (diff-hl-flydiff-mode 1)
+
+  )
+
 (use-package prescient
   :ensure t
   :config
-  (setq completion-styles '(basic prescient partial-completion emacs22))
+;;  (setq completion-styles '(basic prescient partial-completion emacs22))
+  (setq completion-styles '(prescient))
   (prescient-persist-mode)
   )
 (use-package hotfuzz
   :after prescient
   :ensure t
   :config
-  (setq completion-styles '(basic prescient hotfuzz partial-completion emacs22))
+  ;;  (setq completion-styles '(basic prescient hotfuzz partial-completion emacs22))
+  (add-to-list 'completion-styles 'hotfuzz t)
+  )
+(use-package orderless
+  :after prescient
+  :ensure t
+  :config
+;;  (setq orderless-component-separator "[ &]")
+  (setq orderless-component-separator "+")
+  (setq orderless-matching-styles '(orderless-literal
+				    ;; orderless-flex
+                                    ;; orderless-regexp
+                                    )
+        )
+  (add-to-list 'completion-styles 'orderless t)
+;;  (setq completion-styles '(orderless basic)
+;;        completion-category-defaults nil
+;;        completion-category-overrides '((file (styles basic partial-completion)))
+;;        )
+  
+;;  (setq completion-preview-completion-styles '(orderless basic initials))
+  
   )
 
 (use-package ace-window
@@ -146,6 +190,7 @@
   (global-completion-preview-mode -1)
   
   :config
+
   (setq company-idle-delay 0.1)
   (setq company-minimum-prefix-length 3)
   (keymap-global-set "C-," #'company-complete)
@@ -158,7 +203,6 @@
   (setq company-frontends
 	'(company-preview-frontend company-echo-metadata-frontend company-pseudo-tooltip-frontend)
 	)
-  
   ;; 默认的 tab 是 循环选项,替换成补全
   (define-key company-active-map (kbd "<tab>") #'company-complete-selection)
   (define-key company-active-map (kbd "TAB") #'company-complete-selection)
@@ -174,6 +218,7 @@
   (setq company-transformers '(
 			       ;; delete-consecutive-dups
 			       company-sort-prefer-same-case-prefix
+			       ;; company-transformers-filter-case-insensitive
                                ;; company-sort-by-occurrence
 			       ))
  (setq company-backends `(company-capf company-files (company-dabbrev-code company-gtags company-etags company-keywords) company-dabbrev))
