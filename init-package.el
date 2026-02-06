@@ -25,7 +25,13 @@
   :defer t
   :ensure t
   :bind
-  ("C-j g" . #'magit)
+  (
+   ("C-j g" . #'magit)
+   (:map magit-mode-map
+	 ("," . #'magit-process-buffer)
+	 ("，" . #'magit-process-buffer)
+	 )
+   )
   :config
   ;; (global-set-key (kbd "C-j g") #'magit)
   )
@@ -216,10 +222,10 @@
   (setq company-abort-manual-when-too-short t)
   
   (setq company-transformers '(
-			       ;; delete-consecutive-dups
+			       delete-consecutive-dups
 			       company-sort-prefer-same-case-prefix
 			       ;; company-transformers-filter-case-insensitive
-                               ;; company-sort-by-occurrence
+                               company-sort-by-occurrence
 			       ))
  (setq company-backends `(company-capf company-files (company-dabbrev-code company-gtags company-etags company-keywords) company-dabbrev))
   )
@@ -236,10 +242,12 @@
    ("M-SPC b" . consult-buffer)
    ("M-SPC i" . consult-imenu)
    ("M-SPC e" . consult-flymake)
+   ("M-SPC r f" . consult-recent-file)
    ("M-SPC r r" . consult-register)
    ("M-SPC r s" . consult-register-store)
    ("M-SPC r l" . consult-register-load)
-   
+   ("M-SPC f" . consult-find)
+   ("M-SPC SPC" . consult-ripgrep)
    )
   :config
   (setq consult-async-refresh-delay 0.5)
@@ -268,7 +276,8 @@
   ;;  (setq vertico-multiform-categories
   ;;	'((consult-grep buffer)))
   ;;  (vertico-multiform-mode t)
-  (vertico-buffer-mode t)
+  (vertico-buffer-mode t) ;; 使用buffermode感受不到卡顿了,可能是buffer大小固定了
+  (setq vertico-cycle t)
   )
 
 (use-package clipetty
@@ -339,7 +348,22 @@
   (global-kkp-mode +1)
   )
 
+(use-package embark
+  :ensure t
+  :defer t
+  :bind (("C-." . #'embark-act)
+	 ("C-M->" . #'embark-act-all)
+	 )
+  )
+(use-package colorful-mode
+  :ensure t
+  :defer t
+  )
+
+
 (setq l/plugin-start t)
 
+(setq completion-styles (seq-difference completion-styles '(partial-completion))) ;; 移除partial-completion,防到最后
+(add-to-list 'completion-styles 'partial-completion t) ;; 补充默认的补全功能
 
 

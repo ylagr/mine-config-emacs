@@ -17,12 +17,15 @@
 ;;(l/plugin-start)
 
 
-(setq view-lossage-auto-refresh t) ;; C-h l auto refresh
-
-(setq electric-indent-actions '(yank ))
-
-(add-to-list 'electric-pair-pairs '("/\\*" " */" t))
-;;(add-to-list 'electric-pair-text-pairs '("/*" . " */"))
+;;(add-to-list 'electric-pair-pairs '("/\\*" " */" t))
+;;(add-to-list 'electric-pair-text-pairs '("/\\*" . " */"))
 
 
 ; Local Variables: outline-regexp: ";;;\\*+\\|\\`" eval: (outline-minor-mode 1) eval: (outline-hide-sublevels 4) End:
+
+
+(if t
+    "test"
+  
+  )
+

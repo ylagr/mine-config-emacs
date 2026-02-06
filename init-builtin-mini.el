@@ -20,12 +20,22 @@
 
 
 ;; --------------------UI-emacs-------------------------
+;; avoid long line start
+(setq-default bidi-paragraph-direction 'left-to-right
+	      bidi-display-reordering 'left-to-right)
+(setq long-line-threshold 300
+      large-hscroll-threshold 300
+      syntax-wholeline-max 300
+      ;; bidi-inhibit-bpa t
+      )
+;; avoid long line ends
 (setq mode-line-collapse-minor-modes '(eldoc-mode))
 (icomplete-mode 1) ;;内置补全功能
 (setq icomplete-in-buffer t) ;; ???
 ;;(load-file (expand-file-name "init-core.el" user-emacs-directory))
 (global-completion-preview-mode 1) ;;全局补全预览
 (electric-pair-mode 1)		   ;; 自动补全括号
+
 (add-hook 'tty-setup-hook #'xterm-mouse-mode)
 (setq recenter-positions '(top 0.3 bottom)) ;;中心点
 (setq confirm-kill-emacs 'yes-or-no-p)
@@ -43,6 +53,7 @@
       show-paren-when-point-inside-paren t
       show-paren-style 'mixed
       show-paren-delay 0.2
+      blink-matching-paren-highlight-offscreen t ;; 可以显示匹配的括号特殊样式
       ;; show-paren-context-when-offscreen 'child-frame
       show-paren-context-when-offscreen 'overlay
       ;; show-paren-context-when-offscreen t
@@ -59,6 +70,12 @@
 		    :background (face-attribute 'default :background)
 		    ;; :foreground (face-attribute 'default :background)
 		    )
+(with-eval-after-load 'tab-line
+  (set-face-attribute 'tab-line-tab-current nil :box '(:line-width 1 :color "#f5f500") :weight 'heavy )
+  (set-face-attribute 'tab-line-tab nil :box '(:line-width 1 :color "grey75"))
+  (set-face-attribute 'tab-line-tab-modified nil :underline '(:style line) )
+  )
+
 (setq dired-listing-switches "-vhal")
 (save-place-mode t) ;;保存上次光标位置
 (global-eldoc-mode)
@@ -73,6 +90,19 @@
 
 ;;;; behavior
 ;; --------------------BEHAVIOR-emacs--------------------
+(setq-default history-length 1000
+	      savehist-additional-variables '(extended-command-history
+					      file-name-history
+					      mark-ring
+					      global-mark-ring
+					      search-ring
+					      regexp-search-ring)
+	      savehist-autosave-interval 300)
+(savehist-mode 1)
+(setq compilation-scroll-output t) ;; compilation auto refresh
+(setq view-lossage-auto-refresh t) ;; C-h l auto refresh
+(setq electric-indent-actions '(yank ))	;electric 自动格式化的动作
+(setq shell-command-switch "-c");; 使用-ic可以让compile之类的动作可用，但是不能使用project-grep了。很奇怪
 (setq hs-display-lines-hidden t)
 (setq hs-show-indicators t)
 (setq hs-indicator-type nil)
@@ -132,6 +162,40 @@
 	)
   :config
 
+  )
+(use-package undohist
+  :load-path "user-lisp/undohist/"
+  :init
+  (add-hook 'after-init-hook
+          #'(lambda ()
+              (require 'undohist)
+              (undohist-initialize)
+
+              ;; Patch to make undohist silent
+              (define-advice undohist-recover-1 (:override ())
+                (let* ((buffer (current-buffer))
+                       (file (buffer-file-name buffer))
+                       (undo-file (make-undohist-file-name file))
+                       undo-list)
+                  (when (and (undohist-recover-file-p file)
+                             (file-exists-p undo-file)
+                             (null buffer-undo-list))
+                    (with-temp-buffer
+                      (insert-file-contents undo-file)
+                      (goto-char (point-min))
+                      (let ((alist (undohist-decode (read (current-buffer)))))
+                        (if (string= (md5 buffer) (assoc-default 'digest alist))
+                            (setq undo-list (assoc-default 'undo-list alist))
+                          (message "File digest doesn't match, so undo history will be discarded."))))
+                    (when (consp undo-list)
+                      (setq buffer-undo-list undo-list)))))))
+  :config
+;;  (setq undohist-directory (no-littering-expand-var-file-name "undohist"))
+  (push "\\.git/COMMIT_EDITMSG\\'" undohist-ignored-files)
+  (push "dict.yaml\\'" undohist-ignored-files)
+  (push "essay.txt\\'" undohist-ignored-files)
+  (push tramp-file-name-regexp undohist-ignored-files)
+  
   )
 
 (when t
@@ -206,7 +270,7 @@ file to visit if current buffer is not visiting a file."
 (keymap-set lisp-interaction-mode-map "C-j C-j" #'eval-print-last-sexp)
 (eval-after-load "org" `(progn (keymap-unset org-mode-map "C-j") (keymap-set org-mode-map "C-j C-j" #'org-return-and-maybe-indent) ))
 (keymap-global-unset "M-SPC")
-(keymap-global-set "M-]" #'cycle-spacing)
+(keymap-global-set "M-RET" #'cycle-spacing)
 ;;(keymap-global-set "M-SPC ")
 ;; ----leader key----end
 (eval-after-load "hideshow"
@@ -223,6 +287,7 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-j C-k" #'kill-whole-line) ;; save in kill-ring
 (keymap-global-set "C-j C-l" #'l/kill-current-line)	;; save in kill-ring
 (keymap-global-set "C-j C-f" #'l/delete-whole-line)	;; not save in kill-ring
+(keymap-global-set "M-D" #'l/delete-whole-line)
 (keymap-global-set "C-j w" #'l/delete-whole-line)	;; not save
 (keymap-global-set "C-j h" #'l/delete-line)	;; not save in kill-ring
 (keymap-global-set "C-c h" #'l/delete-line)	;; not save in kill-ring
@@ -247,6 +312,10 @@ file to visit if current buffer is not visiting a file."
 ;; ----edit ----end
 (keymap-global-set "C-j r" #'compile) 	;; run shell command
 (keymap-global-set "C-c c c" #'compile)
+(keymap-global-set "C-c r o" #'recentf-open)
+(keymap-global-set "C-c r f" #'recentf-open-files)
+
+
 (use-package outline
   :bind (("C-j o" . #'outline-minor-mode)
 	 (:map outline-minor-mode-map
@@ -266,7 +335,9 @@ file to visit if current buffer is not visiting a file."
 
 (keymap-global-set "C-M-i" #'completion-at-point)
 ;;(global-set-key (kbd "C-M-i") #'completion-symbol)
-(keymap-global-set "C-h C-j" #'eldoc-print-current-symbol-info)
+;; (keymap-global-set "C-h C-j" #'eldoc-print-current-symbol-info)
+(keymap-global-set "C-h C-j" #'eldoc-doc-buffer)
+(keymap-global-set "C-h C-k" #'eldoc-print-current-symbol-info)
 (define-key isearch-mode-map [remap isearch-delete-char] #'isearch-del-char)
 (keymap-set minibuffer-local-completion-map "M-n" #'minibuffer-next-completion)
 (keymap-set completion-in-region-mode-map "M-n" #'minibuffer-next-completion)
@@ -374,8 +445,16 @@ file to visit if current buffer is not visiting a file."
 (defun l/move-forward-of-bounds-of-thing-at-point ()
   "Base on `'isearch-forward-thing-at-point ."
   (interactive)
+  (if (l/select-bound-thing-at-point)
+      nil
+    (back-to-indentation)
+    (l/select-bound-thing-at-point)
+      )
+  
+
+  )
+(defun l/select-bound-thing-at-point()
   (require 'cl-generic)
-  (back-to-indentation)
   (let ((bounds (seq-some (lambda (thing) (bounds-of-thing-at-point thing))
 			  ;; `isearch-forward-thing-at-point
 			  '(url symbol sexp)
@@ -394,7 +473,6 @@ file to visit if current buffer is not visiting a file."
       )
      )
     )
-
   )
 
 (defun l/kill-current-line ()
@@ -516,6 +594,16 @@ file to visit if current buffer is not visiting a file."
     (load-file (expand-file-name config-file-name user-emacs-directory))
     )
   )
+(use-package view
+  :bind((:map view-mode-map
+	      ("f" . #'View-scroll-page-forward)
+	      ("b" . #'View-scroll-page-backward)
+	      ("j" . #'next-line)
+	      ("k" . #'previous-line)
+	      ("h" . #'backward-char)
+	      ("l" . #'forward-char)
+	 ))
+  )
 (use-package drag-stuff
   :load-path "user-lisp/drag-stuff/"
   ;;:ensure t
@@ -553,64 +641,77 @@ file to visit if current buffer is not visiting a file."
     (interactive)
     (delete-char 1)
     )
+  (defun l/next-line()
+    "Local"
+    (interactive)
+    (forward-line 1)
+    )
+  (defun l/previous-line()
+    "Local"
+    (interactive)
+    (forward-line -1)
+    )
+
   ;;  (setq repeat-check-key t)
   (keymap-global-set "C-c [" #'l/tab-line-switch-prev-tab)
   (keymap-global-set "C-c ]" #'l/tab-line-switch-next-tab)
-  ;; (keymap-global-set "C-x <left>" #'l/tab-line-switch-prev-tab)
-  ;; (keymap-global-set "C-x <right>" #'l/tab-line-switch-next-tab)
   (defvar l/buffer-lunch-repeat-map ; C-x <left> 或 <right>
     (let ((map (make-sparse-keymap)))
-      (define-key map (kbd "n") #'next-line)
-      (define-key map (kbd "p") #'previous-line)
-      (define-key map (kbd "f") #'forward-char)
-      (define-key map (kbd "b") #'backward-char)
-      (define-key map (kbd "e") #'previous-line)
-      (define-key map (kbd "d") #'next-line)
-      (define-key map (kbd "s") #'backward-char)
-      (define-key map (kbd "h") #'backward-char)
-      (define-key map (kbd "l") #'forward-char)
-      (define-key map (kbd "v") #'forward-word)
-      (define-key map (kbd "z") #'backward-word)
+      (define-key map (kbd "n") #'l/next-line)
+      (define-key map (kbd "p") #'l/previous-line)
+      ;; (define-key map (kbd "f") #'forward-char)
+      ;; (define-key map (kbd "b") #'backward-char)
+      ;; (define-key map (kbd "e") #'previous-line)
+      ;; (define-key map (kbd "d") #'next-line)
+      ;; (define-key map (kbd "s") #'backward-char)
+      ;; (define-key map (kbd "h") #'backward-char)
+      ;; (define-key map (kbd "l") #'forward-char)
+      ;; (define-key map (kbd "v") #'forward-word)
+      ;; (define-key map (kbd "z") #'backward-word)
       (define-key map (kbd "3") #'move-beginning-of-line)
       (define-key map (kbd "a") #'back-to-indentation)
       (define-key map (kbd "g") #'move-end-of-line)
       
-      (define-key map (kbd "k") #'l/previous-half-page-lines)
-      (define-key map (kbd "j") #'l/next-half-page-lines)
+      ;; (define-key map (kbd "k") #'l/previous-half-page-lines)
+      ;; (define-key map (kbd "j") #'l/next-half-page-lines)
 
-      (define-key map (kbd "4") #'scroll-up-command)
-      (define-key map (kbd "2") #'scroll-down-command)
-      (define-key map (kbd "w") #'l/scroll-half-page-down)
-      (define-key map (kbd "r") #'l/scroll-half-page-up)
+      ;; (define-key map (kbd "4") #'scroll-up-command)
+      ;; (define-key map (kbd "2") #'scroll-down-command)
+      ;; (define-key map (kbd "w") #'l/scroll-half-page-down)
+      ;; (define-key map (kbd "r") #'l/scroll-half-page-up)
 
       (define-key map (kbd "P") #'tab-previous)
       (define-key map (kbd "N") #'tab-next)
       (define-key map (kbd "{") #'tab-previous)
       (define-key map (kbd "}") #'tab-next)
-      (define-key map (kbd "'") #'tab-switcher)
+      ;; (define-key map (kbd "'") #'tab-switcher)
       (define-key map (kbd "y") #'tab-switcher)
       
       (define-key map (kbd "q") #'quit-window)
       (define-key map (kbd "i") #'repeat-exit)
       (define-key map (kbd "o") #'other-window)
       (define-key map (kbd "O") #'other-frame)
-      (define-key map (kbd "m") #'l/push-mark)
-      (define-key map (kbd "x") #'l/backward-kill-word)
+      ;; (define-key map (kbd "m") #'l/push-mark)
+      ;; (define-key map (kbd "x") #'l/backward-kill-word)
       (define-key map (kbd "t") #'kill-current-buffer)
       (define-key map (kbd "c") #'comment-line)
+      (define-key map (kbd "d") #'l/duplicate-line)
+      (define-key map (kbd "w") #'l/delete-whole-line)
       ;; (define-key map (kbd "") #'backward-delete-char-untabify)
-      (define-key map (kbd ".") #'xref-find-definitions)
-      (define-key map (kbd "/") #'xref-find-references)
-      (define-key map (kbd ",") #'xref-go-back)
+      ;; (define-key map (kbd ".") #'xref-find-definitions)
+      ;; (define-key map (kbd "/") #'xref-find-references)
+      ;; (define-key map (kbd ",") #'xref-go-back)
       (define-key map (kbd ">") #'end-of-buffer)
       (define-key map (kbd "<") #'beginning-of-buffer)
       (define-key map (kbd "0") #'delete-window)
       (define-key map (kbd "9") #'ace-window)
       (define-key map (kbd "[") #'l/tab-line-switch-prev-tab)
       (define-key map (kbd "]") #'l/tab-line-switch-next-tab)
-      (dolist (it '(next-line previous-line
-			      forward-char backward-char forward-word backward-word
-			      back-to-indentation left-word right-word
+      (dolist (it '(
+		    ;; next-line previous-line
+		    l/next-line l/previous-line
+			      ;; forward-char backward-char forward-word backward-word
+			      ;; back-to-indentation left-word right-word
 			      l/previous-half-page-lines l/next-half-page-lines
 			      scroll-up-command scroll-down-command
 			      l/scroll-half-page-up l/scroll-half-page-down
@@ -622,7 +723,8 @@ file to visit if current buffer is not visiting a file."
 			      switch-to-buffer project-find-file-in
 			      move-end-of-line move-beginning-of-line end-of-visual-line end-of-visible-line beginning-of-visual-line
 			      tab-previous tab-next tab-switcher tab-switcher-select
-			      xref-find-definitions xref-find-references xref-go-back comment-line 
+			      xref-find-definitions xref-find-references xref-go-back
+			      comment-line l/delete-whole-line l/duplicate-line
 			      embark-dwim end-of-buffer beginning-of-buffer l/push-mark
 			      l/tab-line-switch-next-tab l/tab-line-switch-prev-tab))
 	(put it 'repeat-map 'l/buffer-lunch-repeat-map))
@@ -829,6 +931,7 @@ WINDOW use to change"
   )
 
 (unless (boundp 'l/plugin-start)
+  (keymap-global-set "C-." #'l/plugin-start)
   (keymap-global-set "C-," #'l/plugin-start)
   (keymap-global-set "C-j 9" #'l/plugin-start)
   (keymap-global-set "C-j g" #'l/plugin-start)
