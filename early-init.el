@@ -13,6 +13,7 @@
 	(left . 220)
 	(top . 50)
 	(font . "Fantasque Sans Mono")
+	;; (font . "monospace")
 	(vertical-scroll-bars . nil)
 	(horizontal-scroll-bars . nil)
 ;;	(tool-bar-mode . +1)

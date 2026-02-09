@@ -197,6 +197,12 @@
   (push tramp-file-name-regexp undohist-ignored-files)
   
   )
+(use-package goto-last-change
+  :load-path "user-lisp/goto-last-change/"
+  :bind (
+	 ("C-M-<" . #'goto-last-change)
+	 )
+  )
 
 (when t
   (defvar autosaves-dir (expand-file-name "autosaves/" user-emacs-directory))
