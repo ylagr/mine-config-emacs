@@ -92,4 +92,37 @@
    (global-auto-composition-mode -1))
   )
 (add-hook 'server-after-make-frame-hook #'l/tty-fix)
+
+
+(defun l/setup-cjk-fallback (frame)
+  "为新创建的 FRAME 设置 CJK 字体 Fallback。"
+  (with-selected-frame frame
+    (when (display-graphic-p)
+      ;; 设置 Unifont 为 CJK 字符集的备选字体
+      (let ((cjk-font (font-spec :family "Unifont")))
+	(if cjk-font
+            (dolist (script '(han
+			      kana
+			      cjk-misc
+			      ;; bopomofo
+			      ))
+	      
+              ;; (set-fontset-font "fontset-default" script cjk-font nil 'prepend)
+              (set-fontset-font "fontset-default" script cjk-font)
+	      )
+	  ;; (set-fontset-font "fontset-default" '(#x4E00 . #x9FFF) cjk-font)
+	  )
+	)
+      ;; 如果你希望只在第一个窗口创建时执行一次，可以取消注释下面这行
+      (remove-hook 'after-make-frame-functions #'l/setup-cjk-fallback)      
+      )
+    )
+  
+  )
+;; 针对常规 GUI 启动
+;; (if (daemonp)
+(add-hook 'after-make-frame-functions #'l/setup-cjk-fallback)
+  ;; (l/setup-cjk-fallback (selected-frame)))
+
+
 ;; early-init.el ends here.

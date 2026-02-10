@@ -650,12 +650,14 @@ file to visit if current buffer is not visiting a file."
   (defun l/next-line()
     "Local"
     (interactive)
-    (forward-line 1)
+    ;; (forward-line 1)
+    (line-move 1)
     )
   (defun l/previous-line()
     "Local"
     (interactive)
-    (forward-line -1)
+    ;; (forward-line -1)
+    (line-move -1)
     )
 
   ;;  (setq repeat-check-key t)
@@ -691,7 +693,7 @@ file to visit if current buffer is not visiting a file."
       (define-key map (kbd "{") #'tab-previous)
       (define-key map (kbd "}") #'tab-next)
       ;; (define-key map (kbd "'") #'tab-switcher)
-      (define-key map (kbd "y") #'tab-switcher)
+      (define-key map (kbd "Y") #'tab-switcher)
       
       (define-key map (kbd "q") #'quit-window)
       (define-key map (kbd "i") #'repeat-exit)
@@ -732,6 +734,7 @@ file to visit if current buffer is not visiting a file."
 			      xref-find-definitions xref-find-references xref-go-back
 			      comment-line l/delete-whole-line l/duplicate-line
 			      embark-dwim end-of-buffer beginning-of-buffer l/push-mark
+			      magit-mode-quit-window magit-mode-bury-buffer
 			      l/tab-line-switch-next-tab l/tab-line-switch-prev-tab))
 	(put it 'repeat-map 'l/buffer-lunch-repeat-map))
       map)
