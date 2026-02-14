@@ -18,6 +18,7 @@
 	 ("C-M--" . #'mc/mark-next-like-this)
 	 ("C-M-0" . #'mc/skip-to-next-like-this)
 	 ("C-M-=" . #'mc/mark-all-in-region)
+	 ("C-M-9" . #'mc/unmark-next-like-this)
 	 )
   )
 (use-package magit
@@ -228,7 +229,19 @@
                                company-sort-by-occurrence
 			       ))
  (setq company-backends `(company-capf company-files (company-dabbrev-code company-gtags company-etags company-keywords) company-dabbrev))
-  )
+ )
+
+(if (>= emacs-major-version 31)
+    (use-package company-posframe
+      :ensure t
+      :after company
+      
+      :hook (company-mode . company-posframe-mode)
+      :config
+      ;;  (company-posframe-mode)
+      )
+)
+
 
 (use-package consult
   :ensure t
@@ -336,6 +349,34 @@
   
   ;; 设置emacs killring 不进入系统剪贴板
   (setq x-select-enable-clipboard nil)
+  (defun l/copy-current-dir ()
+    "快速复制当前 buffer 所在的目录路径。"
+    (interactive)
+    (let ((path default-directory)
+	  (select-enable-clipboard t))
+      (if clipetty-mode
+          (kill-new path)
+	(clipetty-mode)
+	(kill-new path)
+	(clipetty-mode 0))
+      (message "已复制当前目录: %s" path))
+    )
+  (defun l/copy-project-root ()
+    "快速复制当前项目根目录路径。"
+    (interactive)
+    (let ((project (project-current)))
+      (if project
+          (let ((root (project-root project))
+		(select-enable-clipboard t))
+	    (if clipetty-mode
+		(kill-new root)
+	      (clipetty-mode)
+	      
+	      (kill-new root)
+	      (clipetty-mode 0))
+            (message "已复制项目根目录: %s" root))
+	(message "当前不在任何项目中 (未找到 .git 等标识)")))
+    )
   )
 
 (use-package async

@@ -1397,6 +1397,244 @@ to TO-WHAT if it's > 1 char long & doesn't already begin with a space."
 (display-buffer (messages-buffer))
 
 
+  (if t
+      ""
+    ;; old repeat map setting
+  (defun l/put-common-repeat-key-in-map-bak(map)
+    (define-key map (kbd "n") #'l/next-line)
+    (define-key map (kbd "p") #'l/previous-line)
+    ;; (define-key map (kbd "f") #'forward-char)
+    ;; (define-key map (kbd "b") #'backward-char)
+    ;; (define-key map (kbd "e") #'previous-line)
+    ;; (define-key map (kbd "d") #'next-line)
+    ;; (define-key map (kbd "s") #'backward-char)
+    ;; (define-key map (kbd "h") #'backward-char)
+    ;; (define-key map (kbd "l") #'forward-char)
+    ;; (define-key map (kbd "v") #'forward-word)
+    ;; (define-key map (kbd "z") #'backward-word)
+    (define-key map (kbd "3") #'move-beginning-of-line)
+    (define-key map (kbd "a") #'back-to-indentation)
+    (define-key map (kbd "g") #'move-end-of-line)
+    
+    ;; (define-key map (kbd "k") #'l/previous-half-page-lines)
+    ;; (define-key map (kbd "j") #'l/next-half-page-lines)
+
+    ;; (define-key map (kbd "4") #'scroll-up-command)
+    ;; (define-key map (kbd "2") #'scroll-down-command)
+    ;; (define-key map (kbd "w") #'l/scroll-half-page-down)
+    ;; (define-key map (kbd "r") #'l/scroll-half-page-up)
+
+    (define-key map (kbd "P") #'tab-previous)
+    (define-key map (kbd "N") #'tab-next)
+    (define-key map (kbd "{") #'tab-previous)
+    (define-key map (kbd "}") #'tab-next)
+    ;; (define-key map (kbd "'") #'tab-switcher)
+    (define-key map (kbd "Y") #'tab-switcher)
+    
+    (define-key map (kbd "q") #'quit-window)
+    (define-key map (kbd "i") #'repeat-exit)
+    (define-key map (kbd "o") #'other-window)
+    (define-key map (kbd "O") #'other-frame)
+    ;; (define-key map (kbd "m") #'l/push-mark)
+    ;; (define-key map (kbd "x") #'l/backward-kill-word)
+    (define-key map (kbd "t") #'kill-current-buffer)
+    (define-key map (kbd "c") #'comment-line)
+    (define-key map (kbd "d") #'l/duplicate-line)
+    (define-key map (kbd "w") #'l/delete-whole-line)
+    ;; (define-key map (kbd "") #'backward-delete-char-untabify)
+    ;; (define-key map (kbd ".") #'xref-find-definitions)
+    ;; (define-key map (kbd "/") #'xref-find-references)
+    ;; (define-key map (kbd ",") #'xref-go-back)
+    (define-key map (kbd ">") #'end-of-buffer)
+    (define-key map (kbd "<") #'beginning-of-buffer)
+    (define-key map (kbd "0") #'delete-window)
+    (define-key map (kbd "9") #'ace-window)
+    (define-key map (kbd "[") #'l/tab-line-switch-prev-tab)
+    (define-key map (kbd "]") #'l/tab-line-switch-next-tab)
+    (define-key map (kbd "O") #'other-frame)
+    )
+    (defvar l/buffer-lunch-repeat-map-bak ; C-x <left> 或 <right>
+      (let ((map (make-sparse-keymap)))
+	(l/put-common-repeat-key-in-map map)
+	(l/put-common-repeat-key-in-map tab-line-switch-repeat-map)
+	(dolist (it '(
+		      ;; next-line previous-line
+		      l/next-line l/previous-line
+		      ;; forward-char backward-char forward-word backward-word
+		      ;; back-to-indentation left-word right-word
+		      l/previous-half-page-lines l/next-half-page-lines
+		      scroll-up-command scroll-down-command
+		      l/scroll-half-page-up l/scroll-half-page-down
+		      other-window kill-current-buffer quit-window ace-window delete-window
+		      l/delete-char l/backward-kill-word
+		      ;; find-file find-file-at-point
+		      find-file--read-only
+		      view-mode-enter view-mode-enable view-mode view-mode-exit View-exit
+		      switch-to-buffer project-find-file-in
+		      move-end-of-line move-beginning-of-line end-of-visual-line end-of-visible-line beginning-of-visual-line
+		      tab-previous tab-next tab-switcher tab-switcher-select
+		      xref-find-definitions xref-find-references xref-go-back
+		      comment-line l/delete-whole-line l/duplicate-line
+		      embark-dwim end-of-buffer beginning-of-buffer l/push-mark
+		      magit-mode-quit-window magit-mode-bury-buffer
+		      other-frame
+		      l/tab-line-switch-next-tab l/tab-line-switch-prev-tab))
+	  (put it 'repeat-map 'l/buffer-lunch-repeat-map)
+	  )
+	map)
+      "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
+      )
+    )
+
+(when t
+  (defun l/clean-window-element (window)
+    "Disable some ui.
+WINDOW use to change"
+    (interactive)
+    (with-selected-window window
+      (setq-local header-line-format nil)
+      (tab-line-mode -1)
+      )
+    window)
+  
+  (setq
+   display-buffer-alist
+   `(
+     ("^\\(magit-process.*\\)"                            ;正则匹配buffer name
+      ;;(display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+      (display-buffer-in-side-window)
+      (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+      (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
+      ;; (window-height . 0.3)                   ;同上
+      (slot . -10)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+      (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+      (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
+       (select . t)                            ;自定义的param
+       (quit . t)                              ;同上
+       (popup . t)                             ;同上
+       (mode-line . nil)
+       ;; (no-other-window . t)
+       ))
+     ("^\\(magit-.*\\)"                            ;正则匹配buffer name
+      ;;(display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+      (display-buffer-use-some-window)
+      (side . left)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+      ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
+      ;; (window-height . 0.2)                   ;同上
+      (slot . 0)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+      (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+      ;;(post-command-select-window . visible)
+      ;;(body-function . l/clean-window-element)
+      (haha . whatever)                        ;当然随你放什么
+      (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
+       (select . t)                            ;自定义的param
+       (quit . t)                              ;同上
+       (popup . t)                             ;同上
+       ;; (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
+       ;; (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
+       ))
+     ("^\\(magit.*\\)\\|\\(\\*xref.*\\)"                            ;正则匹配buffer name
+      ;;(display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+      (display-buffer-in-side-window)
+      (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+      (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
+      (window-height . 0.6)                   ;同上
+      (slot . -10)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+      (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+      ;;(post-command-select-window . visible)
+      ;;(body-function . l/clean-window-element)
+      (haha . whatever)                        ;当然随你放什么
+      (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
+       (select . t)                            ;自定义的param
+       (quit . t)                              ;同上
+       (popup . t)                             ;同上
+       ;; (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
+       ;; (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
+       ))
+     ;; ("^\\(\\*[Hh]elp.*\\)"                            ;正则匹配buffer name
+     ;;  (l/display-buffer-reuse-window-action             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
+     ;;   l/display-buffer-in-side-window-action-clean-header_line)
+     ;;  (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+     ;;  ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
+     ;;  (window-width . 0.4)
+     ;;  (window-height . 0.3)                   ;同上
+     ;;  (slot . 2)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+     ;;  (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+     ;;  ;;(post-command-select-window . visible)
+     ;;  ;;(body-function . l/clean-window-element)
+     ;;  (haha . whatever)                        ;当然随你放什么
+     ;;  (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
+     ;;   (select . t)                            ;自定义的param
+     ;;   (quit . t)                              ;同上
+     ;;   (popup . t)                             ;同上
+     ;;   (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
+     ;;   (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
+     ;;   ))
+     ("^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\|\\(\\*[Hh]elp\\*\\)\\|\\(\\*Metahelp\\*\\)"
+      ;;(display-buffer-reuse-window l/display-buffer-in-side-window-action-clean-header_line)
+      (display-buffer-in-side-window)
+      ;; (l/display-buffer-reuse-window-action-clean-header_line l/display-buffer-in-side-window-action-clean-header_line)
+      (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
+      (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
+      (window-height . 0.4)                   ;同上
+      (slot . 2)                               ;这个会被display-buffer-in-side-window使用，控制window位置
+      (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
+      (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
+       (select . t)                            ;自定义的param
+       (quit . t)                              ;同上
+       (popup . t)                             ;同上
+       (mode-line-format . nil)               ;emacs version > 25， none会隐藏mode line，nil会显示...
+       (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
+       )
+      )
+     ("^\\(\\*gt-result\\*\\)"
+      ;;(l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action_show_tab-line)
+      (display-buffer-in-side-window)
+      (slot . 10)
+      (post-command-select-window . visible)
+      (window-parameters
+       (quit . t)
+       )
+      )
+     ("^\\(\\*vterm\\*\\)"
+      ;;      (display-buffer-reuse-window display-buffer-in-side-window)
+      (display-buffer-in-side-window)
+      (side . right)
+      (window-width . 0.4)
+      (post-command-select-window . visible)
+      )
+     ("^\\(\\*eldoc.*\\)"
+      ;;      (display-buffer-reuse-window  l/display-buffer-in-side-window-action-clean-header_line)
+      ;; (display-buffer-in-side-window)
+      ;; (display-buffer-at-bottom)
+      (display-buffer-in-side-window)
+      ;; (side . bottom)
+      (side . top)
+      (slot . 100)
+      ;; (window-width . 0.4)
+      ;;(window-height . shrink-window-if-larger-than-buffer)
+      (window-min-height . 1)
+      ;; (window-height . fit-window-to-buffer)
+      (window-height . 2)
+      ;; (window-height . 0.05)
+      (window-parameters
+       (mode-line-format . none)
+       (no-other-window . t)
+       (tab-line-format . none)
+       (header-line-format . none)
+       )
+      )
+     ;;fallback
+     ("^\\(\\*.*\\*\\)"
+      ;;(display-buffer-reuse-window display-buffer-in-side-window)
+      (display-buffer-in-side-window)
+      (side . right)
+      (window-width . 0.4)
+      )
+     )
+   )
+  )
+
 (provide 'init)
 
 

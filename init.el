@@ -26,6 +26,15 @@
 
 (if t
     "test"
+  (make-local-variable 'tool-bar-map)
+  (setq tool-bar-map (copy-keymap tool-bar-map))
+  (tool-bar-local-item "save" 'customize-group 'cfg-local
+		       tool-bar-map :help "config current"
+		       )
+  ;;(force-mode-line-update t)
+ 
   
   )
+ 
+  
 

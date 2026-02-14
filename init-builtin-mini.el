@@ -3,6 +3,7 @@
 ;;; Emacs Startup File --- initialization for Emacs
 ;;; code:
 ;; --------------------const-emacs -----------------
+(setenv "BASH_ENV" "~/.bashrc")
 (setq package-quickstart t)
 (setq gc-cons-threshold 16000000)
 (defconst +only-tty  (and (not (daemonp)) (not (display-graphic-p))))
@@ -20,6 +21,47 @@
 
 
 ;; --------------------UI-emacs-------------------------
+(defun l/abbreviate-file-name()
+  (let ((buffer-filename (buffer-file-name))
+	)
+    (if buffer-filename
+	(abbreviate-file-name buffer-filename)
+      "%b"
+      ))
+  )
+;; tab-bar
+(defvar l/global-mode-string '(
+			       "%e"
+			       mode-line-front-space
+			       "%I ["
+			       (:eval (l/abbreviate-file-name))
+			       "]"
+			       mode-line-end-spaces
+			       )
+  "set local global-mode-string , avoid other mode change default value, or set a fix value make other plugin cannot change these local string ")
+(put 'l/global-mode-string 'risky-local-variable t)
+(add-to-list 'global-mode-string  'l/global-mode-string)
+(setq tab-bar-position t)
+(setq tab-bar-format '(tab-bar-format-history
+		       tab-bar-format-tabs tab-bar-separator tab-bar-format-add-tab
+		       tab-bar-format-align-right tab-bar-format-global
+		       ))
+(set-face-attribute 'tab-bar nil :underline '(:color foreground-color :style line :position t))
+(setq mode-line-front-space " ")
+(setq mode-line-end-spaces " ")
+(tab-bar-mode 1)
+(setq display-time-day-and-date t)
+(display-time-mode 1)
+;;; 换行符修改
+(unless standard-display-table
+  (setq standard-display-table (make-display-table)))
+
+;; 修改折行标志字符（第1号插槽）
+;; 下面将 '\' 修改为 '↩' (你也可以换成任何你喜欢的字符，例如 '>' ↩)
+(set-display-table-slot standard-display-table 'wrap ?¬)
+
+;; 如果你也想修改截断（truncation）标志字符（默认是 '$'，第0号插槽）
+;; (set-display-table-slot standard-display-table 'truncation ?…)
 ;; avoid long line start
 (setq-default bidi-paragraph-direction 'left-to-right
 	      bidi-display-reordering 'left-to-right)
@@ -29,7 +71,7 @@
       ;; bidi-inhibit-bpa t
       )
 ;; avoid long line ends
-(setq mode-line-collapse-minor-modes '(eldoc-mode))
+(setq mode-line-collapse-minor-modes '(eldoc-mode company-posframe-mode))
 (icomplete-mode 1) ;;内置补全功能
 (setq icomplete-in-buffer t) ;; ???
 ;;(load-file (expand-file-name "init-core.el" user-emacs-directory))
@@ -47,6 +89,13 @@
 ;; (setq fringe-styles "default") ;; fringe 在终端没用 fringe
 (setq-default left-margin-width 1)
 (setq-default right-margin-width 1)
+
+;; 设置window显示边框
+(setq window-divider-default-bottom-width 1)
+(setq window-divider-default-right-width 2)
+(setq window-divider-default-places t)
+(setq window-resize-pixelwise t)
+(window-divider-mode 1)
 
 
 (setq show-paren-when-point-in-periphery t
@@ -80,6 +129,12 @@
 (save-place-mode t) ;;保存上次光标位置
 (global-eldoc-mode)
 (setq eldoc-echo-area-prefer-doc-buffer t)
+;; 减少docbuffer的无用空行
+(setq eldoc-doc-buffer-separator
+      (propertize "\r\n" 'face '(:inherit underline :extend  t))
+      )
+;; 异步显示所有结果
+(setq eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly)
 (setq eldoc-help-at-pt t) 		;; help key at point
 ;; (setq eldoc-display-functions '(eldoc-display-in-buffer))
 (global-tab-line-mode 1)
@@ -87,6 +142,18 @@
 ;; (global-visual-line-mode 1)
 (column-number-mode 1)
 
+(use-package ansi-color
+  :ensure nil ;; built-in
+  :init
+  (add-hook 'compilation-filter-hook  'ansi-color-compilation-filter)
+  :config
+  )
+(use-package compile
+  :ensure nil
+  :config
+  ;; (add-to-list 'compilation-environment "TERM=xterm-256color")
+  ;; (setq compilation-read-command t)
+  )
 
 ;;;; behavior
 ;; --------------------BEHAVIOR-emacs--------------------
@@ -239,10 +306,28 @@
 With a prefix ARG prompt for a file to visit.  Will also prompt for a
 file to visit if current buffer is not visiting a file."
   (interactive "P")
-  (if (or arg (not buffer-file-name))
-      (find-file (concat "/sudo:root@localhost:"
-			 (ido-read-file-name "Find file(as root): ")))
-    (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name)))
+  (let ((pos (point)))
+    (if (or arg (not buffer-file-name))
+	;; /sudo:root@localhost: 可以简化/sudo::
+	(find-file (concat "/sudo::"
+			   (ido-read-file-name "Find file(as root): ")))
+      (find-alternate-file (concat "/sudo::" buffer-file-name))
+      )
+    (goto-char pos)
+    )
+  )
+(defun l/user-edit (&optional arg)
+  (interactive "P")
+  (let ((file-name (buffer-file-name)))
+    (if (and file-name (tramp-tramp-file-p file-name))
+        (let ((local-path (tramp-file-name-localname (tramp-dissect-file-name file-name)))
+              (pos (point)))
+          (find-alternate-file local-path)
+          (goto-char pos)
+          ;; (message "已恢复为普通用户权限"))
+          (message "Recover file to normal user chown"))
+      ;; (message "当前文件不是通过 TRAMP/Sudo 打开的")))
+      (message "Current file is not open by TRAMP/Sudo. ")))
   )
 
 ;; --------------------INPUT-emacs--------------------
@@ -250,6 +335,26 @@ file to visit if current buffer is not visiting a file."
 
 ;;;; keybind
 ;; --------------------keybind-emacs--------------------
+(defun l/copy-current-dir ()
+  "快速复制当前 buffer 所在的目录路径。"
+  (interactive)
+  (let ((path default-directory)
+	(select-enable-clipboard t))
+    (kill-new path)
+    (message "已复制当前目录: %s" path))
+  )
+(defun l/copy-project-root ()
+  "快速复制当前项目根目录路径。"
+  (interactive)
+  (let ((project (project-current)))
+    (if project
+        (let ((root (project-root project))
+	      (select-enable-clipboard t))
+	  (kill-new root)
+	  (message "已复制项目根目录: %s" root))
+      (message "当前不在任何项目中 (未找到 .git 等标识)")))
+  )
+
 ;; fix tty-key
 (defun l/quoted-insert-with-read-key (arg)
   "Insert the next character using read-key, not read-char."
@@ -274,7 +379,13 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-j C-j" #'electric-newline-and-maybe-indent)
 (keymap-unset lisp-interaction-mode-map "C-j")
 (keymap-set lisp-interaction-mode-map "C-j C-j" #'eval-print-last-sexp)
-(eval-after-load "org" `(progn (keymap-unset org-mode-map "C-j") (keymap-set org-mode-map "C-j C-j" #'org-return-and-maybe-indent) ))
+(eval-after-load "org"
+  `(progn
+     (keymap-unset org-mode-map "C-j")
+     (keymap-set org-mode-map "C-j C-j" #'org-return-and-maybe-indent)
+     (keymap-set org-mode-map "C-c ," #'org-insert-structure-template)
+     )
+  )
 (keymap-global-unset "M-SPC")
 (keymap-global-set "M-RET" #'cycle-spacing)
 ;;(keymap-global-set "M-SPC ")
@@ -334,6 +445,7 @@ file to visit if current buffer is not visiting a file."
 ;; ----code ----end
 (keymap-global-set "C-x F" #'set-fill-column)
 (keymap-global-set "C-x f" #'find-file-at-point)
+(keymap-global-set "C-x j" #'find-file-existing)
 (keymap-global-set "C-c C-n" #'scratch-buffer)
 (keymap-global-set "C-x 4 o" #'display-buffer)
 
@@ -621,6 +733,8 @@ file to visit if current buffer is not visiting a file."
   :after async
   :load-path "lib/praise"
   ;;:bind
+  :config
+  (add-hook 'diff-hl-mode-hook 'praise-mode)
   
   )
 
@@ -657,95 +771,108 @@ file to visit if current buffer is not visiting a file."
     "Local"
     (interactive)
     ;; (forward-line -1)
+    ;; forward-line会移动到行首，而不是保持当前column位置
     (line-move -1)
     )
 
   ;;  (setq repeat-check-key t)
   (keymap-global-set "C-c [" #'l/tab-line-switch-prev-tab)
   (keymap-global-set "C-c ]" #'l/tab-line-switch-next-tab)
+  
+  (defmacro l/define-key-in-map-with-repeat-mode (map &rest bindings)
+    "处理 &rest 参数 bindings，并确保 #'func 被正确识别和检查。"
+    `(progn
+       ,@(mapcar
+          (lambda (binding)
+            (let ((key (car binding))
+                  (func (cdr binding)))
+              ;; 在宏展开阶段生成代码
+              `(progn
+		 ;; 1. 绑定按键 (keymap-set 是 Emacs 29+ 推荐)
+		 (keymap-set ,map ,key ,func)
+		 ;; 2. 自动添加 repeat-map 属性 (如果是符号)
+		 (let ((cmd (if (and (listp ,func) (eq (car ,func) 'function))
+				(cadr ,func)
+                              ,func)))
+                   (when (symbolp cmd)
+                     (put cmd 'repeat-map ',map))))))
+          bindings)
+       )
+    )
+  (defun l/put-common-repeat-key-in-map(map)
+    (define-keymap :keymap map
+      "n"  #'l/next-line
+      "p"  #'l/previous-line
+      
+      "3"  #'move-beginning-of-line
+      "a"  #'back-to-indentation
+      "g"  #'move-end-of-line
+      
+      ;; "4"  #'scroll-up-command
+      ;; "2"  #'scroll-down-command
+      ;; "w"  #'l/scroll-half-page-down
+      ;; "r"  #'l/scroll-half-page-up
+
+      "P"  #'tab-previous
+      "N"  #'tab-next
+      "{"  #'tab-previous
+      "}"  #'tab-next
+      ;; "'"  #'tab-switcher
+      "Y"  #'tab-switcher
+      
+      "q"  #'quit-window
+      "i"  #'repeat-exit
+      "o"  #'other-window
+      "O"  #'other-frame
+      
+      "t"  #'kill-current-buffer
+      "c"  #'comment-line
+      "d"  #'l/duplicate-line
+      "w"  #'l/delete-whole-line
+      ;; ""  #'backward-delete-char-untabify
+      ;; ""  #'xref-find-definitions
+      ;; "/"  #'xref-find-references
+      ;; ","  #'xref-go-back
+      ;; ">"  #'end-of-buffer
+      ;; "<"  #'beginning-of-buffer
+      "0"  #'delete-window
+      "9"  #'ace-window
+      "["  #'l/tab-line-switch-prev-tab
+      "]"  #'l/tab-line-switch-next-tab
+      )
+    )
   (defvar l/buffer-lunch-repeat-map ; C-x <left> 或 <right>
     (let ((map (make-sparse-keymap)))
-      (define-key map (kbd "n") #'l/next-line)
-      (define-key map (kbd "p") #'l/previous-line)
-      ;; (define-key map (kbd "f") #'forward-char)
-      ;; (define-key map (kbd "b") #'backward-char)
-      ;; (define-key map (kbd "e") #'previous-line)
-      ;; (define-key map (kbd "d") #'next-line)
-      ;; (define-key map (kbd "s") #'backward-char)
-      ;; (define-key map (kbd "h") #'backward-char)
-      ;; (define-key map (kbd "l") #'forward-char)
-      ;; (define-key map (kbd "v") #'forward-word)
-      ;; (define-key map (kbd "z") #'backward-word)
-      (define-key map (kbd "3") #'move-beginning-of-line)
-      (define-key map (kbd "a") #'back-to-indentation)
-      (define-key map (kbd "g") #'move-end-of-line)
-      
-      ;; (define-key map (kbd "k") #'l/previous-half-page-lines)
-      ;; (define-key map (kbd "j") #'l/next-half-page-lines)
-
-      ;; (define-key map (kbd "4") #'scroll-up-command)
-      ;; (define-key map (kbd "2") #'scroll-down-command)
-      ;; (define-key map (kbd "w") #'l/scroll-half-page-down)
-      ;; (define-key map (kbd "r") #'l/scroll-half-page-up)
-
-      (define-key map (kbd "P") #'tab-previous)
-      (define-key map (kbd "N") #'tab-next)
-      (define-key map (kbd "{") #'tab-previous)
-      (define-key map (kbd "}") #'tab-next)
-      ;; (define-key map (kbd "'") #'tab-switcher)
-      (define-key map (kbd "Y") #'tab-switcher)
-      
-      (define-key map (kbd "q") #'quit-window)
-      (define-key map (kbd "i") #'repeat-exit)
-      (define-key map (kbd "o") #'other-window)
-      (define-key map (kbd "O") #'other-frame)
-      ;; (define-key map (kbd "m") #'l/push-mark)
-      ;; (define-key map (kbd "x") #'l/backward-kill-word)
-      (define-key map (kbd "t") #'kill-current-buffer)
-      (define-key map (kbd "c") #'comment-line)
-      (define-key map (kbd "d") #'l/duplicate-line)
-      (define-key map (kbd "w") #'l/delete-whole-line)
-      ;; (define-key map (kbd "") #'backward-delete-char-untabify)
-      ;; (define-key map (kbd ".") #'xref-find-definitions)
-      ;; (define-key map (kbd "/") #'xref-find-references)
-      ;; (define-key map (kbd ",") #'xref-go-back)
-      (define-key map (kbd ">") #'end-of-buffer)
-      (define-key map (kbd "<") #'beginning-of-buffer)
-      (define-key map (kbd "0") #'delete-window)
-      (define-key map (kbd "9") #'ace-window)
-      (define-key map (kbd "[") #'l/tab-line-switch-prev-tab)
-      (define-key map (kbd "]") #'l/tab-line-switch-next-tab)
+      (l/put-common-repeat-key-in-map map)
+      (l/put-common-repeat-key-in-map tab-line-switch-repeat-map)
+      ;; 手动处理哪些按键能触发进入repeat-map
       (dolist (it '(
 		    ;; next-line previous-line
 		    l/next-line l/previous-line
-			      ;; forward-char backward-char forward-word backward-word
-			      ;; back-to-indentation left-word right-word
-			      l/previous-half-page-lines l/next-half-page-lines
-			      scroll-up-command scroll-down-command
-			      l/scroll-half-page-up l/scroll-half-page-down
-			      other-window kill-current-buffer quit-window ace-window delete-window
-			      l/delete-char l/backward-kill-word
-			      ;; find-file find-file-at-point
-			      find-file--read-only
-			      view-mode-enter view-mode-enable view-mode view-mode-exit View-exit
-			      switch-to-buffer project-find-file-in
-			      move-end-of-line move-beginning-of-line end-of-visual-line end-of-visible-line beginning-of-visual-line
-			      tab-previous tab-next tab-switcher tab-switcher-select
-			      xref-find-definitions xref-find-references xref-go-back
-			      comment-line l/delete-whole-line l/duplicate-line
-			      embark-dwim end-of-buffer beginning-of-buffer l/push-mark
-			      magit-mode-quit-window magit-mode-bury-buffer
-			      l/tab-line-switch-next-tab l/tab-line-switch-prev-tab))
-	(put it 'repeat-map 'l/buffer-lunch-repeat-map))
+		    ;; forward-char backward-char forward-word backward-word
+		    ;; back-to-indentation left-word right-word
+		    l/previous-half-page-lines l/next-half-page-lines
+		    scroll-up-command scroll-down-command
+		    l/scroll-half-page-up l/scroll-half-page-down
+		    other-window kill-current-buffer quit-window ace-window delete-window
+		    l/delete-char l/backward-kill-word
+		    ;; find-file find-file-at-point
+		    find-file--read-only
+		    view-mode-enter view-mode-enable view-mode view-mode-exit View-exit
+		    switch-to-buffer project-find-file-in
+		    move-end-of-line move-beginning-of-line end-of-visual-line end-of-visible-line beginning-of-visual-line
+		    tab-previous tab-next tab-switcher tab-switcher-select
+		    xref-find-definitions xref-find-references xref-go-back
+		    comment-line l/delete-whole-line l/duplicate-line
+		    embark-dwim
+		    ;; end-of-buffer beginning-of-buffer
+		    l/push-mark
+		    ;; magit-mode-quit-window magit-mode-bury-buffer
+		    other-frame
+		    l/tab-line-switch-next-tab l/tab-line-switch-prev-tab))
+	(put it 'repeat-map 'l/buffer-lunch-repeat-map)
+	)
       map)
-    "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
-    )
-  (defvar l/frame-lunch-repeat-map ; C-x <left> 或 <right>
-    (let ((omap (make-sparse-keymap)))
-      (define-key omap (kbd "O") #'other-frame)
-      (dolist (it '(other-frame))
-	(put it 'repeat-map 'l/buffer-lunch-repeat-map))
-      omap)
     "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
     )
 
@@ -780,154 +907,57 @@ file to visit if current buffer is not visiting a file."
 
 ;; --------------------window-emacs--------------------
 (setq window-min-height 2)
-(when t
-  (defun l/clean-window-element (window)
-    "Disable some ui.
-WINDOW use to change"
-    (interactive)
-    (with-selected-window window
-      (setq-local header-line-format nil)
-      (tab-line-mode -1)
-      )
-    window)
-  
-  (setq
-   display-buffer-alist
-   `(
-     ("^\\(magit-process.*\\)"                            ;正则匹配buffer name
-      ;;(display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
-      (display-buffer-in-side-window)
-      (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
-      (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
-      ;; (window-height . 0.3)                   ;同上
-      (slot . -10)                               ;这个会被display-buffer-in-side-window使用，控制window位置
-      (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
-      (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
-       (select . t)                            ;自定义的param
-       (quit . t)                              ;同上
-       (popup . t)                             ;同上
-       (mode-line . nil)
-       ;; (no-other-window . t)
-       ))
-     ("^\\(magit-.*\\)"                            ;正则匹配buffer name
-      ;;(display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
-      (display-buffer-use-some-window)
-      (side . left)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
-      ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
-      ;; (window-height . 0.2)                   ;同上
-      (slot . 0)                               ;这个会被display-buffer-in-side-window使用，控制window位置
-      (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
-      ;;(post-command-select-window . visible)
-      ;;(body-function . l/clean-window-element)
-      (haha . whatever)                        ;当然随你放什么
-      (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
-       (select . t)                            ;自定义的param
-       (quit . t)                              ;同上
-       (popup . t)                             ;同上
-       ;; (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
-       ;; (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
-       ))
-     ("^\\(magit.*\\)\\|\\(\\*xref.*\\)"                            ;正则匹配buffer name
-      ;;(display-buffer-reuse-window             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
-      (display-buffer-in-side-window)
-      (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
-      (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
-      (window-height . 0.6)                   ;同上
-      (slot . -10)                               ;这个会被display-buffer-in-side-window使用，控制window位置
-      (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
-      ;;(post-command-select-window . visible)
-      ;;(body-function . l/clean-window-element)
-      (haha . whatever)                        ;当然随你放什么
-      (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
-       (select . t)                            ;自定义的param
-       (quit . t)                              ;同上
-       (popup . t)                             ;同上
-       ;; (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
-       ;; (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
-       ))
-     ;; ("^\\(\\*[Hh]elp.*\\)"                            ;正则匹配buffer name
-     ;;  (l/display-buffer-reuse-window-action             ;入口函数，一个个调用直到有返回值，参数是：1.buffer 2.剩下的这些alist
-     ;;   l/display-buffer-in-side-window-action-clean-header_line)
-     ;;  (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
-     ;;  ;;(window-width . 0.5)                     ;emacs会自动把这个设置到window-parameter里
-     ;;  (window-width . 0.4)
-     ;;  (window-height . 0.3)                   ;同上
-     ;;  (slot . 2)                               ;这个会被display-buffer-in-side-window使用，控制window位置
-     ;;  (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
-     ;;  ;;(post-command-select-window . visible)
-     ;;  ;;(body-function . l/clean-window-element)
-     ;;  (haha . whatever)                        ;当然随你放什么
-     ;;  (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
-     ;;   (select . t)                            ;自定义的param
-     ;;   (quit . t)                              ;同上
-     ;;   (popup . t)                             ;同上
-     ;;   (mode-line-format . none)               ;emacs version > 25， none会隐藏mode line，nil会显示...
-     ;;   (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
-     ;;   ))
-     ("^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\|\\(\\*[Hh]elp\\*\\)\\|\\(\\*Metahelp\\*\\)"
-      ;;(display-buffer-reuse-window l/display-buffer-in-side-window-action-clean-header_line)
-      (display-buffer-in-side-window)
-      ;; (l/display-buffer-reuse-window-action-clean-header_line l/display-buffer-in-side-window-action-clean-header_line)
-      (side . right)                          ;参数alist从这里开始。这个side会被display-buffer-in-side-window使用
-      (window-width . 0.4)                     ;emacs会自动把这个设置到window-parameter里
-      (window-height . 0.4)                   ;同上
-      (slot . 2)                               ;这个会被display-buffer-in-side-window使用，控制window位置
-      (reusable-frames . visible)              ;这个参数看第三个链接的display-buffer
-      (window-parameters                       ;emacs 26及以上会自动把下面的设置到window-parameter里
-       (select . t)                            ;自定义的param
-       (quit . t)                              ;同上
-       (popup . t)                             ;同上
-       (mode-line-format . nil)               ;emacs version > 25， none会隐藏mode line，nil会显示...
-       (no-other-window . t)                   ;随你设置其他的window-parameter，看文档 ;可以使用ace-window切换过去
-       )
-      )
-     ("^\\(\\*gt-result\\*\\)"
-      ;;(l/display-buffer-reuse-window-action l/display-buffer-in-side-window-action_show_tab-line)
-      (display-buffer-in-side-window)
-      (slot . 10)
-      (post-command-select-window . visible)
-      (window-parameters
-       (quit . t)
-       )
-      )
-     ("^\\(\\*vterm\\*\\)"
-      ;;      (display-buffer-reuse-window display-buffer-in-side-window)
-      (display-buffer-in-side-window)
-      (side . right)
-      (window-width . 0.4)
-      (post-command-select-window . visible)
-      )
-     ("^\\(\\*eldoc.*\\)"
-      ;;      (display-buffer-reuse-window  l/display-buffer-in-side-window-action-clean-header_line)
-      ;; (display-buffer-in-side-window)
-      ;; (display-buffer-at-bottom)
-      (display-buffer-in-side-window)
-      ;; (side . bottom)
-      (side . top)
-      (slot . 100)
-      ;; (window-width . 0.4)
-      ;;(window-height . shrink-window-if-larger-than-buffer)
-      (window-min-height . 1)
-      ;; (window-height . fit-window-to-buffer)
-      (window-height . 2)
-      ;; (window-height . 0.05)
-      (window-parameters
-       (mode-line-format . none)
-       (no-other-window . t)
-       (tab-line-format . none)
-       (header-line-format . none)
-       )
-      )
-     ;;fallback
-     ("^\\(\\*.*\\*\\)"
-      ;;(display-buffer-reuse-window display-buffer-in-side-window)
-      (display-buffer-in-side-window)
-      (side . right)
-      (window-width . 0.4)
-      )
-     )
+(setq
+ display-buffer-alist
+ `(
+   ("^\\(magit:.*\\)\\|\\(magit-process.*\\)\\|\\(\\*xref.*\\)"
+    (display-buffer-in-side-window)
+    (slot . -10)         (side . right)
+    (window-width . 0.4) (window-height . 0.6)
+    (window-parameters (no-delete-other-windows . t))
+    )
+   ("^\\(magit-.*\\)"
+    (display-buffer-use-some-window)
+    (slot . 0)
+    )
+   ("^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\|\\(.*vertico.*\\)\\|\\(\\*gt-result\\*\\)"
+    (display-buffer-in-side-window )
+    (side . bottom)  (window-height . 7)
+    (window-parameters (mode-line-format . none)
+		       (no-delete-other-windows . t)
+		       (no-other-window . t)
+		       )
+    )
+   ("^\\(\\*[Hh]elp\\*\\)\\|\\(\\*Metahelp\\*\\)"
+    (display-buffer-in-side-window)  (slot . 0) (side . right)  (window-width . 0.4) (window-height 0.4)
+    (window-parameters
+     ;;(no-delete-other-windows . t)
+		       (no-other-window . t)
+		       )
+    ;; (display-buffer-in-side-window) (slot . 10)
+    )
+   ("^\\(\\*vterm\\*\\)"
+    (display-buffer-in-side-window) (slot . 20) (side . right) (post-command-select-window . visible)  (window-width . 0.4)
+    (window-parameters (quit . t)
+		       )
+    )
+   ("^\\(\\*eldoc.*\\)"
+    (display-buffer-in-side-window) (slot . 100) (side . top)
+    (window-min-height . 1)
+    (window-height . 2)
+    (window-parameters  (mode-line-format . none)
+			(no-other-window . t)
+			(tab-line-format . none)
+			(header-line-format . none)
+			(no-delete-other-windows . t)
+			)
+    )
+   ;;fallback
+   ("^\\(\\*.*\\*\\)"
+    (display-buffer-in-side-window) (slot . 0) (side . right)  (window-width . 0.4) (window-height 0.4)
+    )
    )
-  )
+ )
 
 ;; --------------------thirdpkg-emacs--------------------
 (defun l/plugin-start()
@@ -972,7 +1002,8 @@ WINDOW use to change"
   (keymap-global-set  "M-<f9>" #'l/mini-frame)
   )
 ;;(unless (daemonp)
-  (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b") ) ) )
+;; (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b") ) ) )
+(setq frame-title-format '((:eval (l/abbreviate-file-name))))
 ;;  )
 
 
