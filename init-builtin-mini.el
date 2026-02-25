@@ -778,6 +778,8 @@ file to visit if current buffer is not visiting a file."
   ;;  (setq repeat-check-key t)
   (keymap-global-set "C-c [" #'l/tab-line-switch-prev-tab)
   (keymap-global-set "C-c ]" #'l/tab-line-switch-next-tab)
+  (keymap-global-set "C-j n" #'l/next-line)
+  (keymap-global-set "C-j p" #'l/previous-line)
   
   (defmacro l/define-key-in-map-with-repeat-mode (map &rest bindings)
     "处理 &rest 参数 bindings，并确保 #'func 被正确识别和检查。"
@@ -907,20 +909,31 @@ file to visit if current buffer is not visiting a file."
 
 ;; --------------------window-emacs--------------------
 (setq window-min-height 2)
+(defun display-buffer-match(buf-match-str &optional min-width min-height)
+  "返回识别条件的函数."
+  (lambda (buf-name &rest _alist)
+    (and (if min-width (> (frame-width) min-width) t)
+	 (if min-height (> (frame-height) min-height) t)
+	 (string-match-p buf-match-str buf-name)
+	 ))
+  )
+(setq toright-min-width 160)
 (setq
  display-buffer-alist
  `(
-   ("^\\(magit:.*\\)\\|\\(magit-process.*\\)\\|\\(\\*xref.*\\)"
+   (,(display-buffer-match "^\\(magit:.*\\)\\|\\(magit-process.*\\)\\|\\(\\*xref.*\\)"
+			   toright-min-width)
     (display-buffer-in-side-window)
     (slot . -10)         (side . right)
     (window-width . 0.4) (window-height . 0.6)
     (window-parameters (no-delete-other-windows . t))
     )
-   ("^\\(magit-.*\\)"
+   (,(display-buffer-match "^\\(magit-.*\\)")
     (display-buffer-use-some-window)
     (slot . 0)
     )
-   ("^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\|\\(.*vertico.*\\)\\|\\(\\*gt-result\\*\\)"
+   (,(display-buffer-match "^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\|\\(.*vertico.*\\)\\|\\(\\*gt-result\\*\\)"
+			   toright-min-width)
     (display-buffer-in-side-window )
     (side . bottom)  (window-height . 7)
     (window-parameters (mode-line-format . none)
@@ -928,7 +941,8 @@ file to visit if current buffer is not visiting a file."
 		       (no-other-window . t)
 		       )
     )
-   ("^\\(\\*[Hh]elp\\*\\)\\|\\(\\*Metahelp\\*\\)"
+   (,(display-buffer-match "^\\(\\*[Hh]elp\\*\\)\\|\\(\\*Metahelp\\*\\)"
+			   toright-min-width)
     (display-buffer-in-side-window)  (slot . 0) (side . right)  (window-width . 0.4) (window-height 0.4)
     (window-parameters
      ;;(no-delete-other-windows . t)
@@ -936,12 +950,12 @@ file to visit if current buffer is not visiting a file."
 		       )
     ;; (display-buffer-in-side-window) (slot . 10)
     )
-   ("^\\(\\*vterm\\*\\)"
+   (,(display-buffer-match "^\\(\\*vterm\\*\\)")
     (display-buffer-in-side-window) (slot . 20) (side . right) (post-command-select-window . visible)  (window-width . 0.4)
     (window-parameters (quit . t)
 		       )
     )
-   ("^\\(\\*eldoc.*\\)"
+   (,(display-buffer-match "^\\(\\*eldoc.*\\)")
     (display-buffer-in-side-window) (slot . 100) (side . top)
     (window-min-height . 1)
     (window-height . 2)
@@ -953,7 +967,8 @@ file to visit if current buffer is not visiting a file."
 			)
     )
    ;;fallback
-   ("^\\(\\*.*\\*\\)"
+   (,(display-buffer-match "^\\(\\*.*\\*\\)"
+			   toright-min-width)
     (display-buffer-in-side-window) (slot . 0) (side . right)  (window-width . 0.4) (window-height 0.4)
     )
    )
@@ -1005,6 +1020,49 @@ file to visit if current buffer is not visiting a file."
 ;; (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b") ) ) )
 (setq frame-title-format '((:eval (l/abbreviate-file-name))))
 ;;  )
+
+;; -------------------kitty conf ---------------------
+(defvar l/kitty-daemon-process-name "kitty-daemon" "kitty-daemon-process-name setting.")
+(defun l/start-kitty-daemon ()
+  "Start a daemon kitty -1 --start-as=hidden."
+  (interactive)
+  (unless (executable-find "kitty")
+    (message "kitty not find, plz install."))
+  (let ((process-name l/kitty-daemon-process-name))
+    (if (get-process process-name)
+	(message "kitty-daemon already running.")
+      (async-start-process process-name "kitty" nil "-1" "--start-as=hidden" "--instance-group" "emacs-kitty-daemon")
+      )
+    )
+  )
+(add-hook 'after-init-hook #'l/start-kitty-daemon)
+(defun l/open-fzf()
+  (interactive)
+  (let ((process-name l/kitty-daemon-process-name))
+    (if (get-process process-name)
+	(async-start-process process-name "kitty" nil "-1" "--instance-group" "emacs-kitty-daemon" "fzf")
+      (message "kitty-daemon not running.")
+      )
+    )
+  )
+(defun l/open-btop()
+  (interactive)
+  (let ((process-name l/kitty-daemon-process-name))
+    (if (get-process process-name)
+	(async-start-process process-name "kitty" nil "-1" "--instance-group" "emacs-kitty-daemon" "-c" "sh" "btop")
+      (message "kitty-daemon not running.")
+      )
+    )
+  )
+(defun l/open-kitty-instance-group()
+  (interactive)
+  (let ((process-name l/kitty-daemon-process-name))
+    (if (get-process process-name)
+	(async-start-process process-name "kitty" nil "-1" "--instance-group" "emacs-kitty-daemon")
+      (message "kitty-daemon not running.")
+      )
+    )
+  )
 
 
 ;; --------------------char-emacs--------------------
