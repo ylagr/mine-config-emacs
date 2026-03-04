@@ -738,6 +738,24 @@ file to visit if current buffer is not visiting a file."
   
   )
 
+(use-package yasnippet
+  :disabled
+  :load-path "user-lisp/yasnippet"
+  :config
+  (yas-global-mode 1)
+  )
+(defun my/delete-all-child-frames ()
+  "Delete all child frames on the current terminal."
+  (interactive)
+  (let ((frames (frame-list)))
+    (dolist (f frames)
+      (when (frame-parameter f 'parent-frame)
+        (delete-frame f)))))
+;; 绑定一个快捷键，例如 C-x 5 0 也可以被重新绑定
+(global-set-key (kbd "C-c d") 'my/delete-all-child-frames)
+
+
+
 
 ;; --------------------repeat-emacs--------------------
 (when t
@@ -932,12 +950,12 @@ file to visit if current buffer is not visiting a file."
     (display-buffer-use-some-window)
     (slot . 0)
     )
-   (,(display-buffer-match "^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\|\\(.*vertico.*\\)\\|\\(\\*gt-result\\*\\)"
+   (,(display-buffer-match "^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\|\\(.*vertico.*\\)\\|\\(\\*gt-result\\*\\)\\|\\(\\*compilation\\*\\)"
 			   toright-min-width)
     (display-buffer-in-side-window )
     (side . bottom)  (window-height . 7)
-    (window-parameters (mode-line-format . none)
-		       (no-delete-other-windows . t)
+    (window-parameters (no-delete-other-windows . t)
+		       ;; (mode-line-format . t)
 		       (no-other-window . t)
 		       )
     )
@@ -946,8 +964,8 @@ file to visit if current buffer is not visiting a file."
     (display-buffer-in-side-window)  (slot . 0) (side . right)  (window-width . 0.4) (window-height 0.4)
     (window-parameters
      ;;(no-delete-other-windows . t)
-		       (no-other-window . t)
-		       )
+     (no-other-window . t)
+     )
     ;; (display-buffer-in-side-window) (slot . 10)
     )
    (,(display-buffer-match "^\\(\\*vterm\\*\\)")
@@ -1030,6 +1048,7 @@ file to visit if current buffer is not visiting a file."
     (message "kitty not find, plz install."))
   (let ((process-name l/kitty-daemon-process-name))
     (if (get-process process-name)
+	;; (list-system-processes)
 	(message "kitty-daemon already running.")
       (async-start-process process-name "kitty" nil "-1" "--start-as=hidden" "--instance-group" "emacs-kitty-daemon")
       )

@@ -217,6 +217,11 @@
 
 
 
+(run-with-timer 5 nil (lambda () 
+  (with-current-buffer (eldoc-doc-buffer)
+    (switch-to-buffer (get-buffer-create "*Eldoc-Debug*"))
+    (insert-buffer-substring (eldoc-doc-buffer))
+    (message "内容已强行抓取到 *Eldoc-Debug* Buffer 中！"))))
 
 
 

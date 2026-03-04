@@ -1,3 +1,6 @@
 [submodule "lib/nerd-icons-multimodal"]
 	path = lib/nerd-icons-multimodal
 	url = https://github.com/abougouffa/nerd-icons-multimodal.git
+[submodule "lib/lsp-bridge"]
+	path = lib/lsp-bridge
+	url = https://github.com/manateelazycat/lsp-bridge.git

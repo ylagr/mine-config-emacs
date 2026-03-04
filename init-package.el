@@ -231,16 +231,46 @@
  (setq company-backends `(company-capf company-files (company-dabbrev-code company-gtags company-etags company-keywords) company-dabbrev))
  )
 
-(if (>= emacs-major-version 31)
-    (use-package company-posframe
-      :ensure t
-      :after company
-      
-      :hook (company-mode . company-posframe-mode)
-      :config
-      ;;  (company-posframe-mode)
-      )
-)
+(if (< emacs-major-version 31)
+    ""
+  (use-package company-posframe
+    :ensure t
+    :after company
+    
+    :hook (company-mode . company-posframe-mode)
+    :config
+    ;;  (company-posframe-mode)
+    )
+  (use-package lsp-bridge
+    :defer t
+  :load-path "lib/lsp-bridge"
+  :after yasnippet markdown-mode
+  :config
+  (if (file-exists-p "~/.local/bin/python-lsp-bridge" )
+      "Check finish."  
+    (shell-command (concat "ln -s " (expand-file-name "lib/lsp-bridge/python-lsp-bridge" user-emacs-directory) " " "~/.local/bin/" ))
+    )
+  (with-eval-after-load 'citre
+    (setq lsp-bridge-find-ref-fallback-function 'citre-backend-find-reference)
+    (setq lsp-bridge-find-def-fallback-function 'citre-backend-find-definition)
+    )
+
+  (setq lsp-bridge-symbols-enable-which-func t)
+  (setq lsp-bridge-enable-org-babel t)
+  (setq lsp-bridge-disable-backup nil)
+  (setq acm-enable-quick-access t)
+  (setq acm-enable-capf t)
+  (setq acm-enable-doc t)
+  (setq acm-enable-citre t)
+  (setq acm-enable-lsp-workspace-symbol nil)
+  (setq acm-backend-lsp-show-progress t)
+  (setq acm-enable-preview t)
+  
+  ;; (global-lsp-bridge-mode)
+  
+  
+  )
+  )
 
 
 (use-package consult
