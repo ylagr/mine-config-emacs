@@ -3,7 +3,11 @@
 ;;; Emacs Startup File --- initialization for Emacs
 ;;; code:
 ;; --------------------const-emacs -----------------
-(setenv "BASH_ENV" "~/.bashrc")
+;; (add-hook 'after-init-hook (lambda () (setenv "BASH_ENV" "~/.bashrc")))
+;; (setenv "BASH_ENV" "~/.bashrc")
+(setenv "BASH_ENV" "~/.config/bashex/alias")
+(setenv "BASH_POST_RC" "shopt -s expand_aliases")
+;; (setq shell-command-switch "-O expand_aliases -c")
 (setq package-quickstart t)
 (setq gc-cons-threshold 16000000)
 (defconst +only-tty  (and (not (daemonp)) (not (display-graphic-p))))
@@ -139,6 +143,7 @@
 ;; (setq eldoc-display-functions '(eldoc-display-in-buffer))
 (global-tab-line-mode 1)
 ;; (global-display-line-numbers-mode 1)
+(setq display-line-numbers-grow-only t) ;; 只增长，不缩小
 ;; (global-visual-line-mode 1)
 (column-number-mode 1)
 
@@ -394,7 +399,8 @@ file to visit if current buffer is not visiting a file."
   `(keymap-set hs-minor-mode-map "C-." #'hs-cycle)
   )
 
-(keymap-global-set "M-L" #'global-display-line-numbers-mode)
+(keymap-global-set "M-L" #'display-line-numbers-mode)
+(keymap-global-set "M-I" #'global-whitespace-mode)
 (keymap-global-set "C-M-w" #'yank)
 (keymap-global-set "C-j C-i" #'newline-and-indent-up)
 (keymap-global-set "C-j C-o" #'newline-and-indent-down)
@@ -798,7 +804,7 @@ file to visit if current buffer is not visiting a file."
   (keymap-global-set "C-c ]" #'l/tab-line-switch-next-tab)
   (keymap-global-set "C-j n" #'l/next-line)
   (keymap-global-set "C-j p" #'l/previous-line)
-  
+
   (defmacro l/define-key-in-map-with-repeat-mode (map &rest bindings)
     "处理 &rest 参数 bindings，并确保 #'func 被正确识别和检查。"
     `(progn
@@ -1041,45 +1047,58 @@ file to visit if current buffer is not visiting a file."
 
 ;; -------------------kitty conf ---------------------
 (defvar l/kitty-daemon-process-name "kitty-daemon" "kitty-daemon-process-name setting.")
+(defvar l/kitty-daemon-process-exist nil)
+(defvar l/kitty-daemon-instance-groupname "emacs-kitty-daemon")
 (defun l/start-kitty-daemon ()
   "Start a daemon kitty -1 --start-as=hidden."
   (interactive)
   (unless (executable-find "kitty")
     (message "kitty not find, plz install."))
-  (let ((process-name l/kitty-daemon-process-name))
-    (if (get-process process-name)
-	;; (list-system-processes)
-	(message "kitty-daemon already running.")
-      (async-start-process process-name "kitty" nil "-1" "--start-as=hidden" "--instance-group" "emacs-kitty-daemon")
+  (defun find-system-process-exist (command-match-str)
+    (cl-some (lambda (pid)
+               (let ((attrs (process-attributes pid)))
+		 ;; 'args 返回的是完整的命令行字符串，例如 "kitty --instance-group my-group"
+		 (let ((cmd-line (cdr (assoc 'args attrs))))
+		   (and cmd-line (string-match-p command-match-str cmd-line)))))
+             (list-system-processes))
+    )
+
+  (if l/kitty-daemon-process-exist
+      ;; (list-system-processes)
+      (message "kitty-daemon already running.")
+    (if (find-system-process-exist "emacs-kitty-daemon")
+	"kitty-daemon already running"
+      (async-start-process l/kitty-daemon-process-name "kitty" nil "-1" "--start-as=hidden" "--instance-group" l/kitty-daemon-instance-groupname)
       )
+    (setq l/kitty-daemon-process-exist t)
     )
   )
-(add-hook 'after-init-hook #'l/start-kitty-daemon)
+;; (add-hook 'after-init-hook #'l/start-kitty-daemon)
 (defun l/open-fzf()
   (interactive)
-  (let ((process-name l/kitty-daemon-process-name))
-    (if (get-process process-name)
-	(async-start-process process-name "kitty" nil "-1" "--instance-group" "emacs-kitty-daemon" "fzf")
-      (message "kitty-daemon not running.")
-      )
+  (if l/kitty-daemon-process-exist
+      (async-start-process "kitty-fzf" "kitty" nil "-1" "--instance-group" l/kitty-daemon-instance-groupname "fzf")
+    (message "kitty-daemon not running.")
+    (l/start-kitty-daemon)
+    (l/open-fzf)
     )
   )
 (defun l/open-btop()
   (interactive)
-  (let ((process-name l/kitty-daemon-process-name))
-    (if (get-process process-name)
-	(async-start-process process-name "kitty" nil "-1" "--instance-group" "emacs-kitty-daemon" "-c" "sh" "btop")
-      (message "kitty-daemon not running.")
-      )
+  (if l/kitty-daemon-process-exist
+      (async-start-process "kitty-btop" "kitty" nil "-1" "--instance-group" l/kitty-daemon-instance-groupname "-c" "sh" "btop")
+    (message "kitty-daemon not running.")
+    (l/start-kitty-daemon)
+    (l/open-btop)
     )
   )
 (defun l/open-kitty-instance-group()
   (interactive)
-  (let ((process-name l/kitty-daemon-process-name))
-    (if (get-process process-name)
-	(async-start-process process-name "kitty" nil "-1" "--instance-group" "emacs-kitty-daemon")
-      (message "kitty-daemon not running.")
-      )
+  (if l/kitty-daemon-process-exist
+      (async-start-process "kitty-1" "kitty" nil "-1" "--instance-group" l/kitty-daemon-instance-groupname)
+    (message "kitty-daemon not running.")
+    (l/start-kitty-daemon)
+    (l/open-kitty-instance-group)
     )
   )
 
