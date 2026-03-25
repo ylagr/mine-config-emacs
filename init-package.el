@@ -103,6 +103,17 @@
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
         aw-scope 'frame)
   )
+(use-package flash
+  :ensure t
+  :bind (
+	 ("M-U" . flash-jump)
+	 ("M-S-u" . flash-jump)
+	 ("C-j f" . flash-char-find)
+	 ("C-j b" . flash-char-find-backward)
+	 )
+  :init
+  (flash-isearch-mode 1)  ;; 替换isearch 使用flash跳转指定位置，不用按多次isearch快捷键了
+  )
 
 (use-package vundo
   :ensure t
@@ -242,36 +253,90 @@
     ;;  (company-posframe-mode)
     )
   (use-package lsp-bridge
-    :defer t
-  :load-path "lib/lsp-bridge"
-  :after yasnippet markdown-mode
-  :config
-  (if (file-exists-p "~/.local/bin/python-lsp-bridge" )
-      "Check finish."  
-    (shell-command (concat "ln -s " (expand-file-name "lib/lsp-bridge/python-lsp-bridge" user-emacs-directory) " " "~/.local/bin/" ))
-    )
-  (with-eval-after-load 'citre
-    (setq lsp-bridge-find-ref-fallback-function 'citre-backend-find-reference)
-    (setq lsp-bridge-find-def-fallback-function 'citre-backend-find-definition)
-    )
+    ;; :defer t
+    :load-path "lib/lsp-bridge"
+    ;; :after yasnippet
+    ;; markdown-mode
+    :init
+    
+    :config
+    (add-to-list 'exec-path "~/.local/bin/")
+    (if (file-exists-p "~/.local/bin/python-lsp-bridge" )
+	"Check finish."  
+      (shell-command (concat "ln -s " (expand-file-name "lib/lsp-bridge/python-lsp-bridge" user-emacs-directory) " " "~/.local/bin/" ))
+      )
+    (with-eval-after-load 'citre
+      (setq lsp-bridge-find-ref-fallback-function 'citre-backend-find-reference)
+      (setq lsp-bridge-find-def-fallback-function 'citre-backend-find-definition)
+      (setq acm-enable-citre t)
+      )
 
-  (setq lsp-bridge-symbols-enable-which-func t)
-  (setq lsp-bridge-enable-org-babel t)
-  (setq lsp-bridge-disable-backup nil)
-  (setq acm-enable-quick-access t)
-  (setq acm-enable-capf t)
-  (setq acm-enable-doc t)
-  (setq acm-enable-citre t)
-  (setq acm-enable-lsp-workspace-symbol nil)
-  (setq acm-backend-lsp-show-progress t)
-  (setq acm-enable-preview t)
-  
-  ;; (global-lsp-bridge-mode)
-  
-  
-  )
-  )
+    (setq lsp-bridge-symbols-enable-which-func t)
+    (setq lsp-bridge-enable-org-babel t)
+    (setq lsp-bridge-disable-backup nil)
+    (setq acm-enable-quick-access t)
+    (setq acm-enable-capf t)
+    (setq acm-enable-doc t)
 
+    (setq acm-enable-lsp-workspace-symbol nil)
+    (setq acm-backend-lsp-case-mode "smart")
+    (setq acm-backend-search-file-words-enable-fuzzy-match t)
+    (setq acm-backend-lsp-show-progress t)
+    
+    (setq lsp-bridge-python-command "python-lsp-bridge")
+    ;; (setq lsp-bridge-python-command "python3")
+    ;; 用起来有点问题
+    ;; (with-eval-after-load 'orderless
+      ;; (setq acm-candidate-match-function 'orderless-flex)
+      ;; )
+
+    (setq use-lsp-bridge nil)
+    (setq use-company nil)
+    (if (and
+	 (find-system-process-exist "lsp-bridge")
+	 (not (lsp-bridge-process-live-p))
+	 )
+	(progn
+	  (setq use-company t)
+	  (setq use-lsp-bridge nil)
+	  )
+      (setq use-lsp-bridge t)
+      )
+    (with-eval-after-load 'company
+      (if (not use-company)
+	  (global-company-mode -1)
+	)
+      )
+    (if use-lsp-bridge
+	(progn
+	  (global-lsp-bridge-mode)
+	  )
+      )
+    )
+  )
+(use-package cape
+  :ensure t
+  ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
+  ;; Press C-c p ? to for help.
+  ;;  :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
+  ;; Alternatively bind Cape commands individually.
+  ;; :bind (("C-c p d" . cape-dabbrev)
+  ;;        ("C-c p h" . cape-history)
+  ;;        ("C-c p f" . cape-file)
+  ;;        ...)
+  :init
+  ;; Add to the global default value of `completion-at-point-functions' which is
+  ;; used by `completion-at-point'.  The order of the functions matters, the
+  ;; first function returning a result wins.  Note that the list of buffer-local
+  ;; completion functions takes precedence over the global list.
+  ;; (setf super-cape (cape-capf-super #'cape-abbrev #'cape-elisp-block #'cape-elisp-symbol #'cape-file #'cape-emoji #'cape-dabbrev #'cape-sgml #'cape-sgml #'cape-tex #'cape-line #'cape-keyword))
+  ;; (setq completion-at-point-functions (list
+  ;;                                      (cape-capf-super #'cape-abbrev #'cape-elisp-block #'cape-elisp-symbol #'cape-file #'cape-emoji #'cape-dabbrev #'cape-sgml #'cape-sgml #'cape-tex #'cape-line #'cape-keyword)
+  ;;                                      'tags-completion-at-point-function
+  ;;                                      ))
+  (add-hook 'emacs-lisp-mode-hook #'(lambda () (add-to-list 'completion-at-point-functions #'cape-dabbrev t)))
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
+  )
 
 (use-package consult
   :ensure t
@@ -429,6 +494,18 @@
 (use-package colorful-mode
   :ensure t
   :defer t
+  )
+(use-package org-super-agenda
+  :ensure t
+  :config
+  (with-eval-after-load 'org-agenda
+    (org-super-agenda-mode)
+    (setq org-super-agenda-groups
+          '((:name "按项目分组"
+                   :auto-parent t))
+	  )    
+    )
+  
   )
 
 

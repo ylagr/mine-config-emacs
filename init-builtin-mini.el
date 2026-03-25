@@ -80,6 +80,10 @@
 (setq icomplete-in-buffer t) ;; ???
 ;;(load-file (expand-file-name "init-core.el" user-emacs-directory))
 (global-completion-preview-mode 1) ;;全局补全预览
+(setq completion-ignore-case t)
+(setq read-buffer-completion-ignore-case t)
+(setq read-file-name-completion-ignore-case t)
+
 (electric-pair-mode 1)		   ;; 自动补全括号
 
 (add-hook 'tty-setup-hook #'xterm-mouse-mode)
@@ -338,6 +342,16 @@ file to visit if current buffer is not visiting a file."
 ;; --------------------INPUT-emacs--------------------
 (setq completion-styles '(basic flex partial-completion emacs22))
 
+;;;; core func
+(defun find-system-process-exist (command-match-str)
+  (cl-some (lambda (pid)
+             (let ((attrs (process-attributes pid)))
+	       ;; 'args 返回的是完整的命令行字符串，例如 "kitty --instance-group my-group"
+	       (let ((cmd-line (cdr (assoc 'args attrs))))
+		 (and cmd-line (string-match-p command-match-str cmd-line)))))
+           (list-system-processes))
+  )
+
 ;;;; keybind
 ;; --------------------keybind-emacs--------------------
 (defun l/copy-current-dir ()
@@ -389,6 +403,10 @@ file to visit if current buffer is not visiting a file."
      (keymap-unset org-mode-map "C-j")
      (keymap-set org-mode-map "C-j C-j" #'org-return-and-maybe-indent)
      (keymap-set org-mode-map "C-c ," #'org-insert-structure-template)
+     (with-eval-after-load 'org-agenda
+       ;; (org-agenda-file-to-front "~/.notes")
+       ;; (add-to-list 'org-agenda-files "~/.notes")
+       )
      )
   )
 (keymap-global-unset "M-SPC")
@@ -401,6 +419,7 @@ file to visit if current buffer is not visiting a file."
 
 (keymap-global-set "M-L" #'display-line-numbers-mode)
 (keymap-global-set "M-I" #'global-whitespace-mode)
+(add-hook 'prog-mode-hook #'whitespace-mode)
 (keymap-global-set "C-M-w" #'yank)
 (keymap-global-set "C-j C-i" #'newline-and-indent-up)
 (keymap-global-set "C-j C-o" #'newline-and-indent-down)
@@ -421,6 +440,7 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "M-l" #'downcase-dwim)
 (keymap-global-set "M-u" #'upcase-dwim)
 (keymap-global-set "M-c" #'capitalize-dwim)
+(keymap-global-set "M-z" #'zap-up-to-char) ;old func is zap-to-char, diff is with no up del input char.
 (keymap-global-set "M-\"" #'l/choose-inner)
 (keymap-global-set "C-M-;" #'l/choose-inner)
 (keymap-global-set "C-M-'" #'l/choose-outer)
@@ -429,6 +449,8 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-S-v" #'clipboard-yank)
 (keymap-global-set "C-M-]" #'undo-only)
 (keymap-global-set "C-j c" #'comment-line)
+(keymap-global-set "M-SPC c" #'comment-line)
+;;(keymap-global-set "M-U" #'comment-line) 
 
 (keymap-global-set "C-c C-_" #'comment-or-uncomment-region)
 (keymap-global-set "C-c C-/" #'comment-or-uncomment-region)
@@ -745,7 +767,7 @@ file to visit if current buffer is not visiting a file."
   )
 
 (use-package yasnippet
-  :disabled
+  ;; :disabled
   :load-path "user-lisp/yasnippet"
   :config
   (yas-global-mode 1)
@@ -933,12 +955,13 @@ file to visit if current buffer is not visiting a file."
 
 ;; --------------------window-emacs--------------------
 (setq window-min-height 2)
-(defun display-buffer-match(buf-match-str &optional min-width min-height)
+(defun display-buffer-match(buf-match-str &optional min-width min-height buf-nomatch-str)
   "返回识别条件的函数."
   (lambda (buf-name &rest _alist)
     (and (if min-width (> (frame-width) min-width) t)
 	 (if min-height (> (frame-height) min-height) t)
 	 (string-match-p buf-match-str buf-name)
+	 (if buf-nomatch-str (not (string-match-p buf-nomatch-str buf-name)) t)
 	 ))
   )
 (setq toright-min-width 160)
@@ -967,7 +990,7 @@ file to visit if current buffer is not visiting a file."
     )
    (,(display-buffer-match "^\\(\\*[Hh]elp\\*\\)\\|\\(\\*Metahelp\\*\\)"
 			   toright-min-width)
-    (display-buffer-in-side-window)  (slot . 0) (side . right)  (window-width . 0.4) (window-height 0.4)
+    (display-buffer-in-side-window)  (slot . 10) (side . right)  (window-width . 0.4) (window-height 0.4)
     (window-parameters
      ;;(no-delete-other-windows . t)
      (no-other-window . t)
@@ -992,7 +1015,9 @@ file to visit if current buffer is not visiting a file."
     )
    ;;fallback
    (,(display-buffer-match "^\\(\\*.*\\*\\)"
-			   toright-min-width)
+			   toright-min-width
+			   nil ;; height
+			   "^\\(\\*scratch\\*\\|\\*\\*\\)")
     (display-buffer-in-side-window) (slot . 0) (side . right)  (window-width . 0.4) (window-height 0.4)
     )
    )
@@ -1054,14 +1079,6 @@ file to visit if current buffer is not visiting a file."
   (interactive)
   (unless (executable-find "kitty")
     (message "kitty not find, plz install."))
-  (defun find-system-process-exist (command-match-str)
-    (cl-some (lambda (pid)
-               (let ((attrs (process-attributes pid)))
-		 ;; 'args 返回的是完整的命令行字符串，例如 "kitty --instance-group my-group"
-		 (let ((cmd-line (cdr (assoc 'args attrs))))
-		   (and cmd-line (string-match-p command-match-str cmd-line)))))
-             (list-system-processes))
-    )
 
   (if l/kitty-daemon-process-exist
       ;; (list-system-processes)
