@@ -50,7 +50,7 @@
 		       tab-bar-format-tabs tab-bar-separator tab-bar-format-add-tab
 		       tab-bar-format-align-right tab-bar-format-global
 		       ))
-(set-face-attribute 'tab-bar nil :underline '(:color foreground-color :style line :position t))
+(set-face-attribute 'tab-bar nil :foreground "black" :background "grey75" :underline '(:color foreground-color :style line :position t))
 (setq mode-line-front-space " ")
 (setq mode-line-end-spaces " ")
 (tab-bar-mode 1)
@@ -416,6 +416,9 @@ file to visit if current buffer is not visiting a file."
 (eval-after-load "hideshow"
   `(keymap-set hs-minor-mode-map "C-." #'hs-cycle)
   )
+;; 这个默认是使用C-x ^ enlarge  然后触发v的repeatmap来shrink-window
+(keymap-global-set "C-j C-w <down>" #'shrink-window)
+(keymap-global-set "C-j C-w <up>" #'enlarge-window)
 
 (keymap-global-set "M-L" #'display-line-numbers-mode)
 (keymap-global-set "M-I" #'global-whitespace-mode)
@@ -923,6 +926,24 @@ file to visit if current buffer is not visiting a file."
       map)
     "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
     )
+
+  ;; (defvar l/shrink-window-repeat-map ; C-x <left> 或 <right>
+  ;;   (let ((map (make-sparse-keymap)))
+  ;;     (define-keymap :keymap map
+  ;; 	"<up>" #'enlarge-window
+  ;; 	"<down>" #'shrink-window
+  ;; 	)
+  ;;     ;; 手动处理哪些按键能触发进入repeat-map
+  ;;     (dolist (it '(
+  ;; 		    ;; next-line previous-line
+  ;; 		    shrink-window enlarge-window
+  ;; 				)
+  ;; 		  )
+  ;; 	(put it 'repeat-map 'l/shrink-window-repeat-map)
+  ;; 	)
+  ;;    map)
+  ;;   )
+
 
   (setq mode-line-default-color (face-attribute 'mode-line :background))
   (defun l/repeat-mode-show-in-mode-line (&rest args)

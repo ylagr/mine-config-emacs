@@ -270,6 +270,7 @@
       (setq lsp-bridge-find-def-fallback-function 'citre-backend-find-definition)
       (setq acm-enable-citre t)
       )
+    (add-to-list 'lsp-bridge-default-mode-hooks 'sql-mode-hook)
 
     (setq lsp-bridge-symbols-enable-which-func t)
     (setq lsp-bridge-enable-org-babel t)
@@ -287,8 +288,8 @@
     ;; (setq lsp-bridge-python-command "python3")
     ;; 用起来有点问题
     ;; (with-eval-after-load 'orderless
-      ;; (setq acm-candidate-match-function 'orderless-flex)
-      ;; )
+    ;; (setq acm-candidate-match-function 'orderless-flex)
+    ;; )
 
     (setq use-lsp-bridge nil)
     (setq use-company nil)
