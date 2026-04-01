@@ -270,7 +270,40 @@
       (setq lsp-bridge-find-def-fallback-function 'citre-backend-find-definition)
       (setq acm-enable-citre t)
       )
+    ;; 1. 定义你专供 lsp-bridge 使用的超级 Cape 函数
+    ;; 你可以根据需求在里面组合不同的 cape 后端
+    (with-eval-after-load 'cape
+      (defun my/lsp-bridge-super-cape()
+	(interactive)
+	(cape-wrap-super #'cape-dabbrev #'cape-keyword  #'cape-file #'cape-keyword #'cape-abbrev)
+	)
+
+      ;; 2. 使用 advice 劫持 lsp-bridge 的查询方法
+      (defun my/lsp-bridge-capf-with-super-cape (orig-fun &rest args)
+	"当 acm-backend-capf-candidates 运行时，强制使用自定义的 cape 函数"
+	;; 动态绑定 completion-at-point-functions，确保只影响当前作用域
+	(let ((completion-at-point-functions (list 'my/lsp-bridge-super-cape)))
+	  ;; (symbol-value 'completion-at-point-functions)
+	  ;; (message "aaaaa")
+	  (apply orig-fun args)))
+
+      ;; 3. 挂载到 lsp-bridge 的补全后端上
+      (advice-add 'acm-backend-capf-candiates :around #'my/lsp-bridge-capf-with-super-cape)
+      
+      )
+    ;;;;;;;;;;
     (add-to-list 'lsp-bridge-default-mode-hooks 'sql-mode-hook)
+    (add-hook 'sql-mode 'sql-indent-enable)
+    (add-to-list 'acm-backend-capf-mode-list 'text-mode)
+    (add-to-list 'acm-backend-capf-mode-list 'prog-mode)
+    (add-to-list 'acm-backend-capf-mode-list 'sql-mode)
+    (add-to-list 'acm-backend-capf-mode-list 'lisp-interaction-mode)
+    (add-to-list 'acm-backend-capf-mode-list 'yaml-mode)
+    (add-to-list 'acm-backend-capf-mode-hooks 'yaml-mode-hook)
+    (add-to-list 'acm-backend-capf-mode-hooks 'lisp-interaction-mode-hook)
+    (add-to-list 'acm-backend-capf-mode-hooks 'prog-mode-hook)
+    (add-to-list 'acm-backend-capf-mode-hooks 'text-mode-hook)
+    (add-to-list 'acm-backend-capf-mode-hooks 'sql-mode-hook)
 
     (setq lsp-bridge-symbols-enable-which-func t)
     (setq lsp-bridge-enable-org-babel t)
@@ -317,9 +350,11 @@
   )
 (use-package cape
   :ensure t
+  :demand 
   ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
   ;; Press C-c p ? to for help.
-  ;;  :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
+   ;; :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
+  :bind ("M-+" . cape-prefix-map)
   ;; Alternatively bind Cape commands individually.
   ;; :bind (("C-c p d" . cape-dabbrev)
   ;;        ("C-c p h" . cape-history)
@@ -335,8 +370,14 @@
   ;;                                      (cape-capf-super #'cape-abbrev #'cape-elisp-block #'cape-elisp-symbol #'cape-file #'cape-emoji #'cape-dabbrev #'cape-sgml #'cape-sgml #'cape-tex #'cape-line #'cape-keyword)
   ;;                                      'tags-completion-at-point-function
   ;;                                      ))
-  (add-hook 'emacs-lisp-mode-hook #'(lambda () (add-to-list 'completion-at-point-functions #'cape-dabbrev t)))
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
+  ;; https://github.com/minad/cape
+  ;; 还是手动触发吧
+  ;; (defun super-cape()
+    ;; (cape-wrap-super #'cape-dabbrev #'cape-file #'cape-emoji #'cape-keyword #'cape-abbrev)
+    ;; )
+  ;; (add-hook 'after-change-major-mode-hook #'(lambda () (add-to-list 'completion-at-point-functions #'super-cape)))
+ 
+  
   )
 
 (use-package consult
