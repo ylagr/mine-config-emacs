@@ -112,7 +112,7 @@
 	 ("C-j b" . flash-char-find-backward)
 	 )
   :init
-  (flash-isearch-mode 1)  ;; 替换isearch 使用flash跳转指定位置，不用按多次isearch快捷键了
+  ;; (flash-isearch-mode 1)  ;; 替换isearch 使用flash跳转指定位置，不用按多次isearch快捷键了 ;; 使用pyim的时候会导致无法输入更多字符，这个还是使用 flash jump处理吧，flash jump 不能处理中文字符，就这样吧
   )
 
 (use-package vundo
@@ -549,8 +549,193 @@
     )
   
   )
+;; ime
+(use-package rime
+  :ensure t
+  :bind
+  (:map
+   rime-mode-map
+   ("s-R" . #'rime-force-enable)
+   ("s-i" . #'rime-inline-ascii))
+  :init
+  (use-package posframe :ensure t)
+  (setq
+   rime-show-candidate 'posframe
+   rime-show-preedit 'inline
+   rime-posframe-properties nil
+   )
+  (setq default-input-method "rime")
+  ;; nix 系统安装librime 会导致报错，其他系统也可能这样
+  (when +linux
+    (setq rime-emacs-module-header-root (file-truename (concat (file-name-directory (directory-file-name (file-truename invocation-directory))) "include")))
+    (setq rime-librime-root (file-name-directory(directory-file-name(file-name-directory (file-truename (executable-find "rime_deployer"))))))
+    (setq rime-share-data-dir "~/.local/share/fcitx5/rime")
+    )
+  ;; 防止没有文件
+  (unless (file-exists-p rime-share-data-dir)
+    (make-directory rime-share-data-dir)
+    )
+  (use-package phi-search
+    :ensure t
+    :init
+    (keymap-global-set "s-s s" #'phi-search)
+    (keymap-global-set "s-s r" #'phi-search-backward)
+    )
+  (defun rws-rime-predicate-after-most-ascii-char-p ()
+    "If the cursor is after a ascii character expect # [ \ ]"
+    (and (> (point) (save-excursion (back-to-indentation) (point)))
+         (let ((string (buffer-substring (point) (max (line-beginning-position) (- (point) 80)))))
+           (string-match-p "[a-zA-Z0-9\x21-\x22\x24-\x2f\x3a-\x40\x5e-\x60\x7b-\x7f]$" string))))
 
+  (defun rws-rime-predicate-space-after-most-cc-p ()
+    "If cursor is after a whitespace which follow a non-ascii (except `→') character."
+    (and (> (point) (save-excursion (back-to-indentation) (point)))
+         (let ((string (buffer-substring (point) (max (line-beginning-position) (- (point) 80)))))
+           (and (not (string-match-p "→ +$" string))
+                (string-match-p "\\cc +$" string)))))
 
+  (defun rws-rime-predicate-punctuation-space-after-ascii-p ()
+    "If input a punctuation after a ascii charactor with whitespace."
+    (and (rime-predicate-current-input-punctuation-p)
+         (rime-predicate-space-after-ascii-p)))
+
+  (setq rime-disable-predicates
+        '(rime-predicate-prog-in-code-p
+          rws-rime-predicate-punctuation-space-after-ascii-p
+          rime-predicate-punctuation-line-begin-p
+          rime-predicate-current-uppercase-letter-p
+	  rime-predicate-after-alphabet-char-p
+	  ;; rime-predicate-space-after-ascii-p ;; 让 在字母后存在空格时 disable
+	  ;; rime-predicate-punctuation-after-space-en-p
+          rws-rime-predicate-space-after-most-cc-p
+          rws-rime-predicate-after-most-ascii-char-p))
+  (with-eval-after-load "rime"
+    (setq
+     rime-inline-ascii-holder ?㞢
+     rime-inline-ascii-trigger 'control-l
+     )
+    (add-to-list 'rime-translate-keybindings "C-v")
+    (add-to-list 'rime-translate-keybindings "M-v")
+    ;; 
+    (define-key rime-active-mode-map [tab] 'rime-inline-ascii)
+    ;; (define-key rime-active-mode-map (kbd "C-v") 'rime-send-keybinding)
+    ;; (define-key rime-active-mode-map (kbd "M-v") 'rime-send-keybinding)
+    (define-key rime-mode-map (kbd "C-`") 'rime-send-keybinding)
+    (define-key rime-mode-map (kbd "M-S-j") 'rime-force-enable)
+    (define-key rime-mode-map (kbd "M-J") 'rime-force-enable)
+    (define-key rime-mode-map (kbd "M-j") 'rime-force-enable)
+    (setq-default mode-line-mule-info (add-to-list 'mode-line-mule-info '(:eval (rime-lighter)) t))
+    (set-face-attribute 'rime-indicator-face nil :foreground "#ff00ff" :background "#ffffff")
+    (set-face-attribute 'rime-indicator-dim-face nil :foreground "#00ff00" :background "#000000")
+    (set-face-attribute 'rime-default-face nil :foreground "#dcdccc" :background "#333333")
+    (set-face-attribute 'rime-preedit-face nil :foreground "#333333")
+    ;; (set-face-attribute 'rime-preedit-face nil :foreground "#000000" :background "#ffffff")
+    ;; (setq rime-show-preedit 'inline)
+    (set-face-attribute 'rime-highlight-candidate-face nil :background "#000000" :foreground "#ffffff")
+    
+    (with-eval-after-load 'acm
+      ;; 将 acm-mode-map 放入仿真模式列表，确保它在所有 Minor Mode 之上
+      (add-to-list 'emulation-mode-map-alists
+		   `((acm-mode . ,acm-mode-map))))
+    )
+  
+  )
+(use-package pyim :ensure t
+  :config
+  (use-package pyim-basedict :ensure t
+    :config
+    (pyim-basedict-enable))
+
+  (use-package pyim-cregexp-utils
+    :config
+    (setq ivy-re-builders-alist '((t . pyim-cregexp-ivy))))
+
+  (use-package pyim-cstring-utils
+    :bind
+    (("M-f" . #'pyim-forward-word)
+     ("M-b" . #'pyim-backward-word)
+     ;; ("C-<left>" . #'pyim-backward-word)
+     ;; ("C-<right>" . #'pyim-forward-word)
+     ))
+
+  (use-package posframe :ensure t)
+
+  (pyim-scheme-add
+   '(ziranma
+     :document "自然码双拼（不含形码）方案"
+     :class shuangpin
+     :first-chars "abcdefghijklmnopqrstuvwxyz"
+     :rest-chars  "abcdefghijklmnopqrstuvwxyz"
+     :prefer-triggers nil
+     :cregexp-support-p t
+     :keymaps
+     (("a" "a" "a")
+      ("b" "b" "ou")
+      ("c" "c" "iao")
+      ("d" "d" "uang" "iang")
+      ("e" "e" "e")
+      ("f" "f" "en")
+      ("g" "g" "eng")
+      ("h" "h" "ang")
+      ("i" "ch" "i")
+      ("j" "j" "an")
+      ("k" "k" "ao")
+      ("l" "l" "ai")
+      ("m" "m" "ian")
+      ("n" "n" "in")
+      ("o" "o" "uo" "o")
+      ("p" "p" "un")
+      ("q" "q" "iu")
+      ("r" "r" "uan")
+      ("s" "s" "iong" "ong")
+      ("t" "t" "ue" "ve")
+      ("u" "sh" "u")
+      ("v" "zh" "v" "ui")
+      ("w" "w" "ia" "ua")
+      ("x" "x" "ie")
+      ("y" "y" "ing" "uai")
+      ("z" "z" "ei")
+      ("aa" "a")
+      ("an" "an")
+      ("aj" "an")
+      ("ai" "ai")
+      ("al" "ai")
+      ("ao" "ao")
+      ("ak" "ao")
+      ("ah" "ang")
+      ("ee" "e")
+      ("ei" "ei")
+      ("ez" "ei")
+      ("en" "en")
+      ("ef" "en")
+      ("er" "er")
+      ("eg" "eng")
+      ("oo" "o")
+      ("ou" "ou")
+      ("ob" "ou"))))
+
+  (setq pyim-default-scheme 'ziranma
+        pyim-page-tooltip 'posframe
+        pyim-page-length 9
+        pyim-fuzzy-pinyin-alist nil)
+
+  (pyim-isearch-mode t)
+
+  (add-hook 'isearch-mode-hook
+            (lambda ()
+              (progn
+                (setq rws-input-method-before-isearch current-input-method
+                      rws-default-input-method-before-isearch default-input-method)
+                (deactivate-input-method)
+                (setq default-input-method "pyim")
+                (setq input-method-history '("pyim")))))
+
+  (add-hook 'isearch-mode-end-hook
+            (lambda ()
+              (progn
+                (activate-input-method rws-input-method-before-isearch)
+                (setq default-input-method rws-default-input-method-before-isearch)
+                (setq input-method-history (list default-input-method))))))
 (setq l/plugin-start t)
 
 (setq completion-styles (seq-difference completion-styles '(partial-completion))) ;; 移除partial-completion,防到最后

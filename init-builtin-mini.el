@@ -11,6 +11,8 @@
 (setq package-quickstart t)
 (setq gc-cons-threshold 16000000)
 (defconst +only-tty  (and (not (daemonp)) (not (display-graphic-p))))
+(defvar +l/after-init-hook 'after-init-hook)
+(defvar +l/emacs-startup-hook 'emacs-startup-hook)
 
 ;; --------------------pkg-emacs--------------------
 ;; set package archives. possibly set mirrors
@@ -22,6 +24,15 @@
                                ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")
                                ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")))
     (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))))
+(defconst +mac (eq system-type 'darwin))
+(defconst +windows (eq system-type 'windows-nt))
+(defconst +linux (eq system-type 'gnu/linux))
+;; (defconst +wsl2 (string-match-p "WSL2" (shell-command-to-string "uname -r")))
+;; (defconst +nix (string-match-p "current-system" (shell-command-to-string "which nix")))
+;; (defconst +wsl1 (and
+;;                   (eq system-type 'gnu/linux)
+;;                   (not +wsl2)
+;;                   ))
 
 
 ;; --------------------UI-emacs-------------------------
@@ -242,7 +253,8 @@
 (use-package undohist
   :load-path "user-lisp/undohist/"
   :init
-  (add-hook 'after-init-hook
+  (add-hook +l/after-init-hook
+   ;; 'after-init-hook
           #'(lambda ()
               (require 'undohist)
               (undohist-initialize)
@@ -426,6 +438,10 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-M-w" #'yank)
 (keymap-global-set "C-j C-i" #'newline-and-indent-up)
 (keymap-global-set "C-j C-o" #'newline-and-indent-down)
+(keymap-global-set "S-<return>" #'newline-and-indent-down)
+(keymap-global-set "C-<return>" #'newline-and-indent-down)
+(keymap-global-set "C-M-<return>" #'newline-and-indent-up)
+
 (keymap-global-set "C-j D" #'duplicate-dwim)
 (keymap-global-set "C-j C-d" #'l/duplicate-line)
 (keymap-global-set "C-j d" #'l/duplicate-line)
@@ -449,11 +465,13 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-M-'" #'l/choose-outer)
 
 
+(keymap-global-set "C-S-x" #'clipboard-kill-region)
+(keymap-global-set "C-S-c" #'clipboard-kill-ring-save)
 (keymap-global-set "C-S-v" #'clipboard-yank)
 (keymap-global-set "C-M-]" #'undo-only)
 (keymap-global-set "C-j c" #'comment-line)
 (keymap-global-set "M-SPC c" #'comment-line)
-;;(keymap-global-set "M-U" #'comment-line) 
+;;(keymap-global-set "M-U" #'comment-line)
 
 (keymap-global-set "C-c C-_" #'comment-or-uncomment-region)
 (keymap-global-set "C-c C-/" #'comment-or-uncomment-region)
