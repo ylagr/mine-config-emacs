@@ -22,6 +22,16 @@
   :config
   (setq ace-pinyin-simplified-chinese-only-p nil)
   )
+(use-package vlf
+  :ensure t
+  :init
+  (require 'vlf-setup)
+  )
+(use-package iedit
+  :ensure t
+  :bind
+  ("M-_" . iedit-mode)
+  )
 (use-package multiple-cursors
   :bind (
 	 ("C-M--" . #'mc/mark-next-like-this)
@@ -30,6 +40,7 @@
 	 ("C-M-9" . #'mc/unmark-next-like-this)
 	 )
   )
+(use-package yasnippet-snippets :ensure t)
 (use-package magit
   ;; :disabled
   :defer t

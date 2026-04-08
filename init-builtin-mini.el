@@ -501,6 +501,12 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-c r o" #'recentf-open)
 (keymap-global-set "C-c r f" #'recentf-open-files)
 
+(defun yank-pop-last()
+  "When yank select, use this func to jump last yank candidate."
+  (interactive)
+  (yank-pop -1)
+  )
+(global-set-key (kbd "M-Y") #'yank-pop-last)
 
 (use-package outline
   :bind (("C-j o" . #'outline-minor-mode)
@@ -900,7 +906,7 @@ file to visit if current buffer is not visiting a file."
     (define-keymap :keymap map
       "n"  #'l/next-line
       "p"  #'l/previous-line
-      
+      "k"  #'kill-whole-line
       "3"  #'move-beginning-of-line
       "a"  #'back-to-indentation
       "A"  #'move-beginning-of-line
@@ -966,6 +972,7 @@ file to visit if current buffer is not visiting a file."
 		    tab-previous tab-next tab-switcher tab-switcher-select
 		    xref-find-definitions xref-find-references xref-go-back
 		    comment-line l/delete-whole-line l/duplicate-line
+		    kill-whole-line
 		    embark-dwim
 		    ;; end-of-buffer beginning-of-buffer
 		    l/push-mark
