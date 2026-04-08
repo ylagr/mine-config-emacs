@@ -13,6 +13,15 @@
     )
 
 (defvar l/plugin-start nil)
+(use-package ace-pinyin
+  :ensure t
+  :bind ("M-I" . ace-pinyin-jump-char-2)
+  :init
+  ;; (setq ace-pinyin-use-avy t)
+  (ace-pinyin-global-mode +1)
+  :config
+  (setq ace-pinyin-simplified-chinese-only-p nil)
+  )
 (use-package multiple-cursors
   :bind (
 	 ("C-M--" . #'mc/mark-next-like-this)
@@ -204,8 +213,10 @@
   ;; (add-hook 'after-init-hook 'global-company-mode)
   ;; (add-hook 'prog-mode-hook 'company-mode)
   ;; (company-mode 1)
+  ;; (run-with-idle-timer 5 nil '(lambda ()
   (global-company-mode 1)
   (global-completion-preview-mode -1)
+  ;; ))
   
   :config
 
@@ -216,7 +227,7 @@
   ;; fringe
   
   (setq company-dabbrev-code-everywhere t)
-    (setq company-tooltip-align-annotations t)
+  (setq company-tooltip-align-annotations t)
   (setq company-tooltip-offset-display 'lines)
   (setq company-frontends
 	'(company-preview-frontend company-echo-metadata-frontend company-pseudo-tooltip-frontend)
@@ -239,8 +250,8 @@
 			       ;; company-transformers-filter-case-insensitive
                                company-sort-by-occurrence
 			       ))
- (setq company-backends `(company-capf company-files (company-dabbrev-code company-gtags company-etags company-keywords) company-dabbrev))
- )
+  (setq company-backends `(company-capf company-files (company-dabbrev-code company-gtags company-etags company-keywords) company-dabbrev))
+  )
 
 (if (< emacs-major-version 31)
     ""
@@ -258,7 +269,12 @@
     ;; :after yasnippet
     ;; markdown-mode
     :init
-    
+    ;; (run-with-idle-timer 6 nil '(lambda () (require 'lsp-bridge)))
+    ;; (defun l/lsp-bridge-init()
+      ;; (require 'lsp-bridge)
+      ;; (remove-hook 'prog-mode-hook 'l/lsp-bridge-init)
+      ;; )
+    ;; (add-hook 'prog-mode-hook 'l/lsp-bridge-init)
     :config
     (add-to-list 'exec-path "~/.local/bin/")
     (if (file-exists-p "~/.local/bin/python-lsp-bridge" )
@@ -270,6 +286,10 @@
       (setq lsp-bridge-find-def-fallback-function 'citre-backend-find-definition)
       (setq acm-enable-citre t)
       )
+    (with-eval-after-load 'acm
+      ;; 将 acm-mode-map 放入仿真模式列表，确保它在所有 Minor Mode 之上
+      (add-to-list 'emulation-mode-map-alists
+		   `((acm-mode . ,acm-mode-map))))
     ;; 1. 定义你专供 lsp-bridge 使用的超级 Cape 函数
     ;; 你可以根据需求在里面组合不同的 cape 后端
     (with-eval-after-load 'cape
@@ -538,8 +558,9 @@
   :defer t
   )
 (use-package org-super-agenda
+  :defer t
   :ensure t
-  :config
+  :init
   (with-eval-after-load 'org-agenda
     (org-super-agenda-mode)
     (setq org-super-agenda-groups
@@ -558,65 +579,88 @@
    ("s-R" . #'rime-force-enable)
    ("s-i" . #'rime-inline-ascii))
   :init
-  (use-package posframe :ensure t)
-  (setq
-   rime-show-candidate 'posframe
-   rime-show-preedit 'inline
-   rime-posframe-properties nil
-   )
   (setq default-input-method "rime")
-  ;; nix 系统安装librime 会导致报错，其他系统也可能这样
   (when +linux
     (setq rime-emacs-module-header-root (file-truename (concat (file-name-directory (directory-file-name (file-truename invocation-directory))) "include")))
     (setq rime-librime-root (file-name-directory(directory-file-name(file-name-directory (file-truename (executable-find "rime_deployer"))))))
     (setq rime-share-data-dir "~/.local/share/fcitx5/rime")
     )
+  ;; nix 系统安装librime 会导致报错，其他系统也可能这样
   ;; 防止没有文件
   (unless (file-exists-p rime-share-data-dir)
     (make-directory rime-share-data-dir)
     )
-  (use-package phi-search
-    :ensure t
-    :init
-    (keymap-global-set "s-s s" #'phi-search)
-    (keymap-global-set "s-s r" #'phi-search-backward)
-    )
-  (defun rws-rime-predicate-after-most-ascii-char-p ()
-    "If the cursor is after a ascii character expect # [ \ ]"
-    (and (> (point) (save-excursion (back-to-indentation) (point)))
-         (let ((string (buffer-substring (point) (max (line-beginning-position) (- (point) 80)))))
-           (string-match-p "[a-zA-Z0-9\x21-\x22\x24-\x2f\x3a-\x40\x5e-\x60\x7b-\x7f]$" string))))
-
-  (defun rws-rime-predicate-space-after-most-cc-p ()
-    "If cursor is after a whitespace which follow a non-ascii (except `→') character."
-    (and (> (point) (save-excursion (back-to-indentation) (point)))
-         (let ((string (buffer-substring (point) (max (line-beginning-position) (- (point) 80)))))
-           (and (not (string-match-p "→ +$" string))
-                (string-match-p "\\cc +$" string)))))
-
-  (defun rws-rime-predicate-punctuation-space-after-ascii-p ()
-    "If input a punctuation after a ascii charactor with whitespace."
-    (and (rime-predicate-current-input-punctuation-p)
-         (rime-predicate-space-after-ascii-p)))
-
-  (setq rime-disable-predicates
-        '(rime-predicate-prog-in-code-p
-          rws-rime-predicate-punctuation-space-after-ascii-p
-          rime-predicate-punctuation-line-begin-p
-          rime-predicate-current-uppercase-letter-p
-	  rime-predicate-after-alphabet-char-p
-	  ;; rime-predicate-space-after-ascii-p ;; 让 在字母后存在空格时 disable
-	  ;; rime-predicate-punctuation-after-space-en-p
-          rws-rime-predicate-space-after-most-cc-p
-          rws-rime-predicate-after-most-ascii-char-p))
+  
   (with-eval-after-load "rime"
+    (use-package posframe :ensure t)
     (setq
-     rime-inline-ascii-holder ?㞢
-     rime-inline-ascii-trigger 'control-l
+     rime-show-candidate 'posframe
+     rime-show-preedit 'inline
+     rime-posframe-properties nil
+     )
+    (use-package phi-search
+      :ensure t
+      :init
+      (keymap-global-set "s-s s" #'phi-search)
+      (keymap-global-set "s-s r" #'phi-search-backward)
+      )
+    (defun rws-rime-predicate-after-most-ascii-char-p ()
+      "If the cursor is after a ascii character expect # [ \ ]"
+      (and (> (point) (save-excursion (back-to-indentation) (point)))
+           (let ((string (buffer-substring (point) (max (line-beginning-position) (- (point) 80)))))
+             (string-match-p "[a-zA-Z0-9\x21-\x22\x24-\x2f\x3a-\x40\x5e-\x60\x7b-\x7f]$" string))))
+
+    (defun rws-rime-predicate-space-after-most-cc-p ()
+      "If cursor is after a whitespace which follow a non-ascii (except `→') character."
+      (and (> (point) (save-excursion (back-to-indentation) (point)))
+           (let ((string (buffer-substring (point) (max (line-beginning-position) (- (point) 80)))))
+             (and (not (string-match-p "→ +$" string))
+		  (not (string-match-p "-> +$" string))
+                  (string-match-p "\\cc +$" string)))))
+
+    (defun rws-rime-predicate-punctuation-space-after-ascii-p ()
+      "If input a punctuation after a ascii charactor with whitespace."
+      (and (rime-predicate-current-input-punctuation-p)
+           (rime-predicate-space-after-ascii-p)))
+
+    (setq rime-inline-predicates ;; 还是不好用，用disable来处理中英文切换足够了，这个切换过去就切换不回来了，只能手动按rime-inline-ascii，如果需要输入空格，就直接按tab在active状态触发rime-inline-ascii来处理就好了
+	  '(
+	    ;; rime-predicate-space-after-ascii-p
+	    ;; rws-rime-predicate-space-after-most-cc-p
+	    ;; rime-predicate-punctuation-after-space-en-p
+	    ;; rws-rime-predicate-current-lowercase-letter-and-space-after-most-cc-p
+	    ;; rws-rime-predicate-after-most-ascii-char-p
+	    ;; rws-rime-predicate-space-after-most-cc-p
+	    )
+	  )
+    (defun l/rime-predicate-prog-in-code-and-other-p ()
+      (and (rime-predicate-prog-in-code-p)
+	   (or (rws-rime-predicate-punctuation-space-after-ascii-p)
+	       (rws-rime-predicate-space-after-most-cc-p)
+	       (rws-rime-predicate-after-most-ascii-char-p)
+	       (rime-predicate-punctuation-line-begin-p)
+	       (rime-predicate-after-alphabet-char-p))
+	  )
+      )
+    (setq rime-disable-predicates
+          '(
+	    ;; l/rime-predicate-prog-in-code-and-other-p
+	    rime-predicate-prog-in-code-p
+	    rws-rime-predicate-after-most-ascii-char-p
+	    ;; rime-predicate-after-alphabet-char-p
+	    
+            ;; rime-predicate-current-uppercase-letter-p ;; 这个使用rime自己的英文候选吧
+	    ;; rime-predicate-space-after-ascii-p ;; 让 在字母后存在空格时 disable
+	    ;; rime-predicate-punctuation-after-space-en-p
+	    ))
+    ;; 
+    (setq
+     rime-inline-ascii-holder ?∷
+     rime-inline-ascii-trigger 'control-r
      )
     (add-to-list 'rime-translate-keybindings "C-v")
     (add-to-list 'rime-translate-keybindings "M-v")
-    ;; 
+    ;;
     (define-key rime-active-mode-map [tab] 'rime-inline-ascii)
     ;; (define-key rime-active-mode-map (kbd "C-v") 'rime-send-keybinding)
     ;; (define-key rime-active-mode-map (kbd "M-v") 'rime-send-keybinding)
@@ -624,7 +668,8 @@
     (define-key rime-mode-map (kbd "M-S-j") 'rime-force-enable)
     (define-key rime-mode-map (kbd "M-J") 'rime-force-enable)
     (define-key rime-mode-map (kbd "M-j") 'rime-force-enable)
-    (setq-default mode-line-mule-info (add-to-list 'mode-line-mule-info '(:eval (rime-lighter)) t))
+    ;; (setq-default mode-line-mule-info (add-to-list 'mode-line-mule-info '(:eval (rime-lighter)) t))
+    (l/safe-insert-to-list 'mode-line-mule-info 1 '(:eval (rime-lighter)))
     (set-face-attribute 'rime-indicator-face nil :foreground "#ff00ff" :background "#ffffff")
     (set-face-attribute 'rime-indicator-dim-face nil :foreground "#00ff00" :background "#000000")
     (set-face-attribute 'rime-default-face nil :foreground "#dcdccc" :background "#333333")
@@ -633,14 +678,19 @@
     ;; (setq rime-show-preedit 'inline)
     (set-face-attribute 'rime-highlight-candidate-face nil :background "#000000" :foreground "#ffffff")
     
-    (with-eval-after-load 'acm
-      ;; 将 acm-mode-map 放入仿真模式列表，确保它在所有 Minor Mode 之上
-      (add-to-list 'emulation-mode-map-alists
-		   `((acm-mode . ,acm-mode-map))))
+    
     )
   
   )
 (use-package pyim :ensure t
+  ;; :commands toggle-input-method
+  ;; :defer t
+  :init
+  ;; (defun l/pyim-delay-init()
+    ;; (require 'pyim)
+    ;; (remove-hook 'input-method-activate-hook 'l/pyim-delay-init)
+    ;; )
+  (add-hook 'input-method-activate-hook 'l/pyim-delay-init)
   :config
   (use-package pyim-basedict :ensure t
     :config
@@ -718,7 +768,7 @@
         pyim-page-tooltip 'posframe
         pyim-page-length 9
         pyim-fuzzy-pinyin-alist nil)
-
+;; 
   (pyim-isearch-mode t)
 
   (add-hook 'isearch-mode-hook
@@ -735,7 +785,9 @@
               (progn
                 (activate-input-method rws-input-method-before-isearch)
                 (setq default-input-method rws-default-input-method-before-isearch)
-                (setq input-method-history (list default-input-method))))))
+                (setq input-method-history (list default-input-method)))))
+  )
+
 (setq l/plugin-start t)
 
 (setq completion-styles (seq-difference completion-styles '(partial-completion))) ;; 移除partial-completion,防到最后

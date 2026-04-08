@@ -13,7 +13,27 @@
 (defconst +only-tty  (and (not (daemonp)) (not (display-graphic-p))))
 (defvar +l/after-init-hook 'after-init-hook)
 (defvar +l/emacs-startup-hook 'emacs-startup-hook)
-
+;; --------------------core func --------------------
+(defun l/safe-insert-to-list (list-var index new-el)
+  "在 LIST-VAR 的第 INDEX 个元素后插入 NEW-EL。"
+    "非破坏性地在 LIST-VAR 的第 INDEX 个元素后插入 NEW-EL，并重新赋值。"
+  (set list-var
+       (let* ((orig (symbol-value list-var))
+              (head (cl-subseq orig 0  index))
+              (tail (nthcdr index orig)))
+         (append head (list new-el) tail)))
+  )
+(defun l/safe-replace-list-element-at (list-var index new-el)
+  "生成一个新列表并替换第 INDEX 个元素，然后赋值给 LIST-VAR。"
+  (let* ((orig (symbol-value list-var))
+         (new-list (copy-sequence orig)) ; 复制一份，不碰原件
+         (node (nthcdr index new-list)))
+    (if node
+        (progn
+          (setcar node new-el)
+          (set list-var new-list))
+      (error "索引 %d 超出列表范围" index)))
+  )
 ;; --------------------pkg-emacs--------------------
 ;; set package archives. possibly set mirrors
 (defconst +i-am-in-china +1)
@@ -433,7 +453,7 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-j C-w <up>" #'enlarge-window)
 
 (keymap-global-set "M-L" #'display-line-numbers-mode)
-(keymap-global-set "M-I" #'global-whitespace-mode)
+(keymap-global-set "M-W" #'whitespace-mode)
 (add-hook 'prog-mode-hook #'whitespace-mode)
 (keymap-global-set "C-M-w" #'yank)
 (keymap-global-set "C-j C-i" #'newline-and-indent-up)
@@ -757,8 +777,15 @@ file to visit if current buffer is not visiting a file."
   (keymap-global-set "M-P" 'l/previous-half-page-lines) ;; 光标向上移动屏幕一半行
   )
 (when t
+  (setq native-comp-speed 3)
+  (setq native-comp-jit-compilation t)
+  (setq native-comp-jit-compilation-deny-list '("lsp-bridge"))
+  (setq native-comp-async-report-warnings-errors 'silent)
+  (setq native-comp-async-jobs-number 2)
   (defun l/load-config(config-file-name)
-    (load-file (expand-file-name config-file-name user-emacs-directory))
+    (let ((config-file (expand-file-name config-file-name user-emacs-directory)))
+      (native-compile-async config-file nil t )
+      )
     )
   )
 (use-package view
@@ -848,6 +875,7 @@ file to visit if current buffer is not visiting a file."
   (keymap-global-set "C-j n" #'l/next-line)
   (keymap-global-set "C-j p" #'l/previous-line)
 
+  (make-obsolete 'l/define-key-in-map-with-repeat-mode nil "2026-04-01")
   (defmacro l/define-key-in-map-with-repeat-mode (map &rest bindings)
     "处理 &rest 参数 bindings，并确保 #'func 被正确识别和检查。"
     `(progn
@@ -875,7 +903,10 @@ file to visit if current buffer is not visiting a file."
       
       "3"  #'move-beginning-of-line
       "a"  #'back-to-indentation
+      "A"  #'move-beginning-of-line
       "g"  #'move-end-of-line
+      "G"  #'end-of-visual-line
+      "^"  #'beginning-of-visual-line
       
       ;; "4"  #'scroll-up-command
       ;; "2"  #'scroll-down-command
@@ -926,10 +957,12 @@ file to visit if current buffer is not visiting a file."
 		    other-window kill-current-buffer quit-window ace-window delete-window
 		    l/delete-char l/backward-kill-word
 		    ;; find-file find-file-at-point
-		    find-file--read-only
+		    ;; find-file--read-only
 		    view-mode-enter view-mode-enable view-mode view-mode-exit View-exit
 		    switch-to-buffer project-find-file-in
-		    move-end-of-line move-beginning-of-line end-of-visual-line end-of-visible-line beginning-of-visual-line
+		    move-end-of-line move-beginning-of-line
+		    back-to-indentation
+		    end-of-visual-line end-of-visible-line beginning-of-visual-line
 		    tab-previous tab-next tab-switcher tab-switcher-select
 		    xref-find-definitions xref-find-references xref-go-back
 		    comment-line l/delete-whole-line l/duplicate-line
@@ -1167,6 +1200,7 @@ file to visit if current buffer is not visiting a file."
   (set-char-table-range char-width-table ?” 1)
   (set-char-table-range char-width-table ?° 1)
   (set-char-table-range char-width-table ?— 1)
+  ;; (set-char-table-range char-width-table ?— 1)
   (set-char-table-range char-width-table ?… 1)
   )
 (when +only-tty
