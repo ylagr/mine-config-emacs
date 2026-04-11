@@ -702,9 +702,9 @@ file to visit if current buffer is not visiting a file."
 (defun newline-and-indent-up ()
   "回车到上一行."
   (interactive)
-  (forward-line -1)
-  (move-end-of-line 1)
-  (newline-and-indent)
+  (move-beginning-of-line 1)
+  (open-line 1)
+  (indent-for-tab-command)
   )
 (defun newline-and-indent-down ()
   "回车到下一行."

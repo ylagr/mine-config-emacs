@@ -582,6 +582,20 @@
   
   )
 ;; ime
+(use-package rimel
+  :disabled
+  :load-path "lib/rimel"
+  :init
+  (use-package liberime
+    :ensure t
+    :init
+    (setq source-directory (file-truename (concat (file-name-directory (directory-file-name (file-truename invocation-directory))) "include")))
+    (liberime-build)
+    )
+  (set default-input-method "rimel")
+  
+  
+  )
 (use-package rime
   :ensure t
   :bind
@@ -701,7 +715,7 @@
     ;; (require 'pyim)
     ;; (remove-hook 'input-method-activate-hook 'l/pyim-delay-init)
     ;; )
-  (add-hook 'input-method-activate-hook 'l/pyim-delay-init)
+  ;; (add-hook 'input-method-activate-hook 'l/pyim-delay-init)
   :config
   (use-package pyim-basedict :ensure t
     :config
