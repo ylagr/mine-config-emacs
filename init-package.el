@@ -429,6 +429,7 @@
    ("M-SPC r l" . consult-register-load)
    ("M-SPC f" . consult-find)
    ("M-SPC SPC" . consult-ripgrep)
+   ("C-j SPC SPC" . consult-ripgrep)
    )
   :config
   (setq consult-async-refresh-delay 0.5)
@@ -830,7 +831,7 @@
       (delete-char arg)
       )
     )
-
+  ;; (remove-hook 'meow-normal-mode-hook #'(lambda () (meow-insert)))
   (defun meow-setup ()
     (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
     (meow-motion-define-key
@@ -933,7 +934,7 @@
      '("y" . meow-save)
      '("Y" . meow-sync-grab)
      ;; '("z" . meow-pop-selection)
-     '("`" . meow-pop-selection)
+     '("~" . meow-pop-selection)
      '("z" . meow-back-word)
      '("Z" . meow-back-symbol)
      '("'" . repeat)
@@ -944,6 +945,7 @@
      '("M" . l/meow-search-backward)
      '("?" . meow-visit)
      '(":" . execute-extended-command)
+     '("`" . meow-multi-keypad)
      )
     (defun l/meow-search-backward(arg)
       (interactive "P")
@@ -1013,6 +1015,14 @@
     )
   ;; (global-set-key (kbd "C-'") 'meow-enable)
   ;; (global-set-key (kbd "C-.") 'meow-disable)
+
+  (defun meow-multi-keypad()
+    (interactive)
+    (let ((meow-keypad-leader-dispatch "C-j"))
+      (meow-keypad)
+      )
+    )
+  
   )
 
 (use-package
