@@ -14,6 +14,14 @@
 (defvar +l/after-init-hook 'after-init-hook)
 (defvar +l/emacs-startup-hook 'emacs-startup-hook)
 ;; --------------------core func --------------------
+(defun l/cursor-type-default ()
+  "Cursor default."
+  (interactive)
+  ;; (setq cursor-type 'hollow)
+  (setq cursor-type 'box)
+  (setq-default cursor-type 'box)
+  )
+
 (defun l/safe-insert-to-list (list-var index new-el)
   "在 LIST-VAR 的第 INDEX 个元素后插入 NEW-EL。"
     "非破坏性地在 LIST-VAR 的第 INDEX 个元素后插入 NEW-EL，并重新赋值。"
@@ -452,6 +460,16 @@ file to visit if current buffer is not visiting a file."
 (keymap-global-set "C-j C-w <down>" #'shrink-window)
 (keymap-global-set "C-j C-w <up>" #'enlarge-window)
 
+(defun l/backward-delete-char-untabify (arg &optional killp)
+  (interactive "*p\nP")
+  (let ((delete-active-region t))
+    (backward-delete-char-untabify arg killp)
+    )
+  )
+(keymap-global-set "<backspace>" #'l/backward-delete-char-untabify)
+;; (keymap-global-set "<backspace>" #'l/backward-del-selection-or-char)
+;; (keymap-global-unset "<backspace>")
+(setq backward-delete-char-untabify-method 'all)
 (keymap-global-set "M-L" #'display-line-numbers-mode)
 (keymap-global-set "M-W" #'whitespace-mode)
 (add-hook 'prog-mode-hook #'whitespace-mode)
