@@ -73,7 +73,8 @@
 (setq native-comp-async-jobs-number 2)
 
 (setq l/builtin-file (expand-file-name "init-builtin-mini.el" user-emacs-directory))
-(native-compile-async l/builtin-file nil t)
+(load-file l/builtin-file)
+;; (native-compile-async l/builtin-file nil t)
 
 
 ;; 使用default-frame-alist设置了默认字体

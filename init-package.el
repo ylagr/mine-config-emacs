@@ -429,7 +429,9 @@
    ("M-SPC r l" . consult-register-load)
    ("M-SPC f" . consult-find)
    ("M-SPC SPC" . consult-ripgrep)
+   ("C-j C-SPC" . consult-ripgrep)
    ("C-j SPC SPC" . consult-ripgrep)
+   ;; ("C-j m" . consult-ripgrep)
    )
   :config
   (setq consult-async-refresh-delay 0.5)
@@ -679,7 +681,12 @@
 	    ;; rime-predicate-space-after-ascii-p ;; 让 在字母后存在空格时 disable
 	    ;; rime-predicate-punctuation-after-space-en-p
 	    ))
-    ;; 
+    ;;
+    (with-eval-after-load 'meow
+      (add-to-list 'rime-disable-predicates 'meow-normal-mode-p)
+      (add-to-list 'rime-disable-predicates 'meow-keypad-mode-p)
+      (add-to-list 'rime-disable-predicates 'meow-motion-mode-p)
+      )
     (setq
      rime-inline-ascii-holder ?∷
      rime-inline-ascii-trigger 'control-r
@@ -1018,7 +1025,10 @@
 
   (defun meow-multi-keypad()
     (interactive)
-    (let ((meow-keypad-leader-dispatch "C-j"))
+    (let ((meow-keypad-leader-dispatch "C-j")
+	  (meow-keypad-literal-prefix 32)
+	  (meow-keypad-meta-prefix nil)
+	  )
       (meow-keypad)
       )
     )
