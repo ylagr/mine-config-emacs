@@ -47,14 +47,14 @@
   :ensure t
   :bind
   (
-   ("C-j g" . #'magit)
+   ("C-c g" . #'magit)
    (:map magit-mode-map
 	 ("," . #'magit-process-buffer)
 	 ("，" . #'magit-process-buffer)
 	 )
    )
   :config
-  ;; (global-set-key (kbd "C-j g") #'magit)
+  ;; (global-set-key (kbd "C-c g") #'magit)
   )
 
 (use-package diff-hl
@@ -110,8 +110,8 @@
 (use-package ace-window
   :ensure t
   :bind (("C-x o" . ace-window)
-	 ("C-j 9" . ace-window)
-	 ("C-j 0" . ace-delete-window)
+	 ("C-c 9" . ace-window)
+	 ("C-c 0" . ace-delete-window)
 	 ("C-x M-0" . ace-delete-window)
 	 ("C-x M-o" . ace-delete-window)
          ;; ("C-x C-o" . ace-window)  ;; was delete-blank-lines
@@ -128,8 +128,8 @@
   :bind (
 	 ("M-U" . flash-jump)
 	 ("M-S-u" . flash-jump)
-	 ("C-j f" . flash-char-find)
-	 ("C-j b" . flash-char-find-backward)
+	 ("C-c f" . flash-char-find)
+	 ("C-c b" . flash-char-find-backward)
 	 )
   :init
   ;; (flash-isearch-mode 1)  ;; 替换isearch 使用flash跳转指定位置，不用按多次isearch快捷键了 ;; 使用pyim的时候会导致无法输入更多字符，这个还是使用 flash jump处理吧，flash jump 不能处理中文字符，就这样吧
@@ -219,7 +219,7 @@
   :ensure t
   :defer
   :bind
-  ("C-j j" . company-complete)
+  ("C-c j" . company-complete)
   :init
   ;; (add-hook 'after-init-hook 'global-company-mode)
   ;; (add-hook 'prog-mode-hook 'company-mode)
@@ -414,7 +414,7 @@
 (use-package consult
   :ensure t
   :bind
-  (("C-j s" . consult-line)
+  (("C-c s" . consult-line)
    ("M-SPC s" . consult-line)
    ("M-SPC m" . consult-mark)
    ("M-SPC g m" . consult-global-mark)
@@ -429,9 +429,9 @@
    ("M-SPC r l" . consult-register-load)
    ("M-SPC f" . consult-find)
    ("M-SPC SPC" . consult-ripgrep)
-   ("C-j C-SPC" . consult-ripgrep)
-   ("C-j SPC SPC" . consult-ripgrep)
-   ;; ("C-j m" . consult-ripgrep)
+   ("C-c C-SPC" . consult-ripgrep)
+   ("C-c SPC SPC" . consult-ripgrep)
+   ;; ("C-c m" . consult-ripgrep)
    )
   :config
   (setq consult-async-refresh-delay 0.5)
@@ -840,6 +840,8 @@
     )
   ;; (remove-hook 'meow-normal-mode-hook #'(lambda () (meow-insert)))
   (defun meow-setup ()
+    ;; todo use keymap variable
+    (setq meow-keypad-leader-dispatch l/custom-leader-keymap)
     (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
     (meow-motion-define-key
 					; '("j" . meow-next)
@@ -878,27 +880,29 @@
      '("." . meow-bounds-of-thing)
      '("[" . meow-beginning-of-thing)
      '("]" . meow-end-of-thing)
-     '("a" . meow-append)
+     ;; '("a" . meow-append)
+     '("a" . l/meow-append)
      '("A" . meow-open-below)
-     '("b" . meow-left)
+     '("b" . backward-char)
      ;; '("B" . clear-line)
      '("B" . meow-backward-delete)
      ;; '("b" . meow-back-word)
      ;; '("B" . meow-back-symbol)
      '("c" . meow-change)
      '("C" . meow-kill)
-     '("d" . meow-next)
+     '("d" . next-line)
      '("D" . meow-next-expand)
      ;; '("d" . meow-delete)
      ;; '("D" . meow-backward-delete)
-     '("e" . meow-prev)
+     '("e" . previous-line)
      '("E" . meow-prev-expand)
      ;; '("e" . meow-next-word)
      ;; '("E" . meow-next-symbol)
-     '("f" . meow-right)
+     '("f" . forward-char)
      '("F" . meow-right-expand)
      ;; '("f" . meow-find)
-     '("g" . meow-cancel-selection)
+     ;; '("g" . meow-cancel-selection)
+     '("g" . meow-multi-keypad-C-c)
      '("G" . meow-grab)
      '("h" . meow-left)
      '("H" . meow-left-expand)
@@ -911,12 +915,12 @@
      '("l" . meow-right)
      '("L" . meow-right-expand)
      '("m" . meow-join)
-     '("n" . meow-next)
+     '("n" . next-line)
      ;; '("n" . meow-search)
      '("o" . meow-block)
      '("O" . meow-to-block)
      ;; '("p" . meow-yank)
-     '("p" . meow-prev)
+     '("p" . previous-line)
      '("P" . meow-yank)
      ;; '("q" . meow-quit)
      '("q" . meow-cancel-selection)
@@ -952,8 +956,20 @@
      '("M" . l/meow-search-backward)
      '("?" . meow-visit)
      '(":" . execute-extended-command)
-     '("`" . meow-multi-keypad)
+     '("`" . meow-multi-keypad-M-SPC)
+     '("(" . back-to-indentation)
+     '(")" . end-of-visual-line)
+     '("{" . beginning-of-line)
+     '("}" . end-of-line)
      )
+    (defun l/meow-append()
+      (interactive)
+      (if (use-region-p)
+	  (meow-append)
+	(meow-append)
+	(forward-char 1)
+	)
+      )
     (defun l/meow-search-backward(arg)
       (interactive "P")
       (meow-search (- (if arg arg 1)))
@@ -964,6 +980,9 @@
      meow-expand-hint-remove-delay 60.0
      )
     (add-to-list 'meow-mode-state-list '(ement-room-mode . insert))
+    (with-eval-after-load 'view
+      (add-hook 'view-mode-hook #'(lambda () (if meow-mode (meow-insert-mode +1))))
+      )
     )
   (defun meow-setup-modeline ()
     (setq meow-replace-state-name-list
@@ -979,11 +998,6 @@
             (keypad . "K"))
           )
     )
-  (meow-setup)
-  (meow-setup-modeline)
-					;(meow-setup-line-number)
-  (meow-setup-indicator)
-  (meow-global-mode 1)
   
   ;; (meow-motion-define-key '("n" . next-line))
   ;; (meow-motion-define-key '("p" . previous-line))
@@ -1003,8 +1017,11 @@
   (defun meow-enable ()
     "Enable meow."
     (interactive)
-    (meow-global-mode +1)
+    (meow-setup)
+    (meow-setup-modeline)
+    ;;(meow-setup-line-number)
     (meow-setup-indicator)
+    (meow-global-mode +1)
     )
   (defun meow-disable ()
     "Disable meow."
@@ -1020,18 +1037,46 @@
       (meow-enable)
       )
     )
+  ;; 如果设置了C-x 会导致不能使用C-x C-s, 需要使用x 来触发C-x map, 且不能直接触发部分需要 spc 来做快捷键的软件 
+  ;; (setq meow-keypad-leader-dispatch "C-c")
   ;; (global-set-key (kbd "C-'") 'meow-enable)
   ;; (global-set-key (kbd "C-.") 'meow-disable)
-
-  (defun meow-multi-keypad()
+  ;;asdf
+  (defun meow-multi-keypad-C-c()
     (interactive)
-    (let ((meow-keypad-leader-dispatch "C-j")
+    ;; todo change C-j >> C-c
+    (let ((meow-keypad-leader-dispatch "C-c")
+	  (meow-keypad-ctrl-meta-prefix nil)
+	  ;; (meow-keypad-start-keys '((104 . 104)))
+	  (meow-keypad-start-keys nil)
 	  (meow-keypad-literal-prefix 32)
 	  (meow-keypad-meta-prefix nil)
 	  )
+      (meow-leader-define-key
+       '("/" . meow-keypad-describe-key)
+       '("?" . meow-cheatsheet)
+       )
       (meow-keypad)
       )
     )
+
+  (defun meow-multi-keypad-M-SPC()
+    (interactive)
+    (let ((meow-keypad-leader-dispatch l/custom-leader-keymap)
+	  (meow-keypad-ctrl-meta-prefix nil)
+	  ;; (meow-keypad-start-keys '((104 . 104)))
+	  (meow-keypad-start-keys nil)
+	  (meow-keypad-literal-prefix 32)
+	  (meow-keypad-meta-prefix nil)
+	  )
+      (meow-leader-define-key
+       '("/" . meow-keypad-describe-key)
+       '("?" . meow-cheatsheet)
+       )
+      (meow-keypad)
+      )
+    )
+  (meow-enable)
   
   )
 

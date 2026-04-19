@@ -13,6 +13,7 @@
 (defconst +only-tty  (and (not (daemonp)) (not (display-graphic-p))))
 (defvar +l/after-init-hook 'after-init-hook)
 (defvar +l/emacs-startup-hook 'emacs-startup-hook)
+(defgroup l/custom nil "local custom")
 ;; --------------------core func --------------------
 (defun l/cursor-type-default ()
   "Cursor default."
@@ -126,7 +127,7 @@
 (electric-pair-mode 1)		   ;; 自动补全括号
 
 (add-hook 'tty-setup-hook #'xterm-mouse-mode)
-(setq recenter-positions '(top 0.3 bottom)) ;;中心点
+(setq recenter-positions '(top 0.4 bottom)) ;;中心点
 (setq confirm-kill-emacs 'yes-or-no-p)
 (setq use-short-answers t)
 (defvar default-background-color "grey94")
@@ -394,6 +395,67 @@ file to visit if current buffer is not visiting a file."
 
 ;;;; keybind
 ;; --------------------keybind-emacs--------------------
+(keymap-global-unset "M-SPC")
+(keymap-global-set "M-RET" #'cycle-spacing)
+;;(keymap-global-set "M-SPC ")
+
+(if nil
+    "add custom keybind minor mode and keymap"
+  (defvar l/custom-keybind-minor-mode-map (make-sparse-keymap)
+    "Custom keybind map set.")
+
+  (defvar l/custom-keybind-keymap (make-sparse-keymap)
+    "Edit map set.")
+  (define-key l/custom-keybind-minor-mode-map (kbd "C-c") l/custom-keybind-keymap)
+
+  (define-minor-mode l/custom-keybind-mode
+    "Custom user keybind minor mode."
+    :lighter ckm
+    :keymap l/custom-keybind-minor-mode-map
+    )
+  (define-global-minor-mode l/custom-keybind-global-mode l/custom-keybind-mode
+    (lambda () (l/custom-keybind-mode))
+    :group 'l/custom
+    )
+  (l/custom-keybind-global-mode 1)
+  )
+(if nil
+    "add custom keybind leader key"
+  (defvar l/custom-leader-minor-mode-map (make-sparse-keymap)
+    "Custom keybind map set.")
+
+  (defvar l/custom-leader-keymap (make-sparse-keymap)
+    "Edit map set.")
+  (define-key l/custom-leader-minor-mode-map (kbd "M-SPC") l/custom-leader-keymap)
+
+  (define-minor-mode l/custom-leader-mode
+    "Custom user keybind minor mode."
+    :lighter clm
+    :keymap l/custom-leader-minor-mode-map
+    )
+  (define-global-minor-mode l/custom-leader-global-mode l/custom-leader-mode
+    (lambda () (l/custom-leader-mode))
+    :group 'l/custom
+    )
+  (l/custom-leader-global-mode 1)
+  )
+(if nil
+    "add custom global keybind."
+  (defvar l/custom-global-keymap (make-sparse-keymap)
+    "Edit map set.")
+  (define-minor-mode l/custom-global-keybind-mode
+    "Custom user keybind minor mode."
+    :lighter cgm
+    :keymap l/custom-global-keymap
+    )
+  (define-global-minor-mode l/custom-global-keybind-global-mode l/custom-global-keybind-mode
+    (lambda () (l/custom-global-keybind-mode))
+    :group 'l/custom
+    )
+  (l/custom-global-keybind-global-mode 1)
+  )
+
+
 (defun l/copy-current-dir ()
   "快速复制当前 buffer 所在的目录路径。"
   (interactive)
@@ -431,140 +493,144 @@ file to visit if current buffer is not visiting a file."
           (insert-and-inherit char)
           (setq arg (1- arg))))))
   )
-(keymap-global-set "C-q" #'l/quoted-insert-with-read-key)
+(keymap-set l/custom-global-keymap "C-q" #'l/quoted-insert-with-read-key)
 
 ;; ----leader key----
-(keymap-global-unset "C-j")
-(keymap-global-set "C-j C-j" #'electric-newline-and-maybe-indent)
-(keymap-unset lisp-interaction-mode-map "C-j")
-(keymap-set lisp-interaction-mode-map "C-j C-j" #'eval-print-last-sexp)
+;; (keymap-global-unset "C-j")
+;; (keymap-global-set "C-j C-j" #'electric-newline-and-maybe-indent)
+;; (keymap-unset lisp-interaction-mode-map "C-j")
+;; (keymap-set lisp-interaction-mode-map "C-j C-j" #'eval-print-last-sexp)
 (eval-after-load "org"
   `(progn
-     (keymap-unset org-mode-map "C-j")
-     (keymap-set org-mode-map "C-j C-j" #'org-return-and-maybe-indent)
-     (keymap-set org-mode-map "C-c ," #'org-insert-structure-template)
-     (with-eval-after-load 'org-agenda
+     ;; (keymap-unset org-mode-map "C-j")
+     ;; (keymap-set org-mode-map "C-j C-j" #'org-return-and-maybe-indent)
+     ;; (keymap-set org-mode-map "C-c ," #'org-insert-structure-template)
+     ;; (with-eval-after-load 'org-agenda
        ;; (org-agenda-file-to-front "~/.notes")
        ;; (add-to-list 'org-agenda-files "~/.notes")
-       )
+       ;; )
      )
   )
-(keymap-global-set "<f6>"  #'window-toggle-side-windows)
-(keymap-global-unset "M-SPC")
-(keymap-global-set "M-RET" #'cycle-spacing)
-;;(keymap-global-set "M-SPC ")
+(keymap-set l/custom-global-keymap "<f6>"  #'window-toggle-side-windows)
 ;; ----leader key----end
-(eval-after-load "hideshow"
-  `(keymap-set hs-minor-mode-map "C-." #'hs-cycle)
+(with-eval-after-load "hideshow"
+  ;; todo change to other
+  ;; `(keymap-set hs-minor-mode-map "C-." #'hs-cycle)
+  ;; `(keymap-set l/custom-global-keymap "C-." #'hs-cycle)
   )
 ;; 这个默认是使用C-x ^ enlarge  然后触发v的repeatmap来shrink-window
-(keymap-global-set "C-j C-w <down>" #'shrink-window)
-(keymap-global-set "C-j C-w <up>" #'enlarge-window)
-
+;; default use "C-x ^"  "C-x {" "C-x }"
+;; (keymap-set l/custom-leader-keymap "w <down>" #'shrink-window)
+;; (keymap-set l/cjiustom-leader-keymap "w <up>" #'enlarge-window)
+;; 
 (defun l/backward-delete-char-untabify (arg &optional killp)
   (interactive "*p\nP")
   (let ((delete-active-region t))
     (backward-delete-char-untabify arg killp)
     )
   )
-(keymap-global-set "<backspace>" #'l/backward-delete-char-untabify)
+;; <backspace> when use electron pair mode don't delete other pair char
+;; (keymap-global-unset "<backspace>") 
+;; (keymap-global-set "<backspace>" #'l/backward-delete-char-untabify)
+(keymap-set l/custom-global-keymap "DEL" #'l/backward-delete-char-untabify)
 ;; (keymap-global-set "<backspace>" #'l/backward-del-selection-or-char)
 ;; (keymap-global-unset "<backspace>")
 (setq backward-delete-char-untabify-method 'all)
-(keymap-global-set "M-L" #'display-line-numbers-mode)
-(keymap-global-set "M-W" #'whitespace-mode)
+(keymap-set l/custom-global-keymap "M-L" #'display-line-numbers-mode)
+(keymap-set l/custom-global-keymap "M-W" #'whitespace-mode)
 (add-hook 'prog-mode-hook #'whitespace-mode)
-(keymap-global-set "C-M-w" #'yank)
-(keymap-global-set "C-j C-i" #'newline-and-indent-up)
-(keymap-global-set "C-j C-o" #'newline-and-indent-down)
-(keymap-global-set "S-<return>" #'newline-and-indent-down)
-(keymap-global-set "C-<return>" #'newline-and-indent-down)
-(keymap-global-set "C-M-<return>" #'newline-and-indent-up)
+(keymap-set l/custom-global-keymap "C-M-w" #'yank)
+(keymap-set l/custom-global-keymap "S-<return>" #'newline-and-indent-down)
+(keymap-set l/custom-global-keymap "C-<return>" #'newline-and-indent-down)
+(keymap-set l/custom-global-keymap "C-M-<return>" #'newline-and-indent-up)
+(keymap-set l/custom-keybind-keymap "i" #'newline-and-indent-up)
+(keymap-set l/custom-keybind-keymap "o" #'newline-and-indent-down)
 
-(keymap-global-set "C-j D" #'duplicate-dwim)
-(keymap-global-set "C-j C-d" #'l/duplicate-line)
-(keymap-global-set "C-j d" #'l/duplicate-line)
-(keymap-global-set "C-j C-k" #'kill-whole-line) ;; save in kill-ring
-(keymap-global-set "C-j C-l" #'l/kill-current-line)	;; save in kill-ring
-(keymap-global-set "C-j C-f" #'l/delete-whole-line)	;; not save in kill-ring
-(keymap-global-set "M-D" #'l/delete-whole-line)
-(keymap-global-set "C-j w" #'l/delete-whole-line)	;; not save
-(keymap-global-set "C-j h" #'l/delete-line)	;; not save in kill-ring
-(keymap-global-set "C-c h" #'l/delete-line)	;; not save in kill-ring
-(keymap-global-set "C-j m" #'l/push-mark)
-(keymap-global-set "C-c m" #'l/push-mark)
-(keymap-global-set "M-k" #'l/move-forward-of-bounds-of-thing-at-point)
-(keymap-global-set "M-K" #'kill-sentence)
-(keymap-global-set "M-l" #'downcase-dwim)
-(keymap-global-set "M-u" #'upcase-dwim)
-(keymap-global-set "M-c" #'capitalize-dwim)
-(keymap-global-set "M-z" #'zap-up-to-char) ;old func is zap-to-char, diff is with no up del input char.
-(keymap-global-set "M-\"" #'l/choose-inner)
-(keymap-global-set "C-M-;" #'l/choose-inner)
-(keymap-global-set "C-M-'" #'l/choose-outer)
+(keymap-set l/custom-global-keymap "C-c D" #'duplicate-dwim)
+(keymap-set l/custom-global-keymap "C-c C-d" #'l/duplicate-line)
+(keymap-set l/custom-global-keymap "C-c d" #'l/duplicate-line)
+(keymap-set l/custom-global-keymap "C-c C-k" #'kill-whole-line) ;; save in kill-ring
+(keymap-set l/custom-global-keymap "C-c C-l" #'l/kill-current-line)	;; save in kill-ring
+(keymap-set l/custom-global-keymap "C-c C-f" #'l/delete-whole-line)	;; not save in kill-ring
+(keymap-set l/custom-global-keymap "M-D" #'l/delete-whole-line)
+(keymap-set l/custom-global-keymap "C-c w" #'l/delete-whole-line)	;; not save
+(keymap-set l/custom-global-keymap "C-c h" #'l/delete-line)	;; not save in kill-ring
+(keymap-set l/custom-global-keymap "C-c h" #'l/delete-line)	;; not save in kill-ring
+(keymap-set l/custom-global-keymap "C-c m" #'l/push-mark)
+(keymap-set l/custom-global-keymap "C-c m" #'l/push-mark)
+(keymap-set l/custom-global-keymap "M-k" #'l/move-forward-of-bounds-of-thing-at-point)
+(keymap-set l/custom-global-keymap "M-K" #'kill-sentence)
+(keymap-set l/custom-global-keymap "M-l" #'downcase-dwim)
+(keymap-set l/custom-global-keymap "M-u" #'upcase-dwim)
+(keymap-set l/custom-global-keymap "M-c" #'capitalize-dwim)
+(keymap-set l/custom-global-keymap "M-z" #'zap-up-to-char) ;old func is zap-to-char, diff is with no up del input char.
+(keymap-set l/custom-global-keymap "M-\"" #'l/choose-inner)
+(keymap-set l/custom-global-keymap "C-M-;" #'l/choose-inner)
+(keymap-set l/custom-global-keymap "C-M-'" #'l/choose-outer)
 
 
-(keymap-global-set "C-S-x" #'clipboard-kill-region)
-(keymap-global-set "C-S-c" #'clipboard-kill-ring-save)
-(keymap-global-set "C-S-v" #'clipboard-yank)
-(keymap-global-set "C-M-]" #'undo-only)
-(keymap-global-set "C-j c" #'comment-line)
-(keymap-global-set "M-SPC c" #'comment-line)
+(keymap-set l/custom-global-keymap "C-S-x" #'clipboard-kill-region)
+(keymap-set l/custom-global-keymap "C-S-c" #'clipboard-kill-ring-save)
+(keymap-set l/custom-global-keymap "C-S-v" #'clipboard-yank)
+(keymap-set l/custom-global-keymap "C-M-]" #'undo-only)
+(keymap-set l/custom-global-keymap "C-c c" #'comment-line)
+(keymap-set l/custom-global-keymap "M-SPC c" #'comment-line)
 ;;(keymap-global-set "M-U" #'comment-line)
 
-(keymap-global-set "C-c C-_" #'comment-or-uncomment-region)
-(keymap-global-set "C-c C-/" #'comment-or-uncomment-region)
+(keymap-set l/custom-global-keymap "C-c C-_" #'comment-or-uncomment-region)
+(keymap-set l/custom-global-keymap "C-c C-/" #'comment-or-uncomment-region)
 ;; ----edit ----end
-(keymap-global-set "C-j r" #'compile) 	;; run shell command
-(keymap-global-set "C-c c c" #'compile)
-(keymap-global-set "C-c r o" #'recentf-open)
-(keymap-global-set "C-c r f" #'recentf-open-files)
+(keymap-set l/custom-global-keymap "C-c r r" #'compile) 	;; run shell command
+;; (keymap-global-set "C-c c c" #'compile)
+(keymap-set l/custom-global-keymap "C-c r o" #'recentf-open)
+(keymap-set l/custom-global-keymap "C-c r f" #'recentf-open-files)
 
 (defun yank-pop-last()
   "When yank select, use this func to jump last yank candidate."
   (interactive)
   (yank-pop -1)
   )
-(global-set-key (kbd "M-Y") #'yank-pop-last)
+
+(keymap-set l/custom-global-keymap "M-Y" #'yank-pop-last)
 
 (use-package outline
-  :bind (("C-j o" . #'outline-minor-mode)
+  :bind (("C-c o" . #'outline-minor-mode)
 	 (:map outline-minor-mode-map
 	       ("C-c TAB" . #'outline-show-subtree)
 	       ("<backtab>" . #'outline-cycle)
-	       ("C-j p" . #'outline-show-entry)
+	       ("C-c p" . #'outline-show-entry)
 	     )
 	 )
   )
 ;; ----code ----end
-(keymap-global-set "C-x F" #'set-fill-column)
-(keymap-global-set "C-x f" #'find-file-at-point)
-(keymap-global-set "C-x j" #'find-file-existing)
-(keymap-global-set "C-c C-n" #'scratch-buffer)
-(keymap-global-set "C-x 4 o" #'display-buffer)
+(keymap-set l/custom-global-keymap "C-x F" #'set-fill-column)
+(keymap-set l/custom-global-keymap "C-x f" #'find-file-at-point)
+(keymap-set l/custom-global-keymap "C-x j" #'find-file-existing)
+(keymap-set l/custom-global-keymap "C-c C-n" #'scratch-buffer)
+(keymap-set l/custom-global-keymap "C-x 4 o" #'display-buffer)
 
-(keymap-global-set"<f5>" #'redraw-display)
+(keymap-set l/custom-global-keymap "<f5>" #'redraw-display)
 
-(keymap-global-set "C-M-i" #'completion-at-point)
+(keymap-set l/custom-global-keymap "C-M-i" #'completion-at-point)
 ;;(global-set-key (kbd "C-M-i") #'completion-symbol)
 ;; (keymap-global-set "C-h C-j" #'eldoc-print-current-symbol-info)
-(keymap-global-set "C-h C-j" #'eldoc-doc-buffer)
-(keymap-global-set "C-h C-k" #'eldoc-print-current-symbol-info)
+(keymap-set l/custom-global-keymap "C-h C-j" #'eldoc-doc-buffer)
+(keymap-set l/custom-global-keymap "C-h C-k" #'eldoc-print-current-symbol-info)
 (define-key isearch-mode-map [remap isearch-delete-char] #'isearch-del-char)
 (keymap-set minibuffer-local-completion-map "M-n" #'minibuffer-next-completion)
 (keymap-set completion-in-region-mode-map "M-n" #'minibuffer-next-completion)
 (keymap-set minibuffer-local-completion-map "M-p" #'minibuffer-previous-completion)
 (keymap-set completion-in-region-mode-map "M-p" #'minibuffer-previous-completion)
-(keymap-global-set "C-j t" #'kill-current-buffer)
-(keymap-global-set "C-c t" #'kill-current-buffer)
-(keymap-global-set "C-j v" #'view-mode)
-(keymap-global-set "M-o" #'other-window)
-(keymap-global-set "C-x B" #'ibuffer)
+(keymap-set l/custom-global-keymap "C-c t" #'kill-current-buffer)
+(keymap-set l/custom-global-keymap "C-c t" #'kill-current-buffer)
+(keymap-set l/custom-global-keymap "C-c v" #'view-mode)
+(keymap-set l/custom-global-keymap "M-o" #'other-window)
+(keymap-set l/custom-global-keymap "C-x B" #'ibuffer)
 
-(keymap-global-set "C-SPC" #'l/set-marker)
-(keymap-global-set "C-@" #'l/set-marker)
-(keymap-global-set "C-c C-@" #'set-mark-command)
-(keymap-global-set "C-c C-SPC" #'set-mark-command)
+(keymap-set l/custom-global-keymap "C-SPC" #'l/set-marker)
+(keymap-set l/custom-global-keymap "C-@" #'l/set-marker)
+(keymap-set l/custom-keybind-keymap "C-@" #'set-mark-command)
+(keymap-set l/custom-keybind-keymap "C-SPC" #'set-mark-command)
 ;;(keymap-global-set "C-@" #'set-mark-command)
 
 (defvar l/bracket-pairs
@@ -745,32 +811,7 @@ file to visit if current buffer is not visiting a file."
      (add-to-list 'project-switch-commands '(magit-project-status "Magit") t)
      (keymap-set project-prefix-map "m" #'magit-project-status)
      ))
-(eval-after-load "dired"
-  '(progn
-     (define-key dired-mode-map (kbd "z") #'dired-up-directory)
-     (define-key dired-mode-map (kbd "F") #'dired-create-empty-file)
-     (keymap-set dired-mode-map "_" #'dired-create-empty-file)
-     (keymap-set dired-mode-map "—" #'dired-create-empty-file)
-     (defun l/alternate-back-dir()
-       "Back to up dir alternate."
-       (interactive)
-       (find-alternate-file "..")
-       )
-     (define-key dired-mode-map (kbd "b") #'l/alternate-back-dir)
-     )
-  )
-(defun l/scroll-half-page-up()
-  "Scroll up half the page."
-  (interactive)
-  (scroll-up (/ (window-body-height) 2))
-  )
-(defun l/scroll-half-page-down()
-  "Scroll down half the page."
-  (interactive)
-  (scroll-down (/ (window-body-height) 2))
-  )
-
-(when t
+;;(eval-after-load
   (defun l/open-init-file()
     "Open Emacs config file."
     (interactive)
@@ -778,8 +819,8 @@ file to visit if current buffer is not visiting a file."
     )
   (keymap-global-set "C-x ," #'l/open-init-file)
   (keymap-global-set "C-x ，" #'l/open-init-file)
-  (keymap-global-set "M-<f3>" #'l/open-init-file)
-  )
+(keymap-global-set "M-<f3>" #'l/open-init-file)
+;;)
 (when t
   (defun l/refresh-buffer()
     "A."
@@ -900,8 +941,8 @@ file to visit if current buffer is not visiting a file."
   ;;  (setq repeat-check-key t)
   (keymap-global-set "C-c [" #'l/tab-line-switch-prev-tab)
   (keymap-global-set "C-c ]" #'l/tab-line-switch-next-tab)
-  (keymap-global-set "C-j n" #'l/next-line)
-  (keymap-global-set "C-j p" #'l/previous-line)
+  (keymap-global-set "C-c n" #'l/next-line)
+  (keymap-global-set "C-c p" #'l/previous-line)
 
   (make-obsolete 'l/define-key-in-map-with-repeat-mode nil "2026-04-01")
   (defmacro l/define-key-in-map-with-repeat-mode (map &rest bindings)

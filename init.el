@@ -111,11 +111,11 @@
   )
 
 (if nil
-    ""
+    "set org agenda-files "
   (setq org-agenda-files '("~/org/gtd.org"))
   )
 (if nil
-    ""
+    "add new scratch func"
   (defun my-new-scratch ()
     "创建一个新的、唯一的 scratch buffer。"
     (interactive)
@@ -133,5 +133,25 @@
 
 
   )
-
+(if t
+    "test minor mode map"
+  (defvar l/custom-keybind-minor-mode-map (make-sparse-keymap)
+    "Custom keybind map set.")
+  (defvar l/custom-keybind-keymap (make-sparse-keymap)
+    "Edit map set.")
+  (define-key l/custom-keybind-keymap (kbd "c") 'comment-line)
+  (define-key l/custom-keybind-keymap (kbd "w") 'l/delete-whole-line)
+  (define-key l/custom-keybind-minor-mode-map (kbd "C-c") l/custom-keybind-keymap)
+  (define-minor-mode l/custom-keybind-mode
+    "Custom user keybind minor mode."
+    :lighter ckm
+    :keymap l/custom-keybind-minor-mode-map
+    )
+  (l/custom-keybind-mode +1)
+  (l/custom-keybind-mode -1)
+  ;; sdfasdfasdf
+  ;; C-c 使用g键
+  ;; M-spc 使用` 键
+  ;; C-x 使用spc 键
+  )
 
