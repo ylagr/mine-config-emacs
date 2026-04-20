@@ -129,7 +129,7 @@
       (lisp-interaction-mode)))
 
   ;; 绑定快捷键
-  (global-set-key (kbd "C-c n") 'my-new-scratch)
+  (global-set-key (kbd "C-c N") 'my-new-scratch)
 
 
   )

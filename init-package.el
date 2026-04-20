@@ -47,7 +47,7 @@
   :ensure t
   :bind
   (
-   ("C-c g" . #'magit)
+   (:map l/custom-keybind-keymap ("g" . #'magit))
    (:map magit-mode-map
 	 ("," . #'magit-process-buffer)
 	 ("，" . #'magit-process-buffer)
@@ -110,10 +110,11 @@
 (use-package ace-window
   :ensure t
   :bind (("C-x o" . ace-window)
-	 ("C-c 9" . ace-window)
-	 ("C-c 0" . ace-delete-window)
 	 ("C-x M-0" . ace-delete-window)
 	 ("C-x M-o" . ace-delete-window)
+	 (:map l/custom-keybind-keymap
+	       ("9" . ace-window)
+	       ("0" . ace-delete-window))
          ;; ("C-x C-o" . ace-window)  ;; was delete-blank-lines
          )
   :config
@@ -128,8 +129,9 @@
   :bind (
 	 ("M-U" . flash-jump)
 	 ("M-S-u" . flash-jump)
-	 ("C-c f" . flash-char-find)
-	 ("C-c b" . flash-char-find-backward)
+	 (:map l/custom-keybind-keymap
+	       ("f" . flash-char-find)
+	       ("b" . flash-char-find-backward))
 	 )
   :init
   ;; (flash-isearch-mode 1)  ;; 替换isearch 使用flash跳转指定位置，不用按多次isearch快捷键了 ;; 使用pyim的时候会导致无法输入更多字符，这个还是使用 flash jump处理吧，flash jump 不能处理中文字符，就这样吧
@@ -143,7 +145,7 @@
 
 ;; translate
 (use-package gt
-  :bind ("M-SPC t" . gt-translate)
+  :bind ((:map l/custom-leader-keymap ("t" . gt-translate)))
   :config
   (setq gt-preset-translators
 	`((ts-1 . ,(gt-translator
@@ -219,7 +221,7 @@
   :ensure t
   :defer
   :bind
-  ("C-c j" . company-complete)
+  ((:map l/custom-keybind-keymap ("j" . company-complete)))
   :init
   ;; (add-hook 'after-init-hook 'global-company-mode)
   ;; (add-hook 'prog-mode-hook 'company-mode)
@@ -414,23 +416,26 @@
 (use-package consult
   :ensure t
   :bind
-  (("C-c s" . consult-line)
-   ("M-SPC s" . consult-line)
-   ("M-SPC m" . consult-mark)
-   ("M-SPC g m" . consult-global-mark)
-   ("M-SPC g s" . consult-line-multi)
-   ("M-SPC g i" . consult-imenu-multi)
-   ("M-SPC b" . consult-buffer)
-   ("M-SPC i" . consult-imenu)
-   ("M-SPC e" . consult-flymake)
-   ("M-SPC r f" . consult-recent-file)
-   ("M-SPC r r" . consult-register)
-   ("M-SPC r s" . consult-register-store)
-   ("M-SPC r l" . consult-register-load)
-   ("M-SPC f" . consult-find)
-   ("M-SPC SPC" . consult-ripgrep)
-   ("C-c C-SPC" . consult-ripgrep)
-   ("C-c SPC SPC" . consult-ripgrep)
+  (
+   (:map l/custom-keybind-keymap
+	 ("s" . consult-line)
+	 ("C-SPC" . consult-ripgrep)
+	 ("SPC SPC" . consult-ripgrep))
+   (:map l/custom-leader-keymap
+	 ("s l" . consult-line)
+	 ("m m" . consult-mark)
+	 ("m g" . consult-global-mark)
+	 ("s g" . consult-line-multi)
+	 ("b" . consult-buffer)
+	 ("i g" . consult-imenu-multi)
+	 ("i i" . consult-imenu)
+	 ("e e" . consult-flymake)
+	 ("r f" . consult-recent-file)
+	 ("r r" . consult-register)
+	 ("r s" . consult-register-store)
+	 ("r l" . consult-register-load)
+	 ("s f" . consult-find)
+	 ("s s" . consult-ripgrep))
    ;; ("C-c m" . consult-ripgrep)
    )
   :config
@@ -692,6 +697,7 @@
      rime-inline-ascii-trigger 'control-r
      )
     (add-to-list 'rime-translate-keybindings "C-v")
+    (add-to-list 'rime-translate-keybindings "C-k")
     (add-to-list 'rime-translate-keybindings "M-v")
     ;;
     (define-key rime-active-mode-map [tab] 'rime-inline-ascii)
@@ -700,7 +706,7 @@
     (define-key rime-mode-map (kbd "C-`") 'rime-send-keybinding)
     (define-key rime-mode-map (kbd "M-S-j") 'rime-force-enable)
     (define-key rime-mode-map (kbd "M-J") 'rime-force-enable)
-    (define-key rime-mode-map (kbd "M-j") 'rime-force-enable)
+    ;; (define-key rime-mode-map (kbd "M-j") 'rime-force-enable)
     ;; (setq-default mode-line-mule-info (add-to-list 'mode-line-mule-info '(:eval (rime-lighter)) t))
     (l/safe-insert-to-list 'mode-line-mule-info 1 '(:eval (rime-lighter)))
     (set-face-attribute 'rime-indicator-face nil :foreground "#ff00ff" :background "#ffffff")
@@ -842,24 +848,27 @@
   (defun meow-setup ()
     ;; todo use keymap variable
     (setq meow-keypad-leader-dispatch l/custom-leader-keymap)
+    ;; Use SPC (0-9) for digit arguments.
+    (keymap-set l/custom-leader-keymap "1" #'meow-digit-argument)
+    (keymap-set l/custom-leader-keymap "2" #'meow-digit-argument)
+    (keymap-set l/custom-leader-keymap "3" #'meow-digit-argument)
+    (keymap-set l/custom-leader-keymap "4" #'meow-digit-argument)
+    (keymap-set l/custom-leader-keymap "5" #'meow-digit-argument)
+    (keymap-set l/custom-leader-keymap "6" #'meow-digit-argument)
+    (keymap-set l/custom-leader-keymap "7" #'meow-digit-argument)
+    (keymap-set l/custom-leader-keymap "8" #'meow-digit-argument)
+    (keymap-set l/custom-leader-keymap "9" #'meow-digit-argument)
+    (keymap-set l/custom-leader-keymap "0" #'meow-digit-argument)
+    (keymap-set l/custom-leader-keymap "/" #'meow-keypad-describe-key)
+    (keymap-set l/custom-leader-keymap "?" #'meow-cheatsheet)
+
     (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
-    (meow-motion-define-key
-					; '("j" . meow-next)
-					; '("k" . meow-prev)
-					; '("<escape>" . ignore)
-     )
+    ;; (meow-motion-define-key
+    ;; '("j" . meow-next)
+    ;; '("k" . meow-prev)
+    ;; '("<escape>" . ignore)
+    ;; )
     (meow-leader-define-key
-     ;; Use SPC (0-9) for digit arguments.
-     '("1" . meow-digit-argument)
-     '("2" . meow-digit-argument)
-     '("3" . meow-digit-argument)
-     '("4" . meow-digit-argument)
-     '("5" . meow-digit-argument)
-     '("6" . meow-digit-argument)
-     '("7" . meow-digit-argument)
-     '("8" . meow-digit-argument)
-     '("9" . meow-digit-argument)
-     '("0" . meow-digit-argument)
      '("/" . meow-keypad-describe-key)
      '("?" . meow-cheatsheet)
      )
@@ -981,7 +990,7 @@
      )
     (add-to-list 'meow-mode-state-list '(ement-room-mode . insert))
     (with-eval-after-load 'view
-      (add-hook 'view-mode-hook #'(lambda () (if meow-mode (meow-insert-mode +1))))
+      (add-hook 'view-mode-hook #'(lambda () (if meow-mode (progn (meow-insert-exit)(meow-insert-mode +1)))))
       )
     )
   (defun meow-setup-modeline ()
@@ -1052,10 +1061,10 @@
 	  (meow-keypad-literal-prefix 32)
 	  (meow-keypad-meta-prefix nil)
 	  )
-      (meow-leader-define-key
-       '("/" . meow-keypad-describe-key)
-       '("?" . meow-cheatsheet)
-       )
+      ;; (meow-leader-define-key
+       ;; '("/" . meow-keypad-describe-key)
+       ;; '("?" . meow-cheatsheet)
+       ;; )
       (meow-keypad)
       )
     )
@@ -1069,10 +1078,10 @@
 	  (meow-keypad-literal-prefix 32)
 	  (meow-keypad-meta-prefix nil)
 	  )
-      (meow-leader-define-key
-       '("/" . meow-keypad-describe-key)
-       '("?" . meow-cheatsheet)
-       )
+      ;; (meow-leader-define-key
+       ;; '("/" . meow-keypad-describe-key)
+       ;; '("?" . meow-cheatsheet)
+       ;; )
       (meow-keypad)
       )
     )
