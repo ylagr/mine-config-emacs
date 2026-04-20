@@ -616,7 +616,8 @@
   (when +linux
     (setq rime-emacs-module-header-root (file-truename (concat (file-name-directory (directory-file-name (file-truename invocation-directory))) "include")))
     (setq rime-librime-root (file-name-directory(directory-file-name(file-name-directory (file-truename (executable-find "rime_deployer"))))))
-    (setq rime-share-data-dir "~/.local/share/fcitx5/rime")
+    (setq rime-share-data-dir "~/.local/share/fcitx5/rime-data/")
+    ;; (setq rime-user-data-dir (expand-file-name "~/.emacs.d/rime/"))
     )
   ;; nix 系统安装librime 会导致报错，其他系统也可能这样
   ;; 防止没有文件
@@ -697,6 +698,7 @@
      rime-inline-ascii-trigger 'control-r
      )
     (add-to-list 'rime-translate-keybindings "C-v")
+    (add-to-list 'rime-translate-keybindings "C-`")
     (add-to-list 'rime-translate-keybindings "C-k")
     (add-to-list 'rime-translate-keybindings "M-v")
     ;;
