@@ -404,9 +404,9 @@ file to visit if current buffer is not visiting a file."
   (defvar l/custom-keybind-minor-mode-map (make-sparse-keymap)
     "Custom keybind map set.")
 
-  (defvar l/custom-keybind-keymap (make-sparse-keymap)
+  (defvar l/custom-keybind-prefix-keymap (make-sparse-keymap)
     "Edit map set.")
-  (define-key l/custom-keybind-minor-mode-map (kbd "C-c") l/custom-keybind-keymap)
+  (define-key l/custom-keybind-minor-mode-map (kbd "C-c") l/custom-keybind-prefix-keymap)
 
   (define-minor-mode l/custom-keybind-mode
     "Custom user keybind minor mode."
@@ -424,9 +424,9 @@ file to visit if current buffer is not visiting a file."
   (defvar l/custom-leader-minor-mode-map (make-sparse-keymap)
     "Custom keybind map set.")
 
-  (defvar l/custom-leader-keymap (make-sparse-keymap)
+  (defvar l/custom-leader-prefix-keymap (make-sparse-keymap)
     "Edit map set.")
-  (define-key l/custom-leader-minor-mode-map (kbd "M-SPC") l/custom-leader-keymap)
+  (define-key l/custom-leader-minor-mode-map (kbd "M-SPC") l/custom-leader-prefix-keymap)
 
   (define-minor-mode l/custom-leader-mode
     "Custom user keybind minor mode."
@@ -520,7 +520,7 @@ file to visit if current buffer is not visiting a file."
   )
 ;; 这个默认是使用C-x ^ enlarge  然后触发v的repeatmap来shrink-window
 ;; default use "C-x ^"  "C-x {" "C-x }"
-;; (keymap-set l/custom-leader-keymap "w <down>" #'shrink-window)
+;; (keymap-set l/custom-leader-prefix-keymap "w <down>" #'shrink-window)
 ;; (keymap-set l/cjiustom-leader-keymap "w <up>" #'enlarge-window)
 ;; 
 (defun l/backward-delete-char-untabify (arg &optional killp)
@@ -532,9 +532,21 @@ file to visit if current buffer is not visiting a file."
 ;; <backspace> when use electron pair mode don't delete other pair char
 ;; (keymap-global-unset "<backspace>") 
 ;; (keymap-global-set "<backspace>" #'l/backward-delete-char-untabify)
-(keymap-set l/custom-global-keymap "DEL" #'l/backward-delete-char-untabify)
+;; 影响electric Paris delete mode ； meow 的删除使用del 处理
+;; (keymap-set l/custom-global-keymap "DEL" #'l/backward-delete-char-untabify)
 ;; (keymap-global-set "<backspace>" #'l/backward-del-selection-or-char)
 ;; (keymap-global-unset "<backspace>")
+(defun l/delete-selection-or-char(arg)
+  (interactive "p")
+  (if (use-region-p)
+      (let ((beg (region-beginning))
+	    (end (region-end))
+	    )
+	(delete-region beg end)
+	)
+    (delete-char arg)
+    )
+  )
 (setq backward-delete-char-untabify-method 'all)
 (keymap-set l/custom-global-keymap "M-L" #'display-line-numbers-mode)
 (keymap-set l/custom-global-keymap "M-W" #'whitespace-mode)
@@ -543,19 +555,19 @@ file to visit if current buffer is not visiting a file."
 (keymap-set l/custom-global-keymap "S-<return>" #'newline-and-indent-down)
 (keymap-set l/custom-global-keymap "C-<return>" #'newline-and-indent-down)
 (keymap-set l/custom-global-keymap "C-M-<return>" #'newline-and-indent-up)
-(keymap-set l/custom-keybind-keymap "i" #'newline-and-indent-up)
-(keymap-set l/custom-keybind-keymap "o" #'newline-and-indent-down)
+(keymap-set l/custom-keybind-prefix-keymap "i" #'newline-and-indent-up)
+(keymap-set l/custom-keybind-prefix-keymap "o" #'newline-and-indent-down)
 
-(keymap-set l/custom-keybind-keymap "D" #'duplicate-dwim)
-(keymap-set l/custom-keybind-keymap "C-d" #'l/duplicate-line)
-(keymap-set l/custom-keybind-keymap "d" #'l/duplicate-line)
-(keymap-set l/custom-keybind-keymap "C-k" #'kill-whole-line) ;; save in kill-ring
-(keymap-set l/custom-keybind-keymap "C-l" #'l/kill-current-line)	;; save in kill-ring
-(keymap-set l/custom-keybind-keymap "C-f" #'l/delete-whole-line)	;; not save in kill-ring
+(keymap-set l/custom-keybind-prefix-keymap "D D" #'duplicate-dwim)
+;; (keymap-set l/custom-keybind-prefix-keymap "C-d" #'l/duplicate-line)
+(keymap-set l/custom-keybind-prefix-keymap "d" #'l/duplicate-line)
+(keymap-set l/custom-keybind-prefix-keymap "k" #'kill-whole-line) ;; save in kill-ring
+(keymap-set l/custom-keybind-prefix-keymap "l" #'l/kill-current-line)	;; save in kill-ring
+;; (keymap-set l/custom-keybind-prefix-keymap "f" #'l/delete-whole-line)	;; not save in kill-ring
 (keymap-set l/custom-global-keymap "M-D" #'l/delete-whole-line)
-(keymap-set l/custom-keybind-keymap "w" #'l/delete-whole-line)	;; not save
-(keymap-set l/custom-keybind-keymap "h" #'l/delete-line)	;; not save in kill-ring
-(keymap-set l/custom-keybind-keymap "m" #'l/push-mark)
+(keymap-set l/custom-keybind-prefix-keymap "w" #'l/delete-whole-line)	;; not save
+(keymap-set l/custom-keybind-prefix-keymap "h" #'l/delete-line)	;; not save in kill-ring
+(keymap-set l/custom-keybind-prefix-keymap "m" #'l/push-mark)
 (keymap-set l/custom-global-keymap "M-k" #'l/move-forward-of-bounds-of-thing-at-point)
 (keymap-set l/custom-global-keymap "M-K" #'kill-sentence)
 (keymap-set l/custom-global-keymap "M-l" #'downcase-dwim)
@@ -571,17 +583,17 @@ file to visit if current buffer is not visiting a file."
 (keymap-set l/custom-global-keymap "C-S-c" #'clipboard-kill-ring-save)
 (keymap-set l/custom-global-keymap "C-S-v" #'clipboard-yank)
 (keymap-set l/custom-global-keymap "C-M-]" #'undo-only)
-(keymap-set l/custom-global-keymap "C-c c" #'comment-line)
-(keymap-set l/custom-global-keymap "M-SPC c" #'comment-line)
+(keymap-set l/custom-keybind-prefix-keymap "c" #'comment-line)
 ;;(keymap-global-set "M-U" #'comment-line)
 
-(keymap-set l/custom-keybind-keymap "C-_" #'comment-or-uncomment-region)
-(keymap-set l/custom-keybind-keymap "C-/" #'comment-or-uncomment-region)
+(keymap-set l/custom-leader-prefix-keymap "C-_" #'comment-or-uncomment-region)
+(keymap-set l/custom-leader-prefix-keymap "C-/" #'comment-or-uncomment-region)
 ;; ----edit ----end
-(keymap-set l/custom-keybind-keymap "r r" #'compile) 	;; run shell command
+(keymap-set l/custom-keybind-prefix-keymap "r" #'compile) 	;; run shell command
 ;; (keymap-global-set "C-c c c" #'compile)
-(keymap-set l/custom-keybind-keymap "r o" #'recentf-open)
-(keymap-set l/custom-keybind-keymap "r f" #'recentf-open-files)
+(keymap-set l/custom-keybind-prefix-keymap "R R" #'recentf-open)
+(keymap-set l/custom-keybind-prefix-keymap "R o" #'recentf-open)
+(keymap-set l/custom-keybind-prefix-keymap "R f" #'recentf-open-files)
 
 (defun yank-pop-last()
   "When yank select, use this func to jump last yank candidate."
@@ -592,7 +604,7 @@ file to visit if current buffer is not visiting a file."
 (keymap-set l/custom-global-keymap "M-Y" #'yank-pop-last)
 
 (use-package outline
-  :bind (("C-c o" . #'outline-minor-mode)
+  :bind ((:map l/custom-leader-prefix-keymap ("C-o" . #'outline-minor-mode))
 	 (:map outline-minor-mode-map
 	       ("C-c TAB" . #'outline-show-subtree)
 	       ("<backtab>" . #'outline-cycle)
@@ -604,7 +616,7 @@ file to visit if current buffer is not visiting a file."
 (keymap-set l/custom-global-keymap "C-x F" #'set-fill-column)
 (keymap-set l/custom-global-keymap "C-x f" #'find-file-at-point)
 (keymap-set l/custom-global-keymap "C-x j" #'find-file-existing)
-(keymap-set l/custom-keybind-keymap "C-n" #'scratch-buffer)
+(keymap-set l/custom-leader-prefix-keymap "C-n" #'scratch-buffer)
 (keymap-set l/custom-global-keymap "C-x 4 o" #'display-buffer)
 
 (keymap-set l/custom-global-keymap "<f5>" #'redraw-display)
@@ -619,15 +631,20 @@ file to visit if current buffer is not visiting a file."
 (keymap-set completion-in-region-mode-map "M-n" #'minibuffer-next-completion)
 (keymap-set minibuffer-local-completion-map "M-p" #'minibuffer-previous-completion)
 (keymap-set completion-in-region-mode-map "M-p" #'minibuffer-previous-completion)
-(keymap-set l/custom-keybind-keymap "t" #'kill-current-buffer)
-(keymap-set l/custom-keybind-keymap "v" #'view-mode)
+(keymap-set l/custom-keybind-prefix-keymap "t" #'kill-current-buffer)
+(keymap-set l/custom-keybind-prefix-keymap "v" #'view-mode)
+(keymap-set l/custom-leader-prefix-keymap "w t" #'kill-current-buffer)
+(keymap-set l/custom-leader-prefix-keymap "w s" #'window-toggle-side-windows)
+
 (keymap-set l/custom-global-keymap "M-o" #'other-window)
 (keymap-set l/custom-global-keymap "C-x B" #'ibuffer)
 
-(keymap-set l/custom-global-keymap "C-SPC" #'l/set-marker)
-(keymap-set l/custom-global-keymap "C-@" #'l/set-marker)
-(keymap-set l/custom-keybind-keymap "C-@" #'set-mark-command)
-(keymap-set l/custom-keybind-keymap "C-SPC" #'set-mark-command)
+;; cancel C-SPC keybind, pop mark use too busy
+;; (keymap-set l/custom-global-keymap "C-SPC" #'l/set-marker)
+;; (keymap-set l/custom-global-keymap "C-@" #'l/set-marker)
+(keymap-set l/custom-leader-prefix-keymap "C-@" #'set-mark-command)
+(keymap-set l/custom-leader-prefix-keymap "C-SPC" #'set-mark-command) ;; <global> C-SPC
+(keymap-set l/custom-keybind-prefix-keymap "SPC" #'l/set-marker) ;; <local> SPC
 ;;(keymap-global-set "C-@" #'set-mark-command)
 
 (defvar l/bracket-pairs
@@ -961,10 +978,10 @@ file to visit if current buffer is not visiting a file."
     )
 
   ;;  (setq repeat-check-key t)
-  (keymap-set l/custom-leader-keymap "[" #'l/tab-line-switch-prev-tab)
-  (keymap-set l/custom-leader-keymap "]" #'l/tab-line-switch-next-tab)
-  (keymap-set l/custom-keybind-keymap "n" #'l/next-line)
-  (keymap-set l/custom-keybind-keymap "p" #'l/previous-line)
+  (keymap-set l/custom-leader-prefix-keymap "[" #'l/tab-line-switch-prev-tab)
+  (keymap-set l/custom-leader-prefix-keymap "]" #'l/tab-line-switch-next-tab)
+  (keymap-set l/custom-keybind-prefix-keymap "n" #'l/next-line)
+  (keymap-set l/custom-keybind-prefix-keymap "p" #'l/previous-line)
 
   (make-obsolete 'l/define-key-in-map-with-repeat-mode nil "2026-04-01")
   (defmacro l/define-key-in-map-with-repeat-mode (map &rest bindings)
@@ -1200,27 +1217,27 @@ file to visit if current buffer is not visiting a file."
 (unless (boundp 'l/plugin-start)
   (keymap-set l/custom-global-keymap "C-." #'l/plugin-start)
   (keymap-set l/custom-global-keymap "C-," #'l/plugin-start)
-  (keymap-set l/custom-keybind-keymap "9" #'l/plugin-start)
-  (keymap-set l/custom-keybind-keymap "g" #'l/plugin-start)
+  (keymap-set l/custom-keybind-prefix-keymap "9" #'l/plugin-start)
+  (keymap-set l/custom-keybind-prefix-keymap "g" #'l/plugin-start)
   (keymap-set l/custom-global-keymap "C-x u" #'l/plugin-start)
   (keymap-set l/custom-global-keymap "C-x o" #'l/plugin-start)
-  (keymap-set l/custom-keybind-keymap "j" #'l/plugin-start)
+  (keymap-set l/custom-keybind-prefix-keymap "j" #'l/plugin-start)
   (keymap-set l/custom-global-keymap "C-x c u" #'l/plugin-start)
   (keymap-set l/custom-global-keymap "C-x c p" #'l/plugin-start)
   (keymap-set l/custom-global-keymap "C-x c ;" #'l/plugin-start)
   (keymap-set l/custom-global-keymap "C-x c j" #'l/plugin-start)
-  (keymap-set l/custom-leader-keymap "t" #'l/plugin-start)
-  (keymap-set l/custom-leader-keymap "s" #'l/plugin-start)
-  (keymap-set l/custom-keybind-keymap "s" #'l/plugin-start)
-  (keymap-set l/custom-leader-keymap "m" #'l/plugin-start)
-  (keymap-set l/custom-leader-keymap "g m" #'l/plugin-start)
-  (keymap-set l/custom-leader-keymap "g i" #'l/plugin-start)
-  (keymap-set l/custom-leader-keymap "b" #'l/plugin-start)
-  (keymap-set l/custom-leader-keymap "i" #'l/plugin-start)
-  (keymap-set l/custom-leader-keymap "e" #'l/plugin-start)
-  (keymap-set l/custom-leader-keymap "r r" #'l/plugin-start)
-  (keymap-set l/custom-leader-keymap "r s" #'l/plugin-start)
-  (keymap-set l/custom-leader-keymap "r l" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "t" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "s" #'l/plugin-start)
+  (keymap-set l/custom-keybind-prefix-keymap "s" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "m" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "g m" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "g i" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "b" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "i" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "e" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "r r" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "r s" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "r l" #'l/plugin-start)
   )
 
 

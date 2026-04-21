@@ -47,7 +47,7 @@
   :ensure t
   :bind
   (
-   (:map l/custom-keybind-keymap ("g" . #'magit))
+   (:map l/custom-keybind-prefix-keymap ("g" . #'magit))
    (:map magit-mode-map
 	 ("," . #'magit-process-buffer)
 	 ("，" . #'magit-process-buffer)
@@ -112,9 +112,13 @@
   :bind (("C-x o" . ace-window)
 	 ("C-x M-0" . ace-delete-window)
 	 ("C-x M-o" . ace-delete-window)
-	 (:map l/custom-keybind-keymap
+	 (:map l/custom-keybind-prefix-keymap
 	       ("9" . ace-window)
 	       ("0" . ace-delete-window))
+	 (:map l/custom-leader-prefix-keymap
+	       ("a" . ace-window)
+	       ("d" . ace-delete-window)
+	       )
          ;; ("C-x C-o" . ace-window)  ;; was delete-blank-lines
          )
   :config
@@ -129,7 +133,7 @@
   :bind (
 	 ("M-U" . flash-jump)
 	 ("M-S-u" . flash-jump)
-	 (:map l/custom-keybind-keymap
+	 (:map l/custom-keybind-prefix-keymap
 	       ("f" . flash-char-find)
 	       ("b" . flash-char-find-backward))
 	 )
@@ -140,12 +144,15 @@
 (use-package vundo
   :ensure t
   :bind
-  ("C-x u" . vundo)
+  (
+   ("C-x u" . vundo)
+   (:map l/custom-keybind-prefix-keymap ("u" . vundo))
+   )
   )
 
 ;; translate
 (use-package gt
-  :bind ((:map l/custom-leader-keymap ("t" . gt-translate)))
+  :bind ((:map l/custom-leader-prefix-keymap ("t" . gt-translate)))
   :config
   (setq gt-preset-translators
 	`((ts-1 . ,(gt-translator
@@ -221,7 +228,7 @@
   :ensure t
   :defer
   :bind
-  ((:map l/custom-keybind-keymap ("j" . company-complete)))
+  ((:map l/custom-keybind-prefix-keymap ("j" . company-complete)))
   :init
   ;; (add-hook 'after-init-hook 'global-company-mode)
   ;; (add-hook 'prog-mode-hook 'company-mode)
@@ -417,11 +424,12 @@
   :ensure t
   :bind
   (
-   (:map l/custom-keybind-keymap
+   (:map l/custom-keybind-prefix-keymap
 	 ("s" . consult-line)
-	 ("C-SPC" . consult-ripgrep)
-	 ("SPC SPC" . consult-ripgrep))
-   (:map l/custom-leader-keymap
+	 ;; ("C-SPC" . consult-ripgrep)
+	 ;; ("SPC" . consult-ripgrep))
+	 )
+   (:map l/custom-leader-prefix-keymap
 	 ("s l" . consult-line)
 	 ("m m" . consult-mark)
 	 ("m g" . consult-global-mark)
@@ -434,12 +442,14 @@
 	 ("r r" . consult-register)
 	 ("r s" . consult-register-store)
 	 ("r l" . consult-register-load)
-	 ("s f" . consult-find)
+	 ("s f" . consult-fd)
 	 ("s s" . consult-ripgrep))
    ;; ("C-c m" . consult-ripgrep)
    )
   :config
   (setq consult-async-refresh-delay 0.5)
+  (icomplete-mode -1)
+  
   ;;(global-set-key (kbd "M-y") #'consult-yank-pop)
   )
 
@@ -568,8 +578,8 @@
 (use-package embark
   :ensure t
   :defer t
-  :bind (("C-." . #'embark-act)
-	 ("C-M->" . #'embark-act-all)
+  :bind ((:map l/custom-keybind-prefix-keymap ("e" . #'embark-act))
+	 (:map l/custom-keybind-prefix-keymap ("E E" . #'embark-act-all))
 	 )
   )
 (use-package colorful-mode
@@ -835,34 +845,49 @@
   ;; :disabled
   :ensure t
   :config
-  (defun l/delete-selection-or-char(arg)
-    (interactive "p")
+  (defun l/meow-append()
+    (interactive)
     (if (use-region-p)
-	(let ((beg (region-beginning))
-	      (end (region-end))
-	      )
-	  (delete-region beg end)
-	  )
-      (delete-char arg)
+	(meow-append)
+      (meow-append)
+      (forward-char 1)
       )
     )
+  (defun l/meow-search-backward(arg)
+    (interactive "P")
+    (meow-search (- (if arg arg 1)))
+    )
+  (defun l/meow-expand-or-do-func(fallback-func-arg &optional meow-expand-num fallback-func)
+    (if (region-active-p)
+	(meow-expand meow-expand-num)
+      (call-interactively fallback-func fallback-func-arg)
+      )
+    )
+  (defun l/meow-expand-1-or-home(arg) (interactive "P") (l/meow-expand-or-do-func arg 1 #'back-to-indentation))
+  (defun l/meow-expand-2-or-prior(arg) (interactive "P") (l/meow-expand-or-do-func arg 2 #'scroll-down-command))
+  (defun l/meow-expand-3-or-next(arg) (interactive "P") (l/meow-expand-or-do-func arg 3 #'scroll-up-command))
+  (defun l/meow-expand-4-or-end(arg) (interactive "P") (l/meow-expand-or-do-func arg 4 #'end-of-visual-line))
+  (defun l/meow-expand-5-or-meow-line(arg) (interactive "P") (l/meow-expand-or-do-func arg 5 #'meow-line))
+  (defun l/meow-expand-9-or-ace-pinyin(arg) (interactive "P") (l/meow-expand-or-do-func arg 0 #'ace-pinyin-jump-char-2))
+  (defun l/meow-expand-0-or-flash-jump(arg) (interactive "P") (l/meow-expand-or-do-func arg 0 #'flash-jump))
   ;; (remove-hook 'meow-normal-mode-hook #'(lambda () (meow-insert)))
   (defun meow-setup ()
     ;; todo use keymap variable
-    (setq meow-keypad-leader-dispatch l/custom-leader-keymap)
+    (setq meow-keypad-leader-dispatch l/custom-leader-prefix-keymap)
     ;; Use SPC (0-9) for digit arguments.
-    (keymap-set l/custom-leader-keymap "1" #'meow-digit-argument)
-    (keymap-set l/custom-leader-keymap "2" #'meow-digit-argument)
-    (keymap-set l/custom-leader-keymap "3" #'meow-digit-argument)
-    (keymap-set l/custom-leader-keymap "4" #'meow-digit-argument)
-    (keymap-set l/custom-leader-keymap "5" #'meow-digit-argument)
-    (keymap-set l/custom-leader-keymap "6" #'meow-digit-argument)
-    (keymap-set l/custom-leader-keymap "7" #'meow-digit-argument)
-    (keymap-set l/custom-leader-keymap "8" #'meow-digit-argument)
-    (keymap-set l/custom-leader-keymap "9" #'meow-digit-argument)
-    (keymap-set l/custom-leader-keymap "0" #'meow-digit-argument)
-    (keymap-set l/custom-leader-keymap "/" #'meow-keypad-describe-key)
-    (keymap-set l/custom-leader-keymap "?" #'meow-cheatsheet)
+    (keymap-set l/custom-leader-prefix-keymap "1" #'meow-digit-argument)
+    (keymap-set l/custom-leader-prefix-keymap "2" #'meow-digit-argument)
+    (keymap-set l/custom-leader-prefix-keymap "3" #'meow-digit-argument)
+    (keymap-set l/custom-leader-prefix-keymap "4" #'meow-digit-argument)
+    (keymap-set l/custom-leader-prefix-keymap "5" #'meow-digit-argument)
+    (keymap-set l/custom-leader-prefix-keymap "6" #'meow-digit-argument)
+    (keymap-set l/custom-leader-prefix-keymap "7" #'meow-digit-argument)
+    (keymap-set l/custom-leader-prefix-keymap "8" #'meow-digit-argument)
+    (keymap-set l/custom-leader-prefix-keymap "9" #'meow-digit-argument)
+    (keymap-set l/custom-leader-prefix-keymap "0" #'meow-digit-argument)
+    (keymap-set l/custom-leader-prefix-keymap "/" #'meow-keypad-describe-key)
+    (keymap-set l/custom-leader-prefix-keymap "?" #'meow-cheatsheet)
+    (keymap-set l/custom-leader-prefix-keymap "`" #'meow-last-buffer)
 
     (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
     ;; (meow-motion-define-key
@@ -880,11 +905,11 @@
      '("8" . meow-expand-8)
      '("7" . meow-expand-7)
      '("6" . meow-expand-6)
-     '("5" . meow-expand-5)
-     '("4" . meow-expand-4)
-     '("3" . meow-expand-3)
-     '("2" . meow-expand-2)
-     '("1" . meow-expand-1)
+     '("5" . l/meow-expand-5-or-meow-line)
+     '("4" . l/meow-expand-4-or-end)
+     '("3" . l/meow-expand-3-or-next)
+     '("2" . l/meow-expand-2-or-prior)
+     '("1" . l/meow-expand-1-or-home)
      '("-" . negative-argument)
      '(";" . meow-reverse)
      '("," . meow-inner-of-thing)
@@ -973,26 +998,23 @@
      '("{" . beginning-of-line)
      '("}" . end-of-line)
      )
-    (defun l/meow-append()
-      (interactive)
-      (if (use-region-p)
-	  (meow-append)
-	(meow-append)
-	(forward-char 1)
-	)
-      )
-    (defun l/meow-search-backward(arg)
-      (interactive "P")
-      (meow-search (- (if arg arg 1)))
-      )
+    
     (setq
-     meow-cursor-type-normal '(hbar . 3)
-     meow-cursor-type-insert '(bar . 4)
+     meow-cursor-type-normal '(box . 20)
+     meow-cursor-type-insert '(bar . 3)
      meow-expand-hint-remove-delay 60.0
+     meow-cursor-type-motion '(hbar . 4)
      )
     (add-to-list 'meow-mode-state-list '(ement-room-mode . insert))
     (with-eval-after-load 'view
       (add-hook 'view-mode-hook #'(lambda () (if meow-mode (progn (meow-insert-exit)(meow-insert-mode +1)))))
+      )
+    (with-eval-after-load 'ace-pinyin
+      (meow-normal-define-key '("9" . l/meow-expand-9-or-ace-pinyin))
+      ;; (meow-normal-define-key '("\"" . ace-pinyin))
+      )
+    (with-eval-after-load 'flash
+      (meow-normal-define-key '("0" . l/meow-expand-0-or-flash-jump))
       )
     )
   (defun meow-setup-modeline ()
@@ -1033,12 +1055,14 @@
     ;;(meow-setup-line-number)
     (meow-setup-indicator)
     (meow-global-mode +1)
+    (meow--enable-shims)
     )
   (defun meow-disable ()
     "Disable meow."
     (interactive)
     (meow-global-mode -1)
     (l/cursor-type-default)
+    (meow--disable-shims)
     )
   (defun meow-toggle ()
     "Toggle meow."
@@ -1073,7 +1097,7 @@
 
   (defun meow-multi-keypad-M-SPC()
     (interactive)
-    (let ((meow-keypad-leader-dispatch l/custom-leader-keymap)
+    (let ((meow-keypad-leader-dispatch l/custom-leader-prefix-keymap)
 	  (meow-keypad-ctrl-meta-prefix nil)
 	  ;; (meow-keypad-start-keys '((104 . 104)))
 	  (meow-keypad-start-keys nil)

@@ -129,7 +129,7 @@
       (lisp-interaction-mode)))
 
   ;; 绑定快捷键
-  (global-set-key (kbd "C-c N") 'my-new-scratch)
+  (global-set-key (kbd "C-c N N") 'my-new-scratch)
 
 
   )
@@ -137,11 +137,11 @@
     "test minor mode map"
   (defvar l/custom-keybind-minor-mode-map (make-sparse-keymap)
     "Custom keybind map set.")
-  (defvar l/custom-keybind-keymap (make-sparse-keymap)
+  (defvar l/custom-keybind-prefix-keymap (make-sparse-keymap)
     "Edit map set.")
-  (define-key l/custom-keybind-keymap (kbd "c") 'comment-line)
-  (define-key l/custom-keybind-keymap (kbd "w") 'l/delete-whole-line)
-  (define-key l/custom-keybind-minor-mode-map (kbd "C-c") l/custom-keybind-keymap)
+  (define-key l/custom-keybind-prefix-keymap (kbd "c") 'comment-line)
+  (define-key l/custom-keybind-prefix-keymap (kbd "w") 'l/delete-whole-line)
+  (define-key l/custom-keybind-minor-mode-map (kbd "C-c") l/custom-keybind-prefix-keymap)
   (define-minor-mode l/custom-keybind-mode
     "Custom user keybind minor mode."
     :lighter ckm
