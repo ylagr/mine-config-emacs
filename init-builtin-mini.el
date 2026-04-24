@@ -190,7 +190,7 @@
 (setq display-line-numbers-grow-only t) ;; 只增长，不缩小
 ;; (global-visual-line-mode 1)
 (column-number-mode 1)
-
+(setopt cursor-in-non-selected-windows 'hbar)
 (use-package ansi-color
   :ensure nil ;; built-in
   :init
@@ -590,6 +590,8 @@ file to visit if current buffer is not visiting a file."
 (keymap-set l/custom-leader-prefix-keymap "C-/" #'comment-or-uncomment-region)
 ;; ----edit ----end
 (keymap-set l/custom-keybind-prefix-keymap "r" #'compile) 	;; run shell command
+(keymap-set l/custom-leader-prefix-keymap "q" #'quit-window)
+(keymap-set l/custom-leader-prefix-keymap "r" #'compile)
 ;; (keymap-global-set "C-c c c" #'compile)
 (keymap-set l/custom-keybind-prefix-keymap "R R" #'recentf-open)
 (keymap-set l/custom-keybind-prefix-keymap "R o" #'recentf-open)

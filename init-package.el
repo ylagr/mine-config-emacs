@@ -47,6 +47,10 @@
   :ensure t
   :bind
   (
+   (:map l/custom-leader-prefix-keymap
+	 ("g" . #'magit)
+	 ("G" . #'magit)
+	 )
    (:map l/custom-keybind-prefix-keymap ("g" . #'magit))
    (:map magit-mode-map
 	 ("," . #'magit-process-buffer)
@@ -117,7 +121,8 @@
 	       ("0" . ace-delete-window))
 	 (:map l/custom-leader-prefix-keymap
 	       ("a" . ace-window)
-	       ("d" . ace-delete-window)
+	       ;; ("d" . ace-delete-window)
+	       ("w d" . ace-delete-window)
 	       )
          ;; ("C-x C-o" . ace-window)  ;; was delete-blank-lines
          )
@@ -438,17 +443,17 @@
 	 ("i g" . consult-imenu-multi)
 	 ("i i" . consult-imenu)
 	 ("e e" . consult-flymake)
-	 ("r f" . consult-recent-file)
-	 ("r r" . consult-register)
-	 ("r s" . consult-register-store)
-	 ("r l" . consult-register-load)
+	 ("R f" . consult-recent-file)
+	 ("R R" . consult-register)
+	 ("R s" . consult-register-store)
+	 ("R l" . consult-register-load)
 	 ("s f" . consult-fd)
 	 ("s s" . consult-ripgrep))
    ;; ("C-c m" . consult-ripgrep)
    )
   :config
   (setq consult-async-refresh-delay 0.5)
-  (icomplete-mode -1)
+  ;; (icomplete-mode -1)
   
   ;;(global-set-key (kbd "M-y") #'consult-yank-pop)
   )
@@ -458,7 +463,7 @@
   :defer
   :init
   (vertico-mode +1)
-  ;;  (icomplete-mode 1)
+  (icomplete-mode -1)
   ;; (setq vertico-multiform-commands
   ;; 	'((consult-imenu buffer indexed)
   ;; 	  (describe-variable buffer indexed)
@@ -841,6 +846,14 @@
                 (setq input-method-history (list default-input-method)))))
   )
 
+(use-package surround
+  :ensure t
+  )
+(use-package beacon
+  :ensure t				;; 这个是查看当前光标位置使用的
+  :init
+  (beacon-mode +1)
+  )
 (use-package meow
   ;; :disabled
   :ensure t
@@ -890,11 +903,11 @@
     (keymap-set l/custom-leader-prefix-keymap "`" #'meow-last-buffer)
 
     (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
-    ;; (meow-motion-define-key
-    ;; '("j" . meow-next)
-    ;; '("k" . meow-prev)
-    ;; '("<escape>" . ignore)
-    ;; )
+    (meow-motion-define-key
+     ;; '("j" . meow-next)
+     ;; '("k" . meow-prev)
+     '("<escape>" . ignore)
+    )
     (meow-leader-define-key
      '("/" . meow-keypad-describe-key)
      '("?" . meow-cheatsheet)
@@ -953,6 +966,7 @@
      '("m" . meow-join)
      '("n" . next-line)
      ;; '("n" . meow-search)
+     '("N" . surround-insert)
      '("o" . meow-block)
      '("O" . meow-to-block)
      ;; '("p" . meow-yank)
@@ -997,14 +1011,18 @@
      '(")" . end-of-visual-line)
      '("{" . beginning-of-line)
      '("}" . end-of-line)
+     '("<" . beginning-of-buffer)
+     '(">" . end-of-buffer)
      )
     
     (setq
      meow-cursor-type-normal '(box . 20)
      meow-cursor-type-insert '(bar . 3)
      meow-expand-hint-remove-delay 60.0
-     meow-cursor-type-motion '(hbar . 4)
+     ;; meow-cursor-type-motion '(hbar . 4)
+     meow-cursor-type-motion 'hollow
      )
+
     (add-to-list 'meow-mode-state-list '(ement-room-mode . insert))
     (with-eval-after-load 'view
       (add-hook 'view-mode-hook #'(lambda () (if meow-mode (progn (meow-insert-exit)(meow-insert-mode +1)))))
