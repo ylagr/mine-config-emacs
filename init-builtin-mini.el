@@ -65,6 +65,13 @@
 
 
 ;; --------------------UI-emacs-------------------------
+(use-package hl-line
+  :hook (after-init . global-hl-line-mode)
+  :config
+  (setq hl-line-sticky-flag nil)
+  ;; Highlight starts from EOL, to avoid conflicts with other overlays
+  (setq hl-line-range-function (lambda () (cons (line-end-position) (line-beginning-position 2))))
+  )
 (defun l/abbreviate-file-name()
   (let ((buffer-filename (buffer-file-name))
 	)
@@ -1168,7 +1175,8 @@ file to visit if current buffer is not visiting a file."
     (side . bottom)  (window-height . 7)
     (window-parameters (no-delete-other-windows . t)
 		       ;; (mode-line-format . t)
-		       (no-other-window . t)
+		       ;; (no-other-window . t)
+		       (no-other-window . nil)
 		       )
     )
    (,(display-buffer-match "^\\(\\*[Hh]elp\\*\\)\\|\\(\\*Metahelp\\*\\)"
@@ -1176,7 +1184,8 @@ file to visit if current buffer is not visiting a file."
     (display-buffer-in-side-window)  (slot . 10) (side . right)  (window-width . 0.4) (window-height 0.4)
     (window-parameters
      ;;(no-delete-other-windows . t)
-     (no-other-window . t)
+     ;; (no-other-window . t)
+     (no-other-window . nil)
      )
     ;; (display-buffer-in-side-window) (slot . 10)
     )
@@ -1210,12 +1219,14 @@ file to visit if current buffer is not visiting a file."
 (defun l/plugin-start()
   "Start plugin."
   (interactive)
-  (l/load-config "init-package.el")
+  (l/load-config "init-package.el" t)
   )
 (if (boundp 'l/init-plugin)
     (l/plugin-start)
   )
 
+(if t
+    nil
 (unless (boundp 'l/plugin-start)
   (keymap-set l/custom-global-keymap "C-." #'l/plugin-start)
   (keymap-set l/custom-global-keymap "C-," #'l/plugin-start)
@@ -1237,11 +1248,11 @@ file to visit if current buffer is not visiting a file."
   (keymap-set l/custom-leader-prefix-keymap "b" #'l/plugin-start)
   (keymap-set l/custom-leader-prefix-keymap "i" #'l/plugin-start)
   (keymap-set l/custom-leader-prefix-keymap "e" #'l/plugin-start)
-  (keymap-set l/custom-leader-prefix-keymap "r r" #'l/plugin-start)
-  (keymap-set l/custom-leader-prefix-keymap "r s" #'l/plugin-start)
-  (keymap-set l/custom-leader-prefix-keymap "r l" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "R r" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "R s" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "R l" #'l/plugin-start)
   )
-
+)
 
 ;; --------------------frame-emacs--------------------
 (unless  +only-tty
