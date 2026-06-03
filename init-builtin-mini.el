@@ -1219,7 +1219,7 @@ file to visit if current buffer is not visiting a file."
 (defun l/plugin-start()
   "Start plugin."
   (interactive)
-  (l/load-config "init-package.el" t)
+  (l/load-config "init-package.el" )
   )
 (if (boundp 'l/init-plugin)
     (l/plugin-start)

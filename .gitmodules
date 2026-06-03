@@ -7,3 +7,6 @@
 [submodule "rimel"]
 	path = lib/rimel
 	url = https://github.com/jixiuf/rimel.git
+[submodule "lib/goggles"]
+	path = lib/goggles
+	url = https://github.com/minad/goggles.git

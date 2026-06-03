@@ -33,6 +33,7 @@
   ("M-_" . iedit-mode)
   )
 (use-package multiple-cursors
+  :ensure t
   :bind (
 	 ("C-M--" . #'mc/mark-next-like-this)
 	 ("C-M-0" . #'mc/skip-to-next-like-this)
@@ -294,6 +295,7 @@
     ;; :after yasnippet
     ;; markdown-mode
     :init
+    (use-package markdown-mode :ensure t)
     ;; (run-with-idle-timer 6 nil '(lambda () (require 'lsp-bridge)))
     ;; (defun l/lsp-bridge-init()
       ;; (require 'lsp-bridge)
@@ -461,6 +463,7 @@
 (use-package vertico
   ;;:disabled ;; 有点卡
   :defer
+  :ensure t
   :init
   (vertico-mode +1)
   (icomplete-mode -1)
@@ -1160,6 +1163,13 @@
 	  subscript)))
   (indent-bars-no-stipple-char ?\⎸)
   )
+(use-package goggles
+  :load-path "lib/goggles"
+  :hook ((prog-mode text-mode) . goggles-mode)
+  :config
+  (setq-default goggles-pulse t)
+	     )
+
 
 (setq l/plugin-start t)
 
