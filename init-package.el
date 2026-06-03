@@ -127,10 +127,12 @@
 	       )
          ;; ("C-x C-o" . ace-window)  ;; was delete-blank-lines
          )
+  :init
+  (ace-window-display-mode +1)
   :config
   (custom-set-faces
    '(aw-leading-char-face
-     ((t (:inherit ace-jump-face-foreground :height 3.0 :background "yellow")))))
+     ((t (:inherit ace-jump-face-foreground :height 1.0 :background "yellow")))))
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
         aw-scope 'frame)
   )
@@ -1175,5 +1177,5 @@
 
 (setq completion-styles (seq-difference completion-styles '(partial-completion))) ;; 移除partial-completion,防到最后
 (add-to-list 'completion-styles 'partial-completion t) ;; 补充默认的补全功能
-
+(add-to-list 'completion-styles 'flex) ;; add flex in beginning
 
