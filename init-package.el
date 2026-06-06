@@ -306,6 +306,10 @@
     ;; (add-hook 'prog-mode-hook 'l/lsp-bridge-init)
     :config
     (add-to-list 'exec-path "~/.local/bin/")
+    (if (file-exists-p "~/.local/bin/")
+	"check bin dir exists."
+      (make-directory "~/.local/bin/")
+      )
     (if (file-exists-p "~/.local/bin/python-lsp-bridge" )
 	"Check finish."  
       (shell-command (concat "ln -s " (expand-file-name "lib/lsp-bridge/python-lsp-bridge" user-emacs-directory) " " "~/.local/bin/" ))
