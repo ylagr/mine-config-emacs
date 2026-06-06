@@ -633,18 +633,19 @@
    ("s-i" . #'rime-inline-ascii))
   :init
   (setq default-input-method "rime")
-  (when +linux
+
+  (when (and +linux (executable-find "rime_deployer"))
     (setq rime-emacs-module-header-root (file-truename (concat (file-name-directory (directory-file-name (file-truename invocation-directory))) "include")))
     (setq rime-librime-root (file-name-directory(directory-file-name(file-name-directory (file-truename (executable-find "rime_deployer"))))))
     (setq rime-share-data-dir "~/.local/share/fcitx5/rime-data/")
     ;; (setq rime-user-data-dir (expand-file-name "~/.emacs.d/rime/"))
-    )
-  ;; nix 系统安装librime 会导致报错，其他系统也可能这样
-  ;; 防止没有文件
-  (unless (file-exists-p rime-share-data-dir)
-    (make-directory rime-share-data-dir)
-    )
-  
+    
+    ;; nix 系统安装librime 会导致报错，其他系统也可能这样
+    ;; 防止没有文件
+    (unless (file-exists-p rime-share-data-dir)
+      (make-directory rime-share-data-dir)
+      )
+  )
   (with-eval-after-load "rime"
     (use-package posframe :ensure t)
     (setq
