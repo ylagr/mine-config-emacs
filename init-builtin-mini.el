@@ -67,6 +67,7 @@
 ;; --------------------UI-emacs-------------------------
 (setq elisp-fontify-semantically +1)
 (cursor-sensor-mode +1)
+(windmove-default-keybindings)
 (windmove-mode +1)
 (use-package hl-line
   :hook (after-init . global-hl-line-mode)
