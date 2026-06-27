@@ -844,6 +844,7 @@ file to visit if current buffer is not visiting a file."
      (define-key dired-mode-map (kbd "F") #'dired-create-empty-file)
      (keymap-set dired-mode-map "_" #'dired-create-empty-file)
      (keymap-set dired-mode-map "—" #'dired-create-empty-file)
+     (setq dired-dwim-target t)
      (defun l/alternate-back-dir()
        "Back to up dir alternate."
        (interactive)
