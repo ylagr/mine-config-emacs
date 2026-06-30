@@ -1171,11 +1171,12 @@
   (indent-bars-no-stipple-char ?\⎸)
   )
 (use-package goggles
+  :disabled t
   :load-path "lib/goggles"
   :hook ((prog-mode text-mode) . goggles-mode)
   :config
   (setq-default goggles-pulse t)
-	     )
+  )
 
 
 (setq l/plugin-start t)
