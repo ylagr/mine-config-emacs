@@ -65,9 +65,6 @@
 (use-package magit-fast
   :vc (:url "https://github.com/zHaOdANiuu/magit-fast" :rev :newest)
   :after magit
-  :bind
-  (:map magit-status-mode-map
-   ("<return>" . my-magit-fast-diff))
   :init
   (remove-hook 'server-switch-hook 'magit-commit-diff)
   (remove-hook 'magit-pre-start-git-hook #'magit-maybe-save-repository-buffers)
@@ -76,17 +73,46 @@
 				  ("D" "deleted" :foreground "#f38ba8")
 				  ("R" "renamed" :foreground "#89b4fa")
 				  ("C" "copied" :foreground "#94e2d5")
-				  ("U" "unmerged" :foreground "#cba6f7"))
-	)
-  
-  (magit-fast-mode)
+				  ("U" "unmerged" :foreground "#cba6f7")))
 
   (defun my-magit-fast-diff ()
+    "Show diff for file at point in magit-fast, or fallback to section toggle."
     (interactive)
-    (when-let* ((file (magit-file-at-point)))
-      (magit-diff-dwim nil `(,file))
-      )
-    ))
+    (if-let* ((file (magit-file-at-point)))
+        (magit-diff-dwim nil `(,file))
+      (call-interactively #'magit-section-toggle)))
+
+  ;; Minor mode dedicated to magit-fast keybindings (active only when magit-fast-mode is enabled)
+  (defvar-keymap magit-fast-keybind-mode-map
+    :doc "Keymap for `magit-fast-keybind-mode'."
+    "<tab>" #'my-magit-fast-diff
+    "TAB"   #'my-magit-fast-diff)
+
+  (define-minor-mode magit-fast-keybind-mode
+    "Minor mode for `magit-fast' custom keybindings."
+    :init-value nil
+    :lighter ""
+    :keymap magit-fast-keybind-mode-map)
+
+  (defun my-magit-fast--setup-keys ()
+    "Enable `magit-fast-keybind-mode' only when `magit-fast-mode' is active."
+    (if (bound-and-true-p magit-fast-mode)
+        (magit-fast-keybind-mode 1)
+      (magit-fast-keybind-mode -1)))
+
+  (defun my-magit-fast--sync-keys (&rest _)
+    "Sync `magit-fast-keybind-mode' across existing magit-status buffers."
+    (dolist (buf (buffer-list))
+      (with-current-buffer buf
+        (when (derived-mode-p 'magit-status-mode)
+          (my-magit-fast--setup-keys)))))
+
+  (add-hook 'magit-status-mode-hook #'my-magit-fast--setup-keys)
+  (add-hook 'magit-fast-mode-hook #'my-magit-fast--sync-keys)
+
+  :config
+  (magit-fast-mode 1)
+  )
 
 
 
