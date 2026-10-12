@@ -88,7 +88,11 @@ Evaluated inside the subprocess."
 (defun praise--async (line-num file &optional cb)
   (let ((orig-buffer (current-buffer))
         (dir (file-name-directory (expand-file-name file)))
-        (fname (file-local-name (expand-file-name file))))
+        (fname (file-local-name (expand-file-name file)))
+        ;; Prevent async.el from matching tramp-password-prompt-regexp
+        ;; on commit messages containing words like "pinyin ... keybind: "
+        (async-prompt-for-password nil)
+	)
     (when (and praise--pending-task
                (processp praise--pending-task)
                (process-live-p praise--pending-task))
@@ -143,7 +147,7 @@ Evaluated inside the subprocess."
           'async)
       (when praise--last-information
         (funcall cb praise--last-information :thing 'BLAME :face 'default)
-        nil))))
+        t))))
 
 
 
