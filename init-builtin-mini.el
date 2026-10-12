@@ -64,6 +64,74 @@
 ;;                   ))
 
 
+
+;; speed up
+(when +windows
+  (setq browse-url-firefox-program nil
+        browse-url-chrome-program nil
+        browse-url-chromium-program nil
+        browse-url-text-browser nil
+        browse-url-browser-function 'eww-browse-url
+        sgml-validate-command nil)
+
+  ;; exec
+  (when (eq system-type 'windows-nt)
+    (setq exec-suffixes '("" ".exe" ".bat")
+          exec-path (delete-dups (mapcar #'directory-file-name exec-path))))
+
+  (defvar my-executable-find-cache (make-hash-table :test 'equal :size 100))
+  (defvar my-executable-find-cache-miss (make-symbol "miss"))
+
+  (defun my-executable-find-clear-cache ()
+    (clrhash my-executable-find-cache))
+
+  (define-advice executable-find
+      (:around (orig-fun command &optional remote)
+               my-executable-find-cache-advice)
+    (if remote
+        (funcall orig-fun command remote)
+      (let ((cached (gethash command my-executable-find-cache my-executable-find-cache-miss)))
+        (if (eq cached my-executable-find-cache-miss)
+            (puthash command (funcall orig-fun command) my-executable-find-cache)
+          cached))))
+
+  ;; dired
+  (setq shell-command-guess-open nil)
+
+  (defun my-open-in-external-app (&optional filename)
+    "Open the current file or Dired marked files in external app.
+When called from Lisp, if FILENAME is given, open that."
+    (interactive)
+    (let* ((file-list (cond
+                       (filename `(,filename))
+                       ((eq major-mode 'dired-mode) (dired-get-marked-files))
+                       (t '(,(buffer-file-name)))))
+           (do-it-p (if (<= (length file-list) 5)
+                        t (y-or-n-p "Open more than 5 files? "))))
+      (when do-it-p
+        (dolist (fpath file-list)
+          (let ((expanded (expand-file-name fpath)))
+            (pcase system-type
+              ('windows-nt
+               (start-process
+                "open-external" nil
+                "powershell" "-Command" "Invoke-Item -LiteralPath"
+                expanded))
+              ('darwin
+               (start-process "open-external" nil "open" expanded))
+              ('gnu/linux
+               (let ((process-connection-type nil))
+                 (start-process "open-external" nil "xdg-open" expanded)))))))))
+
+  (with-eval-after-load 'dired
+    (define-key dired-mode-map [remap dired-do-open] #'my-open-in-external-app))
+
+  ;; find-gile
+  (remove-hook 'before-save-hook #'vc-before-save nil)
+  (remove-hook 'find-file-hook #'vc-refresh-state)
+  (remove-hook 'find-file-hook #'epa-file-find-file-hook)
+  )
+
 ;; --------------------UI-emacs-------------------------
 (setq elisp-fontify-semantically +1)
 (cursor-sensor-mode +1)

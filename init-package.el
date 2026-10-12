@@ -62,6 +62,26 @@
   ;; (global-set-key (kbd "C-c g") #'magit)
   )
 
+(use-package magit-fast
+  :vc (:url "https://github.com/zHaOdANiuu/magit-fast" :rev :newest)
+  :after magit
+  :bind
+  (:map magit-status-mode-map
+   ("<return>" . my-magit-fast-diff))
+  :init
+  (remove-hook 'server-switch-hook 'magit-commit-diff)
+  (remove-hook 'magit-pre-start-git-hook #'magit-maybe-save-repository-buffers)
+  (magit-fast-mode)
+
+  (defun my-magit-fast-diff ()
+    (interactive)
+    (when-let* ((file (magit-file-at-point)))
+      (magit-diff-dwim nil `(,file))
+      )
+    )
+  )
+
+
 (use-package diff-hl
   :ensure t
   :defer t
@@ -305,15 +325,14 @@
       ;; )
     ;; (add-hook 'prog-mode-hook 'l/lsp-bridge-init)
     :config
-    (add-to-list 'exec-path "~/.local/bin/")
-    (if (file-exists-p "~/.local/bin/")
-	"check bin dir exists."
-      (make-directory "~/.local/bin/")
-      )
-    (if (file-exists-p "~/.local/bin/python-lsp-bridge" )
-	"Check finish."  
-      (shell-command (concat "ln -s " (expand-file-name "lib/lsp-bridge/python-lsp-bridge" user-emacs-directory) " " "~/.local/bin/" ))
-      )
+    (unless (eq system-type 'windows-nt)
+      (add-to-list 'exec-path "~/.local/bin/")
+      (if (file-exists-p "~/.local/bin/")
+	  "check bin dir exists."
+	(make-directory "~/.local/bin/" t))
+      (if (file-exists-p "~/.local/bin/python-lsp-bridge")
+	  "Check finish."  
+	(shell-command (concat "ln -s " (expand-file-name "lib/lsp-bridge/python-lsp-bridge" user-emacs-directory) " " "~/.local/bin/"))))
     (with-eval-after-load 'citre
       (setq lsp-bridge-find-ref-fallback-function 'citre-backend-find-reference)
       (setq lsp-bridge-find-def-fallback-function 'citre-backend-find-definition)
@@ -370,34 +389,37 @@
     (setq acm-backend-search-file-words-enable-fuzzy-match t)
     (setq acm-backend-lsp-show-progress t)
     
-    (setq lsp-bridge-python-command "python-lsp-bridge")
+    ;; 使用 lsp-bridge defcustom 默认配置（Windows 自动寻找 python.exe/python3.exe，Linux 自动寻找 python-lsp-bridge）
+    (custom-reevaluate-setting 'lsp-bridge-python-command)
+    ;; (setq lsp-bridge-python-command "python-lsp-bridge")
     ;; (setq lsp-bridge-python-command "python3")
     ;; 用起来有点问题
     ;; (with-eval-after-load 'orderless
     ;; (setq acm-candidate-match-function 'orderless-flex)
     ;; )
 
-    (setq use-lsp-bridge nil)
+    ;; 直接启用 lsp-bridge（lsp-bridge 原生支持多 Emacs 实例并发，各自分配独立端口，无需扫描全局系统进程）
+    (setq use-lsp-bridge t)
     (setq use-company nil)
-    (if (and
-	 (find-system-process-exist "lsp-bridge")
-	 (not (lsp-bridge-process-live-p))
-	 )
-	(progn
-	  (setq use-company t)
-	  (setq use-lsp-bridge nil)
-	  )
-      (setq use-lsp-bridge t)
-      )
+    ;; 以前使用的进程探测逻辑（通过查询系统全局进程判断是否启动，若已存在则当前实例降级为 company）：
+    ;; (setq use-lsp-bridge nil)
+    ;; (setq use-company nil)
+    ;; (if (and
+    ;;      (find-system-process-exist "lsp-bridge")
+    ;;      (not (lsp-bridge-process-live-p))
+    ;;      )
+    ;;     (progn
+    ;;       (setq use-company t)
+    ;;       (setq use-lsp-bridge nil)
+    ;;       )
+    ;;   (setq use-lsp-bridge t)
+    ;;   )
     (with-eval-after-load 'company
-      (if (not use-company)
-	  (global-company-mode -1)
-	)
+      (unless use-company
+	(global-company-mode -1))
       )
-    (if use-lsp-bridge
-	(progn
-	  (global-lsp-bridge-mode)
-	  )
+    (when use-lsp-bridge
+      (global-lsp-bridge-mode)
       )
     )
   )

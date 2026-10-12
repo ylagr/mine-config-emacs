@@ -7,6 +7,14 @@
 ;;(setq package-enable-at-startup nil)	;; 禁止package 自动初始化
 ;; ui
 ;;(setq default-frame-alist '((height . 48) (width . 100)))
+(when (eq system-type 'windows-nt)
+  ;; (unless (getenv "HOME")
+    (when-let* ((home (getenv "USERPROFILE")))
+      (setenv "HOME" home)
+      (setq abbreviated-home-dir nil)
+      )
+    ;; )
+  )
 (setq default-frame-alist
       '((height . 44)
 	(width . 180)
