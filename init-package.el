@@ -71,6 +71,14 @@
   :init
   (remove-hook 'server-switch-hook 'magit-commit-diff)
   (remove-hook 'magit-pre-start-git-hook #'magit-maybe-save-repository-buffers)
+  (setq magit-fast-status-alist '(("M" "modified" :foreground "#1500ff")
+				  ("A" "new file" :foreground "#ff3d00")
+				  ("D" "deleted" :foreground "#f38ba8")
+				  ("R" "renamed" :foreground "#89b4fa")
+				  ("C" "copied" :foreground "#94e2d5")
+				  ("U" "unmerged" :foreground "#cba6f7"))
+	)
+  
   (magit-fast-mode)
 
   (defun my-magit-fast-diff ()
@@ -78,8 +86,8 @@
     (when-let* ((file (magit-file-at-point)))
       (magit-diff-dwim nil `(,file))
       )
-    )
-  )
+    ))
+
 
 
 (use-package diff-hl
@@ -618,10 +626,85 @@
 	 (:map l/custom-keybind-prefix-keymap ("E E" . #'embark-act-all))
 	 )
   )
+(use-package color-picker
+  :load-path "lib/color-picker"
+  :commands color-picker
+  :custom
+  (color-picker-scale 1.6))
+
 (use-package colorful-mode
   :ensure t
-  :defer t
-  )
+  :hook prog-mode
+  :custom
+  (colorful-use-prefix t)
+  (colorful-prefix-string "■")
+  (colorful-only-strings 'only-prog)
+  (css-fontify-colors nil)
+  :config
+  (with-eval-after-load 'web-mode
+    (add-hook 'web-mode (lambda () (setq-local colorful-only-strings nil))))
+
+  (setcdr (assq 'colorful-mode minor-mode-map-alist) nil)
+
+  (defvar-keymap my-colorful--color-picker-map
+    "<mouse-1>"
+    (lambda (event)
+      (interactive "e")
+      (when-let* ((ov (colorful--find-overlay))
+                  (color (overlay-get ov 'colorful--color)))
+        (if buffer-read-only
+            (progn
+              (kill-new color)
+              (message "`%s' copied." color))
+          (if (not (display-graphic-p))
+              (pcase-let* ((`(,r ,g ,b) (color-name-to-rgb (read-color nil t)))
+                           (picked (color-rgb-to-hex r g b 2)))
+                (with-current-buffer
+                    (window-buffer (posn-window (event-start event)))
+                  (replace-region-contents
+                   (overlay-start ov) (overlay-end ov) picked 0)
+                  (redisplay)))
+            (dlet ((color-picker-initial-color color))
+              (color-picker
+               :style 'simple
+               :ok (lambda (picked)
+                     (with-current-buffer
+                         (window-buffer (posn-window (event-start event)))
+                       (replace-region-contents
+                        (overlay-start ov) (overlay-end ov) picked 0)
+                       (redisplay))))))))))
+
+  (when (display-graphic-p)
+    (require 'svg)
+    (defun my-colorful--svg-img (color)
+      (let* ((sz (frame-char-width))
+             (svg (svg-create sz sz)))
+        (svg-node svg 'rect
+                  :x 1 :y 1 :width  (- sz 2) :height (- sz 2)
+                  :fill color :stroke "#ffffff" :stroke-width "1.5")
+        (svg-image svg :ascent 'center))))
+
+  (define-advice colorful--colorize-match
+      (:override (color beg end kind face map) my-colorful--colorize-match)
+    "Overlay match with a face from BEG to END.
+Like `colorful--colorize-match', but the prefix also carries a
+`display' SVG image generated from COLOR."
+    (let ((ov (make-overlay beg end)))
+      (overlay-put ov 'colorful--overlay t)
+      (overlay-put ov 'colorful--color-kind kind)
+      (overlay-put ov 'colorful--color color)
+      (overlay-put ov 'evaporate t)
+      (overlay-put
+       ov
+       'before-string
+       (apply
+        #'propertize
+        " "
+        `(keymap ,my-colorful--color-picker-map
+          pointer hand
+          ,@(when (display-graphic-p)
+              `(display ,(my-colorful--svg-img color))))))
+      (overlay-put ov 'face nil))))
 (use-package org-super-agenda
   :defer t
   :ensure t
@@ -1199,7 +1282,21 @@
   :config
   (setq-default goggles-pulse t)
   )
+(use-package zoom-window
+  :ensure t
+  ;; 1. 绑定快捷键：官方默认推荐 C-x C-z，但更推荐将其绑定到类似 C-c z 的单手键上
+  :bind ("C-c z" . zoom-window-zoom)
+  
+  :config
+  ;; 2. 自定义全屏时的状态栏背景色（选填，比如深绿色，让你一眼看出当前是全屏）
+  ;; (setq zoom-window-mode-line-color "DarkGreen") 
 
+  ;; 3. 【高级视觉优化】在状态栏中加入 "[ZOOMING]" 标签提示
+  ;; 这样当你全屏时，状态栏会多出一个文字标记，退出全屏时标签自动消失
+  (add-to-list 'mode-line-misc-info
+               '(:eval (if (and (boundp 'zoom-window-mode) zoom-window-mode)
+                           (propertize " [ZOOMING] " 'face 'error)
+                         ""))))
 
 (setq l/plugin-start t)
 

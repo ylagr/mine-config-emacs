@@ -10,3 +10,8 @@
 [submodule "lib/goggles"]
 	path = lib/goggles
 	url = https://github.com/minad/goggles.git
+[submodule "lib/color-picker"]
+	path = lib/color-picker
+	url = https://github.com/zHaOdANiuu/color-picker.el
+
+
