@@ -12,6 +12,7 @@
     (when-let* ((home (getenv "USERPROFILE")))
       (setenv "HOME" home)
       (setq abbreviated-home-dir nil)
+      (setq-default default-directory (file-name-as-directory home))
       )
     ;; )
   )

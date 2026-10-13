@@ -410,6 +410,13 @@ When called from Lisp, if FILENAME is given, open that."
     (make-directory backups-dir t)
     )
   ;; change default action
+  (setq-default default-directory (expand-file-name "~/"))
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (when (get-buffer "*scratch*")
+                (with-current-buffer "*scratch*"
+                  (setq default-directory (expand-file-name "~/"))))
+              (setq default-directory (expand-file-name "~/"))))
   (setq backup-directory-alist
 	;; `((".*" . ,temporary-file-directory))
 	`((".*" . ,backups-dir))
