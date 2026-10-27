@@ -1120,7 +1120,7 @@ file to visit if current buffer is not visiting a file."
       "Y"  #'tab-switcher
       
       "q"  #'quit-window
-      "i"  #'repeat-exit
+      ;; "i"  #'repeat-exit
       "o"  #'other-window
       "O"  #'other-frame
       
@@ -1198,7 +1198,8 @@ file to visit if current buffer is not visiting a file."
 
   (setq mode-line-default-color (face-attribute 'mode-line :background))
   (defun l/repeat-mode-show-in-mode-line (&rest args)
-    (set-face-attribute 'mode-line-active nil :background "firebrick4")
+    (set-face-attribute 'mode-line-active nil :background "tan")
+    ;; (set-face-attribute 'mode-line-active nil :background "firebrick4")
     ;; (set-face-attribute 'hl-line nil :background "red")
     ;; (setq tab-bar-local-format-color "yellow")
     ""
@@ -1209,14 +1210,27 @@ file to visit if current buffer is not visiting a file."
     (setq l/repeat-in-progress nil)
     ;; (set-face-attribute 'hl-line nil :background "darkseagreen2")
     ;; (setq tab-bar-local-format-color "blue")
-    ""
+
     )
+  (l/repeat-mode-hide-in-mode-line)
   (defun l/repeat-echo-function (keymap)
-    (unless l/repeat-in-progress
-      (repeat-echo-message keymap)
-      (setq l/repeat-in-progress t)
-      (l/repeat-mode-show-in-mode-line)
+    (if keymap
+	(progn
+	  (unless l/repeat-in-progress
+	    (repeat-echo-message keymap)
+	    (setq l/repeat-in-progress t)
+	    (l/repeat-mode-show-in-mode-line)
+	    )
+	  )
+      (progn
+	(l/repeat-mode-hide-in-mode-line)
+	)
       )
+    ;; (unless l/repeat-in-progres
+    ;;   (repeat-echo-message keymap)
+    ;;   (setq l/repeat-in-progress t)
+    ;;   (l/repeat-mode-show-in-mode-line)
+    ;;   )
     )
   ;; (advice-add (symbol-value 'repeat-echo-function) :after 'l/repeat-mode-show-in-tab-bar)
   (setq repeat-echo-function #'l/repeat-echo-function)
@@ -1236,12 +1250,13 @@ file to visit if current buffer is not visiting a file."
 	 (if buf-nomatch-str (not (string-match-p buf-nomatch-str buf-name)) t)
 	 ))
   )
-(setq toright-min-width 160)
+(setq to-right-min-width 160)
+(setq to-bottom-min-height 40)
 (setq
  display-buffer-alist
  `(
    (,(display-buffer-match "^\\(magit:.*\\)\\|\\(magit-process.*\\)\\|\\(\\*xref.*\\)"
-			   toright-min-width)
+			   to-right-min-width)
     (display-buffer-in-side-window)
     (slot . -10)         (side . right)
     (window-width . 0.4) (window-height . 0.6)
@@ -1252,7 +1267,7 @@ file to visit if current buffer is not visiting a file."
     (slot . 0)
     )
    (,(display-buffer-match "^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\|\\(.*vertico.*\\)\\|\\(\\*gt-result\\*\\)\\|\\(\\*compilation\\*\\)"
-			   toright-min-width)
+			   to-bottom-min-height)
     (display-buffer-in-side-window )
     (side . bottom)  (window-height . 7)
     (window-parameters (no-delete-other-windows . t)
@@ -1262,7 +1277,7 @@ file to visit if current buffer is not visiting a file."
 		       )
     )
    (,(display-buffer-match "^\\(\\*[Hh]elp\\*\\)\\|\\(\\*Metahelp\\*\\)"
-			   toright-min-width)
+			   to-right-min-width)
     (display-buffer-in-side-window)  (slot . 10) (side . right)  (window-width . 0.4) (window-height 0.4)
     (window-parameters
      ;;(no-delete-other-windows . t)
@@ -1289,7 +1304,7 @@ file to visit if current buffer is not visiting a file."
     )
    ;;fallback
    (,(display-buffer-match "^\\(\\*.*\\*\\)"
-			   toright-min-width
+			   to-right-min-width
 			   nil ;; height
 			   "^\\(\\*scratch\\*\\|\\*\\*\\)")
     (display-buffer-in-side-window) (slot . 0) (side . right)  (window-width . 0.4) (window-height 0.4)
