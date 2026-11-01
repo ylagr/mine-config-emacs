@@ -71,9 +71,21 @@
 (setq native-comp-speed 3)
 (setq native-comp-async-report-warnings-errors 'silent)
 (setq native-comp-async-jobs-number 2)
+(setq load-prefer-newer t)
+;; 急速合并，谁先返回谁先显示
+(setq eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly)
 
-(setq l/builtin-file (expand-file-name "init-builtin-mini.el" user-emacs-directory))
-(load-file l/builtin-file)
+(setq l/load-config-use-file t)
+
+(if t
+    (progn
+      (setq l/builtin-file (expand-file-name "init-builtin-mini.el" user-emacs-directory))
+      (load-file l/builtin-file)
+      )
+  (progn
+    (require 'init-builtin-mini)
+    )
+)
 ;; (native-compile-async l/builtin-file nil t)
 
 

@@ -377,36 +377,46 @@
       (add-to-list 'emulation-mode-map-alists
 		   `((acm-mode . ,acm-mode-map))))
     ;; 1. 定义你专供 lsp-bridge 使用的超级 Cape 函数
-    ;; 你可以根据需求在里面组合不同的 cape 后端
+    ;; 1. 集成 Cape 与原生 CAPF 后端
+    ;; 注意：不要用硬编码 advice 暴力覆盖 completion-at-point-functions，
+    ;; 否则会抹杀 emacs-lisp-mode 原生的 elisp-completion-at-point。
     (with-eval-after-load 'cape
       (defun my/lsp-bridge-super-cape()
 	(interactive)
-	(cape-wrap-super #'cape-dabbrev #'cape-keyword  #'cape-file #'cape-keyword #'cape-abbrev)
+	(cape-wrap-super #'cape-dabbrev #'cape-keyword #'cape-file)
 	)
 
       ;; 2. 使用 advice 劫持 lsp-bridge 的查询方法
       (defun my/lsp-bridge-capf-with-super-cape (orig-fun &rest args)
 	"当 acm-backend-capf-candidates 运行时，强制使用自定义的 cape 函数"
+	;; (message "bbbbbb")
 	;; 动态绑定 completion-at-point-functions，确保只影响当前作用域
-	(let ((completion-at-point-functions (list 'my/lsp-bridge-super-cape)))
+	(let* ((completion-at-point-functions-old completion-at-point-functions)
+	       (completion-at-point-functions (append completion-at-point-functions-old (list  'my/lsp-bridge-super-cape))))
 	  ;; (symbol-value 'completion-at-point-functions)
 	  ;; (message "aaaaa")
 	  (apply orig-fun args)))
+      
 
       ;; 3. 挂载到 lsp-bridge 的补全后端上
-      (advice-add 'acm-backend-capf-candiates :around #'my/lsp-bridge-capf-with-super-cape)
+      ;;(advice-add 'acm-backend-capf-candiates :around #'my/lsp-bridge-capf-with-super-cape)
       
       )
     ;;;;;;;;;;
     (add-to-list 'lsp-bridge-default-mode-hooks 'sql-mode-hook)
     (add-hook 'sql-mode 'sql-indent-enable)
+
+    ;; 开启 CAPF 模式支持（特别加入 emacs-lisp-mode，因为底层使用的是 member 精确匹配）
+    (add-to-list 'acm-backend-capf-mode-list 'emacs-lisp-mode)
+    (add-to-list 'acm-backend-capf-mode-list 'lisp-interaction-mode)
     (add-to-list 'acm-backend-capf-mode-list 'text-mode)
     (add-to-list 'acm-backend-capf-mode-list 'prog-mode)
     (add-to-list 'acm-backend-capf-mode-list 'sql-mode)
-    (add-to-list 'acm-backend-capf-mode-list 'lisp-interaction-mode)
     (add-to-list 'acm-backend-capf-mode-list 'yaml-mode)
-    (add-to-list 'acm-backend-capf-mode-hooks 'yaml-mode-hook)
+
+    (add-to-list 'acm-backend-capf-mode-hooks 'emacs-lisp-mode-hook)
     (add-to-list 'acm-backend-capf-mode-hooks 'lisp-interaction-mode-hook)
+    (add-to-list 'acm-backend-capf-mode-hooks 'yaml-mode-hook)
     (add-to-list 'acm-backend-capf-mode-hooks 'prog-mode-hook)
     (add-to-list 'acm-backend-capf-mode-hooks 'text-mode-hook)
     (add-to-list 'acm-backend-capf-mode-hooks 'sql-mode-hook)
@@ -415,13 +425,25 @@
     (setq lsp-bridge-enable-org-babel t)
     (setq lsp-bridge-disable-backup nil)
     (setq acm-enable-quick-access t)
-    (setq acm-enable-capf t)
+    ;; (setq acm-enable-capf t)
     (setq acm-enable-doc t)
 
     (setq acm-enable-lsp-workspace-symbol nil)
     (setq acm-backend-lsp-case-mode "smart")
     (setq acm-backend-search-file-words-enable-fuzzy-match t)
     (setq acm-backend-lsp-show-progress t)
+
+    ;; 补全触发长度配置：
+    ;; 1. 代码补全（LSP 与 Elisp）设为 1，输入 1 个字符即开始提示（避免原先设为 3 导致迟钝）
+    (setq acm-backend-lsp-candidate-min-length 3)
+    (setq acm-backend-elisp-candidate-min-length 3)
+    ;; 2. 词库与代码片段补全设为 2，避免敲 1 个字母时弹出一大堆无关的文件词干扰视线
+    (setq acm-backend-search-file-words-candidate-min-length 3)
+    (setq acm-backend-yas-candidate-min-length 3)
+
+    ;; 快捷键支持：允许主动调用补全菜单（C-M-i 或 remap completion-at-point）
+    ;; (define-key lsp-bridge-mode-map [remap completion-at-point] #'lsp-bridge-popup-complete-menu)
+    ;; (define-key lsp-bridge-mode-map (kbd "C-M-i") #'lsp-bridge-popup-complete-menu)
     
     ;; 使用 lsp-bridge defcustom 默认配置（Windows 自动寻找 python.exe/python3.exe，Linux 自动寻找 python-lsp-bridge）
     (custom-reevaluate-setting 'lsp-bridge-python-command)
@@ -1333,9 +1355,29 @@ Like `colorful--colorize-match', but the prefix also carries a
                            (propertize " [ZOOMING] " 'face 'error)
                          ""))))
 
+(setq etaf-enable nil)
+(when etaf-enable
+  (use-package ecss :ensure t :vc (ecss :url "https://github.com/emacs-taf/ecss" :rev :newest :lisp-dir "."))
+  (use-package ebox :ensure t :vc (:url "https://github.com/emacs-taf/ebox" :rev :newest :lisp-dir "."))
+  (use-package etaf :after ecss ebox :ensure t :vc (:url "https://github.com/emacs-taf/etaf" :rev :newest :lisp-dir "."))
+  (use-package etaf-ui :after etaf :ensure t :vc (:url "https://github.com/emacs-taf/etaf-ui" :rev :newest :lisp-dir "."))
+  (use-package etaf-md-preview :after etaf-ui :ensure t :vc (:url "https://github.com/emacs-taf/etaf-md-preview" :rev :newest :lisp-dir ".")
+    :init
+    (require 'etaf-md-preview)
+    )
+  (use-package etaf-desktop :after etaf-ui :ensure t :vc (:url "https://github.com/emacs-taf/etaf-desktop" :rev :newest :lisp-dir "."))
+  
+  (use-package etaf-gamekit :after etaf-ui :ensure t :vc (:url "https://github.com/emacs-taf/etaf-gamekit" :rev :newest :lisp-dir "."))
+  
+  (use-package etaf-solitaire :after etaf-gamekit :ensure t :vc (:url "https://github.com/emacs-taf/etaf-solitaire" :rev :newest :lisp-dir "."))
+
+  
+  )
+
 (setq l/plugin-start t)
 
 (setq completion-styles (seq-difference completion-styles '(partial-completion))) ;; 移除partial-completion,防到最后
 (add-to-list 'completion-styles 'partial-completion t) ;; 补充默认的补全功能
 (add-to-list 'completion-styles 'flex) ;; add flex in beginning
 
+(provide 'init-package)
