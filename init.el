@@ -7,6 +7,9 @@
 ;;;** main
 ;; first load config
 
+;;(require 'init-builtin)
+
+;;; old config
 (if t
     ""
   (use-package benchmark-init :ensure t
@@ -65,27 +68,32 @@
     )
   )
 ;; (elpaca-init)
-(defvar l/init-plugin t)
-(setq native-comp-jit-compilation t)
-(setq native-comp-jit-compilation-deny-list '("lsp-bridge"))
-(setq native-comp-speed 3)
-(setq native-comp-async-report-warnings-errors 'silent)
-(setq native-comp-async-jobs-number 2)
-(setq load-prefer-newer t)
-;; 急速合并，谁先返回谁先显示
-(setq eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly)
 
-(setq l/load-config-use-file t)
 
-(if t
+(setq l/load-config-use-file nil)
+
+(when l/load-config-use-file
+  (defvar l/init-plugin t)
+  (setq native-comp-jit-compilation t)
+  (setq native-comp-jit-compilation-deny-list '("lsp-bridge"))
+  (setq native-comp-speed 3)
+  (setq native-comp-async-report-warnings-errors 'silent)
+  (setq native-comp-async-jobs-number 2)
+  (setq load-prefer-newer t)
+  ;; 急速合并，谁先返回谁先显示
+  ;; (setq eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly)
+
+
+  (if t
+      (progn
+	(setq l/builtin-file (expand-file-name "init-builtin-mini.el" user-emacs-directory))
+	(load-file l/builtin-file)
+	)
     (progn
-      (setq l/builtin-file (expand-file-name "init-builtin-mini.el" user-emacs-directory))
-      (load-file l/builtin-file)
+      (require 'init-builtin-mini)
       )
-  (progn
-    (require 'init-builtin-mini)
     )
-)
+  )
 ;; (native-compile-async l/builtin-file nil t)
 
 
@@ -100,6 +108,18 @@
 ;;(add-to-list 'electric-pair-text-pairs '("/\\*" . " */"))
 
 
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(mode-line ((t (:background "grey75" :foreground "black" :box (:line-width (1 . 1) :color "#a1afc9"))))))
 					; Local Variables: outline-regexp: ";;;\\*+\\|\\`" eval: (outline-minor-mode 1) eval: (outline-hide-sublevels 4) End:
 
 

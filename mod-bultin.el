@@ -1,0 +1,1060 @@
+; init.el --- Initialization file for Emacs  -*- lexical-binding: t; -*-
+;;; Commentary:
+;;; Emacs Startup File --- initialization for Emacs
+;;; code:
+;; --------------------const-emacs -----------------
+;; (add-hook 'after-init-hook (lambda () (setenv "BASH_ENV" "~/.bashrc")))
+;; (setenv "BASH_ENV" "~/.bashrc")
+(setenv "BASH_ENV" "~/.config/bashex/alias")
+(setenv "BASH_POST_RC" "shopt -s expand_aliases")
+;; (setq shell-command-switch "-O expand_aliases -c")
+
+
+;; --------------------core func --------------------
+(defun l/cursor-type-default ()
+  "Cursor default."
+  (interactive)
+  ;; (setq cursor-type 'hollow)
+  (setq cursor-type 'box)
+  (setq-default cursor-type 'box)
+  )
+
+(defun l/safe-insert-to-list (list-var index new-el)
+  "在 LIST-VAR 的第 INDEX 个元素后插入 NEW-EL。"
+    "非破坏性地在 LIST-VAR 的第 INDEX 个元素后插入 NEW-EL，并重新赋值。"
+  (set list-var
+       (let* ((orig (symbol-value list-var))
+              (head (cl-subseq orig 0  index))
+              (tail (nthcdr index orig)))
+         (append head (list new-el) tail)))
+  )
+(defun l/safe-replace-list-element-at (list-var index new-el)
+  "生成一个新列表并替换第 INDEX 个元素，然后赋值给 LIST-VAR。"
+  (let* ((orig (symbol-value list-var))
+         (new-list (copy-sequence orig)) ; 复制一份，不碰原件
+         (node (nthcdr index new-list)))
+    (if node
+        (progn
+          (setcar node new-el)
+          (set list-var new-list))
+      (error "索引 %d 超出列表范围" index)))
+  )
+;; --------------------pkg-emacs--------------------
+;; set package archives. possibly set mirrors
+
+;; (defconst +wsl2 (string-match-p "WSL2" (shell-command-to-string "uname -r")))
+;; (defconst +nix (string-match-p "current-system" (shell-command-to-string "which nix")))
+;; (defconst +wsl1 (and
+;;                   (eq system-type 'gnu/linux)
+;;                   (not +wsl2)
+;;                   ))
+
+
+
+;; --------------------UI-emacs-------------------------
+
+(setq icomplete-in-buffer t) ;; ???
+;;(load-file (expand-file-name "init-core.el" user-emacs-directory))
+
+(add-hook 'tty-setup-hook #'xterm-mouse-mode)
+
+;; (setq fringe-styles "default") ;; fringe 在终端没用 fringe
+
+;; 设置window显示边框
+(setq window-divider-default-bottom-width 1)
+(setq window-divider-default-right-width 2)
+(setq window-divider-default-places t)
+(setq window-resize-pixelwise t)
+(window-divider-mode 1)
+
+
+(set-face-attribute 'mode-line-inactive nil
+		    :background (face-attribute 'default :background)
+		    ;; :foreground (face-attribute 'default :background)
+		    )
+
+
+
+(setq eldoc-help-at-pt t) 		;; help key at point
+;; (setq eldoc-display-functions '(eldoc-display-in-buffer))
+
+;; (global-display-line-numbers-mode 1)
+
+;; (global-visual-line-mode 1)
+
+
+(use-package ansi-color
+  :ensure nil ;; built-in
+  :init
+  (add-hook 'compilation-filter-hook  'ansi-color-compilation-filter)
+  :config
+  )
+(use-package compile
+  :ensure nil
+  :config
+  ;; (add-to-list 'compilation-environment "TERM=xterm-256color")
+  ;; (setq compilation-read-command t)
+  )
+
+;;;; behavior
+;; --------------------BEHAVIOR-emacs--------------------
+
+(setq shell-command-switch "-c");; 使用-ic可以让compile之类的动作可用，但是不能使用project-grep了。很奇怪
+
+
+;;(add-hook 'find-file-hook #'read-only-mode)
+(defun l/change-buffer-in-view-when-editable()
+  (selected-window)
+  )
+;;(setq window-buffer-change-functions )
+(setq x-select-enable-clipboard nil)	 ;; 关闭和系统剪贴板的交互
+(setq truncate-partial-width-windows 10) ;; 截断行判断窗口宽度调整，默认50
+
+
+
+(setq minibuffer-follows-selected-frame nil) ;; 让minibuffer只在启动minibuffer的frame生效
+
+
+	
+
+
+
+
+
+(setq org-indent-mode-turns-on-hiding-stars nil)
+
+
+
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+
+
+;; --------------------INPUT-emacs--------------------
+
+
+;;;; core func
+(defun find-system-process-exist (command-match-str)
+  (cl-some (lambda (pid)
+             (let ((attrs (process-attributes pid)))
+	       ;; 'args 返回的是完整的命令行字符串，例如 "kitty --instance-group my-group"
+	       (let ((cmd-line (cdr (assoc 'args attrs))))
+		 (and cmd-line (string-match-p command-match-str cmd-line)))))
+           (list-system-processes))
+  )
+
+;;;; keybind
+;; --------------------keybind-emacs--------------------
+(keymap-global-unset "M-SPC")
+(keymap-global-set "M-RET" #'cycle-spacing)
+;;(keymap-global-set "M-SPC ")
+
+(if nil
+    "add custom keybind minor mode and keymap"
+  (defvar l/custom-keybind-minor-mode-map (make-sparse-keymap)
+    "Custom keybind map set.")
+
+  (defvar l/custom-keybind-prefix-keymap (make-sparse-keymap)
+    "Edit map set.")
+  (define-key l/custom-keybind-minor-mode-map (kbd "C-c") l/custom-keybind-prefix-keymap)
+
+  (define-minor-mode l/custom-keybind-mode
+    "Custom user keybind minor mode."
+    :lighter ckm
+    :keymap l/custom-keybind-minor-mode-map
+    )
+  (define-global-minor-mode l/custom-keybind-global-mode l/custom-keybind-mode
+    (lambda () (l/custom-keybind-mode))
+    :group 'l/custom
+    )
+  (l/custom-keybind-global-mode 1)
+  )
+
+
+
+(defun l/copy-current-dir ()
+  "快速复制当前 buffer 所在的目录路径。"
+  (interactive)
+  (let ((path default-directory)
+	(select-enable-clipboard t))
+    (kill-new path)
+    (message "已复制当前目录: %s" path))
+  )
+(defun l/copy-project-root ()
+  "快速复制当前项目根目录路径。"
+  (interactive)
+  (let ((project (project-current)))
+    (if project
+        (let ((root (project-root project))
+	      (select-enable-clipboard t))
+	  (kill-new root)
+	  (message "已复制项目根目录: %s" root))
+      (message "当前不在任何项目中 (未找到 .git 等标识)")))
+  )
+
+;; fix tty-key
+(defun l/quoted-insert-with-read-key (arg)
+  "Insert the next character using read-key, not read-char."
+  (interactive "*p")
+  (let ((char (read-key))
+	)
+    ;; Ensure char is treated as a character code for insertion
+    (if (eq char 67108896)
+	(insert-and-inherit ?\0)
+      (unless (characterp char)
+	(user-error "%s is not a valid character"
+                    (key-description (vector char))))
+      (when (numberp char)
+	(while (> arg 0)
+          (insert-and-inherit char)
+          (setq arg (1- arg))))))
+  )
+(keymap-set l/custom-global-keymap "C-q" #'l/quoted-insert-with-read-key)
+
+;; ----leader key----
+;; (keymap-global-unset "C-j")
+;; (keymap-global-set "C-j C-j" #'electric-newline-and-maybe-indent)
+;; (keymap-unset lisp-interaction-mode-map "C-j")
+;; (keymap-set lisp-interaction-mode-map "C-j C-j" #'eval-print-last-sexp)
+(eval-after-load "org"
+  `(progn
+     ;; (keymap-unset org-mode-map "C-j")
+     ;; (keymap-set org-mode-map "C-j C-j" #'org-return-and-maybe-indent)
+     ;; (keymap-set org-mode-map "C-c ," #'org-insert-structure-template)
+     ;; (with-eval-after-load 'org-agenda
+       ;; (org-agenda-file-to-front "~/.notes")
+       ;; (add-to-list 'org-agenda-files "~/.notes")
+       ;; )
+     )
+  )
+;; ----leader key----end
+(with-eval-after-load "hideshow"
+  ;; todo change to other
+  ;; `(keymap-set hs-minor-mode-map "C-." #'hs-cycle)
+  ;; `(keymap-set l/custom-global-keymap "C-." #'hs-cycle)
+  )
+;; 这个默认是使用C-x ^ enlarge  然后触发v的repeatmap来shrink-window
+;; default use "C-x ^"  "C-x {" "C-x }"
+;; (keymap-set l/custom-leader-prefix-keymap "w <down>" #'shrink-window)
+;; (keymap-set l/cjiustom-leader-keymap "w <up>" #'enlarge-window)
+;; 
+(defun l/backward-delete-char-untabify (arg &optional killp)
+  (interactive "*p\nP")
+  (let ((delete-active-region t))
+    (backward-delete-char-untabify arg killp)
+    )
+  )
+;; <backspace> when use electron pair mode don't delete other pair char
+;; (keymap-global-unset "<backspace>") 
+;; (keymap-global-set "<backspace>" #'l/backward-delete-char-untabify)
+;; 影响electric Paris delete mode ； meow 的删除使用del 处理
+;; (keymap-set l/custom-global-keymap "DEL" #'l/backward-delete-char-untabify)
+;; (keymap-global-set "<backspace>" #'l/backward-del-selection-or-char)
+;; (keymap-global-unset "<backspace>")
+(defun l/delete-selection-or-char(arg)
+  (interactive "p")
+  (if (use-region-p)
+      (let ((beg (region-beginning))
+	    (end (region-end))
+	    )
+	(delete-region beg end)
+	)
+    (delete-char arg)
+    )
+  )
+(setq backward-delete-char-untabify-method 'all)
+(keymap-set l/custom-global-keymap "M-L" #'display-line-numbers-mode)
+(keymap-set l/custom-global-keymap "M-W" #'whitespace-mode)
+(add-hook 'prog-mode-hook #'whitespace-mode)
+(keymap-set l/custom-global-keymap "C-M-w" #'yank)
+(keymap-set l/custom-global-keymap "S-<return>" #'newline-and-indent-down)
+(keymap-set l/custom-global-keymap "C-<return>" #'newline-and-indent-down)
+(keymap-set l/custom-global-keymap "C-M-<return>" #'newline-and-indent-up)
+(keymap-set l/custom-keybind-prefix-keymap "i" #'newline-and-indent-up)
+(keymap-set l/custom-keybind-prefix-keymap "o" #'newline-and-indent-down)
+
+(keymap-set l/custom-keybind-prefix-keymap "D D" #'duplicate-dwim)
+;; (keymap-set l/custom-keybind-prefix-keymap "C-d" #'l/duplicate-line)
+(keymap-set l/custom-keybind-prefix-keymap "d" #'l/duplicate-line)
+(keymap-set l/custom-keybind-prefix-keymap "k" #'kill-whole-line) ;; save in kill-ring
+(keymap-set l/custom-keybind-prefix-keymap "l" #'l/kill-current-line)	;; save in kill-ring
+;; (keymap-set l/custom-keybind-prefix-keymap "f" #'l/delete-whole-line)	;; not save in kill-ring
+(keymap-set l/custom-global-keymap "M-D" #'l/delete-whole-line)
+(keymap-set l/custom-keybind-prefix-keymap "w" #'l/delete-whole-line)	;; not save
+(keymap-set l/custom-keybind-prefix-keymap "h" #'l/delete-line)	;; not save in kill-ring
+(keymap-set l/custom-keybind-prefix-keymap "m" #'l/push-mark)
+(keymap-set l/custom-global-keymap "M-k" #'l/move-forward-of-bounds-of-thing-at-point)
+(keymap-set l/custom-global-keymap "M-K" #'kill-sentence)
+(keymap-set l/custom-global-keymap "M-l" #'downcase-dwim)
+(keymap-set l/custom-global-keymap "M-u" #'upcase-dwim)
+(keymap-set l/custom-global-keymap "M-c" #'capitalize-dwim)
+(keymap-set l/custom-global-keymap "M-z" #'zap-up-to-char) ;old func is zap-to-char, diff is with no up del input char.
+(keymap-set l/custom-global-keymap "M-\"" #'l/choose-inner)
+(keymap-set l/custom-global-keymap "C-M-;" #'l/choose-inner)
+(keymap-set l/custom-global-keymap "C-M-'" #'l/choose-outer)
+
+
+(keymap-set l/custom-global-keymap "C-S-x" #'clipboard-kill-region)
+(keymap-set l/custom-global-keymap "C-S-c" #'clipboard-kill-ring-save)
+(keymap-set l/custom-global-keymap "C-S-v" #'clipboard-yank)
+(keymap-set l/custom-global-keymap "C-M-]" #'undo-only)
+(keymap-set l/custom-keybind-prefix-keymap "c" #'comment-line)
+;;(keymap-global-set "M-U" #'comment-line)
+
+(keymap-set l/custom-leader-prefix-keymap "C-_" #'comment-or-uncomment-region)
+(keymap-set l/custom-leader-prefix-keymap "C-/" #'comment-or-uncomment-region)
+;; ----edit ----end
+(keymap-set l/custom-keybind-prefix-keymap "r" #'compile) 	;; run shell command
+(keymap-set l/custom-leader-prefix-keymap "q" #'quit-window)
+(keymap-set l/custom-leader-prefix-keymap "r" #'compile)
+;; (keymap-global-set "C-c c c" #'compile)
+(keymap-set l/custom-keybind-prefix-keymap "R R" #'recentf-open)
+(keymap-set l/custom-keybind-prefix-keymap "R o" #'recentf-open)
+(keymap-set l/custom-keybind-prefix-keymap "R f" #'recentf-open-files)
+
+(defun yank-pop-last()
+  "When yank select, use this func to jump last yank candidate."
+  (interactive)
+  (yank-pop -1)
+  )
+
+(keymap-set l/custom-global-keymap "M-Y" #'yank-pop-last)
+
+(use-package outline
+  :bind ((:map l/custom-leader-prefix-keymap ("C-o" . #'outline-minor-mode))
+	 (:map outline-minor-mode-map
+	       ("C-c TAB" . #'outline-show-subtree)
+	       ("<backtab>" . #'outline-cycle)
+	       ("C-c p" . #'outline-show-entry)
+	     )
+	 )
+  )
+;; ----code ----end
+(keymap-set l/custom-global-keymap "C-x F" #'set-fill-column)
+(keymap-set l/custom-global-keymap "C-x f" #'find-file-at-point)
+(keymap-set l/custom-global-keymap "C-x j" #'find-file-existing)
+(keymap-set l/custom-leader-prefix-keymap "C-n" #'scratch-buffer)
+(keymap-set l/custom-global-keymap "C-x 4 o" #'display-buffer)
+
+(keymap-set l/custom-global-keymap "<f5>" #'redraw-display)
+
+(keymap-set l/custom-global-keymap "C-M-i" #'completion-at-point)
+;;(global-set-key (kbd "C-M-i") #'completion-symbol)
+;; (keymap-global-set "C-h C-j" #'eldoc-print-current-symbol-info)
+(keymap-set l/custom-global-keymap "C-h C-j" #'eldoc-doc-buffer)
+(keymap-set l/custom-global-keymap "C-h C-k" #'eldoc-print-current-symbol-info)
+(define-key isearch-mode-map [remap isearch-delete-char] #'isearch-del-char)
+(keymap-set minibuffer-local-completion-map "M-n" #'minibuffer-next-completion)
+(keymap-set completion-in-region-mode-map "M-n" #'minibuffer-next-completion)
+(keymap-set minibuffer-local-completion-map "M-p" #'minibuffer-previous-completion)
+(keymap-set completion-in-region-mode-map "M-p" #'minibuffer-previous-completion)
+(keymap-set l/custom-keybind-prefix-keymap "t" #'kill-current-buffer)
+(keymap-set l/custom-keybind-prefix-keymap "v" #'view-mode)
+(keymap-set l/custom-leader-prefix-keymap "w t" #'kill-current-buffer)
+(keymap-set l/custom-leader-prefix-keymap "w s" #'window-toggle-side-windows)
+
+(keymap-set l/custom-global-keymap "M-o" #'other-window)
+(keymap-set l/custom-global-keymap "C-x B" #'ibuffer)
+
+;; cancel C-SPC keybind, pop mark use too busy
+;; (keymap-set l/custom-global-keymap "C-SPC" #'l/set-marker)
+;; (keymap-set l/custom-global-keymap "C-@" #'l/set-marker)
+(keymap-set l/custom-leader-prefix-keymap "C-@" #'set-mark-command)
+(keymap-set l/custom-leader-prefix-keymap "C-SPC" #'set-mark-command) ;; <global> C-SPC
+(keymap-set l/custom-keybind-prefix-keymap "SPC" #'l/set-marker) ;; <local> SPC
+;;(keymap-global-set "C-@" #'set-mark-command)
+
+(defvar l/bracket-pairs
+  '((?\( . ?\))   ; 圆括号
+    (?\[ . ?\])   ; 方括号  
+    (?{ . ?})     ; 花括号
+    (?< . ?>)     ; 尖括号
+;;    (?' . ?')     ; 单引号
+;;    (?\" . ?\")   ; 双引号
+;;    (?` . ?`)     ; 反引号
+    (?« . ?»)     ; 书名号
+    (?『 . ?』)   ; 中文方括号
+    (?「 . ?」)   ; 中文引号
+    (?（ . ?）)   ; 中文圆括号
+    (?【 . ?】)   ; 中文六角括号
+    (?〖 . ?〗)   ; 中文方头括号
+    (?〔 . ?〕)   ; 中文方头括号
+    (?［ . ?］)   ; 中文方头括号
+    (?〚 . ?〛)   ; 中文方头括号
+    (?〘 . ?〙)   ; 中文方头括号
+    (?｛ . ?｝)   ; 中文方头括号
+    (?《 . ?》)   ; 中文方头括号
+    (?〈 . ?〉)   ; 中文方头括号
+    (?‹ . ?›)   ; 中文方头括号
+    (?⟨ . ?⟩)   ; 中文方头括号
+    (?˂ . ?˃)   ; 中文方头括号
+    (?˱ . ?˲)   ; 中文方头括号
+    )
+  "List of bracket pairs for matching.")
+
+(defun l/choose(inner outer char)
+  (when (use-region-p) (deactivate-mark) )
+  (let ((cur-pos (point))
+	(pair (assoc char l/bracket-pairs))
+	(pair-match (rassoc char l/bracket-pairs))
+	)
+    (let ((forward-char (cond
+			 (pair (cdr pair))
+			 (pair-match (cdr pair-match))
+			 (t char)
+			 ))
+	  (backward-char (cond
+			  (pair (car pair))
+			  (pair-match (car pair-match))
+			  (t char)
+			  ))
+	  )
+      (search-forward (string forward-char))
+      (if outer (forward-char))
+      (set-marker (mark-marker) (- (point) 1))
+      (goto-char cur-pos)
+      (search-backward (string backward-char))
+      (if inner (forward-char))
+      (setq mark-active t)
+      )
+    )
+  
+  )
+
+(defun l/choose-inner (char)
+  (interactive (list
+		;;(prefix-numeric-value current-prefix-arg)
+		(read-char-from-minibuffer "Inner to char: " nil 'read-char-history)
+		))
+  (l/choose t nil char)
+  )
+(defun l/choose-outer (char)
+  (interactive (list
+		(read-char-from-minibuffer "Outer to char: " nil 'read-char-history)
+		))
+  (l/choose nil t char)
+  )
+
+
+(defun l/set-marker()
+  (interactive)
+  (set-marker (mark-marker) (point))
+  (setq mark-active t)
+  )
+
+(defun l/push-mark()
+  "Interactive."
+  (interactive)
+  (push-mark)
+  )
+
+;; region移动 C-x C-x
+
+;; (require 'cl-generic)
+(defun l/move-forward-of-bounds-of-thing-at-point ()
+  "Base on `'isearch-forward-thing-at-point ."
+  (interactive)
+  (if (l/select-bound-thing-at-point)
+      nil
+    (back-to-indentation)
+    (l/select-bound-thing-at-point)
+      )
+  
+
+  )
+(defun l/select-bound-thing-at-point()
+  (require 'cl-generic)
+  (let ((bounds (seq-some (lambda (thing) (bounds-of-thing-at-point thing))
+			  ;; `isearch-forward-thing-at-point
+			  '(url symbol sexp)
+			  )))
+    (cond
+     (bounds
+      (when (use-region-p)
+        (deactivate-mark)
+	)
+      ;;(when (< (car bounds) (point))
+      (goto-char (cdr bounds))
+      ;;	(set-mark (cdr bounds))
+      (set-marker (mark-marker) (cdr bounds))
+      (goto-char (car bounds))
+      (setq mark-active t)
+      )
+     )
+    )
+  )
+
+(defun l/kill-current-line ()
+  "Clear line."
+  (interactive)
+  (move-beginning-of-line 1)
+  (kill-line)
+  )
+(defun l/delete-whole-line()
+  (interactive)
+  (delete-line)
+  )
+(defun l/delete-line()
+  (interactive)
+  (delete-region (line-beginning-position) (line-end-position))
+  )
+(defun l/duplicate-line ()
+  "Duplicate line, but cursor follow."
+  (interactive)
+  (let ((column (current-column))
+;;	(point (point))
+	(line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+	)
+    (end-of-line)
+    (newline)
+    (insert line)
+    (beginning-of-line)
+    ;;    (goto-char point)
+    (move-to-column column)
+    )
+  )
+
+
+(defun newline-and-indent-up ()
+  "回车到上一行."
+  (interactive)
+  (move-beginning-of-line 1)
+  (open-line 1)
+  (indent-for-tab-command)
+  )
+(defun newline-and-indent-down ()
+  "回车到下一行."
+  (interactive)
+  (move-end-of-line 1)
+  (newline-and-indent)
+  )
+
+(add-to-list 'save-some-buffers-action-alist
+	     '(?~ (lambda (buf)
+		    (with-current-buffer buf
+		      (set-buffer-modified-p nil))
+		    ;; Return t so we don't ask about BUF again.
+		    t)
+		  "skip this buffer and mark it unmodified")
+	     )
+(eval-after-load "project"
+  `(progn
+     (add-to-list 'project-switch-commands '(magit-project-status "Magit") t)
+     (keymap-set project-prefix-map "m" #'magit-project-status)
+     ))
+(eval-after-load "dired"
+  '(progn
+     (define-key dired-mode-map (kbd "z") #'dired-up-directory)
+     (define-key dired-mode-map (kbd "F") #'dired-create-empty-file)
+     (keymap-set dired-mode-map "_" #'dired-create-empty-file)
+     (keymap-set dired-mode-map "—" #'dired-create-empty-file)
+     (setq dired-dwim-target t)
+     (defun l/alternate-back-dir()
+       "Back to up dir alternate."
+       (interactive)
+       (find-alternate-file "..")
+       )
+     (define-key dired-mode-map (kbd "b") #'l/alternate-back-dir)
+     )
+  )
+(defun l/scroll-half-page-up()
+  "Scroll up half the page."
+  (interactive)
+  (scroll-up (/ (window-body-height) 2))
+  )
+(defun l/scroll-half-page-down()
+  "Scroll down half the page."
+  (interactive)
+  (scroll-down (/ (window-body-height) 2))
+  )
+
+(when t
+  (defun l/open-init-file()
+    "Open Emacs config file."
+    (interactive)
+    (find-file (concat user-emacs-directory "init.el"))
+    )
+  (keymap-global-set "C-x ," #'l/open-init-file)
+  (keymap-global-set "C-x ，" #'l/open-init-file)
+(keymap-global-set "M-<f3>" #'l/open-init-file)
+)
+(when t
+  (defun l/refresh-buffer()
+    "A."
+    (interactive)
+    (message "Refresh buffer...")
+    (revert-buffer t)
+    )
+  (keymap-global-set  "<f8>" #'l/refresh-buffer)
+  )
+(when t
+  (defun l/next-half-page-lines()
+    "Move cursor to next half-page lines."
+    (interactive)
+    (forward-line (/ (window-body-height) 2)))
+  (defun l/previous-half-page-lines()
+    "Move cursor to previous half-page lines."
+    (interactive)
+    (forward-line (/ (window-body-height) -2)))
+  (keymap-global-set "M-N" 'l/next-half-page-lines) ;; 光标向下移动 屏幕一半行
+  (keymap-global-set "M-P" 'l/previous-half-page-lines) ;; 光标向上移动屏幕一半行
+  )
+(when t
+  (setq native-comp-speed 3)
+  (setq native-comp-jit-compilation t)
+  (setq native-comp-jit-compilation-deny-list '("lsp-bridge"))
+  (setq native-comp-async-report-warnings-errors 'silent)
+  (setq native-comp-async-jobs-number 2)
+  (defun l/load-config(config-file-name &optional async)
+    (let ((config-file (expand-file-name config-file-name user-emacs-directory)))
+      (if async
+	  (native-compile-async config-file nil t )
+	(load-file config-file)
+	)
+      )
+    )
+  )
+(use-package view
+  :bind((:map view-mode-map
+	      ("f" . #'View-scroll-page-forward)
+	      ("b" . #'View-scroll-page-backward)
+	      ("j" . #'next-line)
+	      ("k" . #'previous-line)
+	      ("h" . #'backward-char)
+	      ("l" . #'forward-char)
+	 ))
+  )
+(use-package drag-stuff
+  :load-path "user-lisp/drag-stuff/"
+  ;;:ensure t
+  :bind
+  ("M-<up>"  . drag-stuff-up)
+  ("M-<down>" . drag-stuff-down)
+  )
+(use-package praise
+  :after async
+  :load-path "lib/praise"
+  ;;:bind
+  :config
+  (add-hook 'diff-hl-mode-hook 'praise-mode)
+  
+  )
+
+(use-package yasnippet
+  ;; :disabled
+  :load-path "user-lisp/yasnippet"
+  :config
+  (yas-global-mode 1)
+  )
+(defun my/delete-all-child-frames ()
+  "Delete all child frames on the current terminal."
+  (interactive)
+  (let ((frames (frame-list)))
+    (dolist (f frames)
+      (when (frame-parameter f 'parent-frame)
+        (delete-frame f)))))
+;; 绑定一个快捷键，例如 C-x 5 0 也可以被重新绑定
+(global-set-key (kbd "C-c d") 'my/delete-all-child-frames)
+
+
+
+
+;; --------------------repeat-emacs--------------------
+(when t
+  (repeat-mode +1)
+  (setq repeat-exit-key (kbd "i"))
+  (defun l/tab-line-switch-next-tab ()
+    (interactive)
+    (tab-line-switch-to-next-tab)
+    )
+  (defun l/tab-line-switch-prev-tab ()
+    (interactive)
+    (tab-line-switch-to-prev-tab)
+    )
+  (defun l/backward-kill-word()
+    "Avoid M-DEL in repeat-progress."
+    (interactive)
+    (backward-kill-word 1)
+    )
+  (defun l/delete-char()
+    "Avoid C-d in repeat-progress."
+    (interactive)
+    (delete-char 1)
+    )
+  (defun l/next-line()
+    "Local"
+    (interactive)
+    ;; (forward-line 1)
+    (line-move 1)
+    )
+  (defun l/previous-line()
+    "Local"
+    (interactive)
+    ;; (forward-line -1)
+    ;; forward-line会移动到行首，而不是保持当前column位置
+    (line-move -1)
+    )
+
+  ;;  (setq repeat-check-key t)
+  (keymap-set l/custom-leader-prefix-keymap "[" #'l/tab-line-switch-prev-tab)
+  (keymap-set l/custom-leader-prefix-keymap "]" #'l/tab-line-switch-next-tab)
+  (keymap-set l/custom-keybind-prefix-keymap "n" #'l/next-line)
+  (keymap-set l/custom-keybind-prefix-keymap "p" #'l/previous-line)
+
+  (make-obsolete 'l/define-key-in-map-with-repeat-mode nil "2026-04-01")
+  (defmacro l/define-key-in-map-with-repeat-mode (map &rest bindings)
+    "处理 &rest 参数 bindings，并确保 #'func 被正确识别和检查。"
+    `(progn
+       ,@(mapcar
+          (lambda (binding)
+            (let ((key (car binding))
+                  (func (cdr binding)))
+              ;; 在宏展开阶段生成代码
+              `(progn
+		 ;; 1. 绑定按键 (keymap-set 是 Emacs 29+ 推荐)
+		 (keymap-set ,map ,key ,func)
+		 ;; 2. 自动添加 repeat-map 属性 (如果是符号)
+		 (let ((cmd (if (and (listp ,func) (eq (car ,func) 'function))
+				(cadr ,func)
+                              ,func)))
+                   (when (symbolp cmd)
+                     (put cmd 'repeat-map ',map))))))
+          bindings)
+       )
+    )
+  (defun l/put-common-repeat-key-in-map(map)
+    (define-keymap :keymap map
+      "n"  #'l/next-line
+      "p"  #'l/previous-line
+      "k"  #'kill-whole-line
+      "3"  #'move-beginning-of-line
+      "a"  #'back-to-indentation
+      "A"  #'move-beginning-of-line
+      "g"  #'move-end-of-line
+      "G"  #'end-of-visual-line
+      "^"  #'beginning-of-visual-line
+      
+      ;; "4"  #'scroll-up-command
+      ;; "2"  #'scroll-down-command
+      ;; "w"  #'l/scroll-half-page-down
+      ;; "r"  #'l/scroll-half-page-up
+
+      "P"  #'tab-previous
+      "N"  #'tab-next
+      "{"  #'tab-previous
+      "}"  #'tab-next
+      ;; "'"  #'tab-switcher
+      "Y"  #'tab-switcher
+      
+      "q"  #'quit-window
+      ;; "i"  #'repeat-exit
+      "o"  #'other-window
+      "O"  #'other-frame
+      
+      "t"  #'kill-current-buffer
+      "c"  #'comment-line
+      "d"  #'l/duplicate-line
+      "w"  #'l/delete-whole-line
+      ;; ""  #'backward-delete-char-untabify
+      ;; ""  #'xref-find-definitions
+      ;; "/"  #'xref-find-references
+      ;; ","  #'xref-go-back
+      ;; ">"  #'end-of-buffer
+      ;; "<"  #'beginning-of-buffer
+      "0"  #'delete-window
+      "9"  #'ace-window
+      "["  #'l/tab-line-switch-prev-tab
+      "]"  #'l/tab-line-switch-next-tab
+      )
+    )
+  (defvar l/buffer-lunch-repeat-map ; C-x <left> 或 <right>
+    (let ((map (make-sparse-keymap)))
+      (l/put-common-repeat-key-in-map map)
+      (l/put-common-repeat-key-in-map tab-line-switch-repeat-map)
+      ;; 手动处理哪些按键能触发进入repeat-map
+      (dolist (it '(
+		    ;; next-line previous-line
+		    l/next-line l/previous-line
+		    ;; forward-char backward-char forward-word backward-word
+		    ;; back-to-indentation left-word right-word
+		    l/previous-half-page-lines l/next-half-page-lines
+		    scroll-up-command scroll-down-command
+		    l/scroll-half-page-up l/scroll-half-page-down
+		    other-window kill-current-buffer quit-window ace-window delete-window
+		    l/delete-char l/backward-kill-word
+		    ;; find-file find-file-at-point
+		    ;; find-file--read-only
+		    view-mode-enter view-mode-enable view-mode view-mode-exit View-exit
+		    switch-to-buffer project-find-file-in
+		    move-end-of-line move-beginning-of-line
+		    back-to-indentation
+		    end-of-visual-line end-of-visible-line beginning-of-visual-line
+		    tab-previous tab-next tab-switcher tab-switcher-select
+		    xref-find-definitions xref-find-references xref-go-back
+		    comment-line l/delete-whole-line l/duplicate-line
+		    kill-whole-line
+		    embark-dwim
+		    ;; end-of-buffer beginning-of-buffer
+		    l/push-mark
+		    ;; magit-mode-quit-window magit-mode-bury-buffer
+		    other-frame
+		    l/tab-line-switch-next-tab l/tab-line-switch-prev-tab))
+	(put it 'repeat-map 'l/buffer-lunch-repeat-map)
+	)
+      map)
+    "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."
+    )
+
+  ;; (defvar l/shrink-window-repeat-map ; C-x <left> 或 <right>
+  ;;   (let ((map (make-sparse-keymap)))
+  ;;     (define-keymap :keymap map
+  ;; 	"<up>" #'enlarge-window
+  ;; 	"<down>" #'shrink-window
+  ;; 	)
+  ;;     ;; 手动处理哪些按键能触发进入repeat-map
+  ;;     (dolist (it '(
+  ;; 		    ;; next-line previous-line
+  ;; 		    shrink-window enlarge-window
+  ;; 				)
+  ;; 		  )
+  ;; 	(put it 'repeat-map 'l/shrink-window-repeat-map)
+  ;; 	)
+  ;;    map)
+  ;;   )
+
+
+  (setq mode-line-default-color (face-attribute 'mode-line :background))
+  (defun l/repeat-mode-show-in-mode-line (&rest args)
+    (set-face-attribute 'mode-line-active nil :background "tan")
+    ;; (set-face-attribute 'mode-line-active nil :background "firebrick4")
+    ;; (set-face-attribute 'hl-line nil :background "red")
+    ;; (setq tab-bar-local-format-color "yellow")
+    ""
+    )
+  (defvar l/repeat-in-progress nil)
+  (defun l/repeat-mode-hide-in-mode-line ()
+    (set-face-attribute 'mode-line-active nil :background mode-line-default-color)
+    (setq l/repeat-in-progress nil)
+    ;; (set-face-attribute 'hl-line nil :background "darkseagreen2")
+    ;; (setq tab-bar-local-format-color "blue")
+
+    )
+  (l/repeat-mode-hide-in-mode-line)
+  (defun l/repeat-echo-function (keymap)
+    (if keymap
+	(progn
+	  (unless l/repeat-in-progress
+	    (repeat-echo-message keymap)
+	    (setq l/repeat-in-progress t)
+	    (l/repeat-mode-show-in-mode-line)
+	    )
+	  )
+      (progn
+	(l/repeat-mode-hide-in-mode-line)
+	)
+      )
+    ;; (unless l/repeat-in-progres
+    ;;   (repeat-echo-message keymap)
+    ;;   (setq l/repeat-in-progress t)
+    ;;   (l/repeat-mode-show-in-mode-line)
+    ;;   )
+    )
+  ;; (advice-add (symbol-value 'repeat-echo-function) :after 'l/repeat-mode-show-in-tab-bar)
+  (setq repeat-echo-function #'l/repeat-echo-function)
+  (advice-add 'repeat-exit :after #'l/repeat-mode-hide-in-mode-line)
+
+  )
+
+
+;; --------------------window-emacs--------------------
+(setq window-min-height 2)
+(defun display-buffer-match(buf-match-str &optional min-width min-height buf-nomatch-str)
+  "返回识别条件的函数."
+  (lambda (buf-name &rest _alist)
+    (and (if min-width (> (frame-width) min-width) t)
+	 (if min-height (> (frame-height) min-height) t)
+	 (string-match-p buf-match-str buf-name)
+	 (if buf-nomatch-str (not (string-match-p buf-nomatch-str buf-name)) t)
+	 ))
+  )
+(setq to-right-min-width 160)
+(setq to-bottom-min-height 40)
+(setq
+ display-buffer-alist
+ `(
+   (,(display-buffer-match "^\\(magit:.*\\)\\|\\(magit-process.*\\)\\|\\(\\*xref.*\\)"
+			   to-right-min-width)
+    (display-buffer-in-side-window)
+    (slot . -10)         (side . right)
+    (window-width . 0.4) (window-height . 0.6)
+    (window-parameters (no-delete-other-windows . t))
+    )
+   (,(display-buffer-match "^\\(magit-.*\\)")
+    (display-buffer-use-some-window)
+    (slot . 0)
+    )
+   (,(display-buffer-match "^\\(\\*Warnings\\*\\)\\|\\(\\*Messages\\*\\)\\|\\(.*vertico.*\\)\\|\\(\\*gt-result\\*\\)\\|\\(\\*compilation\\*\\)"
+			   to-bottom-min-height)
+    (display-buffer-in-side-window )
+    (side . bottom)  (window-height . 7)
+    (window-parameters (no-delete-other-windows . t)
+		       ;; (mode-line-format . t)
+		       ;; (no-other-window . t)
+		       (no-other-window . nil)
+		       )
+    )
+   (,(display-buffer-match "^\\(\\*[Hh]elp\\*\\)\\|\\(\\*Metahelp\\*\\)"
+			   to-right-min-width)
+    (display-buffer-in-side-window)  (slot . 10) (side . right)  (window-width . 0.4) (window-height 0.4)
+    (window-parameters
+     ;;(no-delete-other-windows . t)
+     ;; (no-other-window . t)
+     (no-other-window . nil)
+     )
+    ;; (display-buffer-in-side-window) (slot . 10)
+    )
+   (,(display-buffer-match "^\\(\\*vterm\\*\\)")
+    (display-buffer-in-side-window) (slot . 20) (side . right) (post-command-select-window . visible)  (window-width . 0.4)
+    (window-parameters (quit . t)
+		       )
+    )
+   (,(display-buffer-match "^\\(\\*eldoc.*\\)")
+    (display-buffer-in-side-window) (slot . 100) (side . top)
+    (window-min-height . 1)
+    (window-height . 2)
+    (window-parameters  (mode-line-format . none)
+			(no-other-window . t)
+			(tab-line-format . none)
+			(header-line-format . none)
+			(no-delete-other-windows . t)
+			)
+    )
+   ;;fallback
+   (,(display-buffer-match "^\\(\\*.*\\*\\)"
+			   to-right-min-width
+			   nil ;; height
+			   "^\\(\\*scratch\\*\\|\\*\\*\\)")
+    (display-buffer-in-side-window) (slot . 0) (side . right)  (window-width . 0.4) (window-height 0.4)
+    )
+   )
+ )
+
+;; --------------------thirdpkg-emacs--------------------
+(defun l/plugin-start()
+  "Start plugin."
+  (interactive)
+  (if (boundp 'l/load-config-use-file)
+      (l/load-config "init-package.el" )
+    (require 'init-package)
+    )
+
+  )
+(if (boundp 'l/init-plugin)
+    (l/plugin-start)
+  )
+
+(if t
+    nil
+(unless (boundp 'l/plugin-start)
+  (keymap-set l/custom-global-keymap "C-." #'l/plugin-start)
+  (keymap-set l/custom-global-keymap "C-," #'l/plugin-start)
+  (keymap-set l/custom-keybind-prefix-keymap "9" #'l/plugin-start)
+  (keymap-set l/custom-keybind-prefix-keymap "g" #'l/plugin-start)
+  (keymap-set l/custom-global-keymap "C-x u" #'l/plugin-start)
+  (keymap-set l/custom-global-keymap "C-x o" #'l/plugin-start)
+  (keymap-set l/custom-keybind-prefix-keymap "j" #'l/plugin-start)
+  (keymap-set l/custom-global-keymap "C-x c u" #'l/plugin-start)
+  (keymap-set l/custom-global-keymap "C-x c p" #'l/plugin-start)
+  (keymap-set l/custom-global-keymap "C-x c ;" #'l/plugin-start)
+  (keymap-set l/custom-global-keymap "C-x c j" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "t" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "s" #'l/plugin-start)
+  (keymap-set l/custom-keybind-prefix-keymap "s" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "m" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "g m" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "g i" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "b" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "i" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "e" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "R r" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "R s" #'l/plugin-start)
+  (keymap-set l/custom-leader-prefix-keymap "R l" #'l/plugin-start)
+  )
+)
+
+;; --------------------frame-emacs--------------------
+(unless  +only-tty
+  (keymap-global-set  "M-<f12>" #'l/normal-frame)
+  (keymap-global-set  "M-<f9>" #'l/mini-frame)
+  )
+;;(unless (daemonp)
+;; (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b") ) ) )
+(setq frame-title-format '((:eval (l/abbreviate-file-name))))
+;;  )
+
+;; -------------------kitty conf ---------------------
+(defvar l/kitty-daemon-process-name "kitty-daemon" "kitty-daemon-process-name setting.")
+(defvar l/kitty-daemon-process-exist nil)
+(defvar l/kitty-daemon-instance-groupname "emacs-kitty-daemon")
+(defun l/start-kitty-daemon ()
+  "Start a daemon kitty -1 --start-as=hidden."
+  (interactive)
+  (unless (executable-find "kitty")
+    (message "kitty not find, plz install."))
+
+  (if l/kitty-daemon-process-exist
+      ;; (list-system-processes)
+      (message "kitty-daemon already running.")
+    (if (find-system-process-exist "emacs-kitty-daemon")
+	"kitty-daemon already running"
+      (async-start-process l/kitty-daemon-process-name "kitty" nil "-1" "--start-as=hidden" "--instance-group" l/kitty-daemon-instance-groupname)
+      )
+    (setq l/kitty-daemon-process-exist t)
+    )
+  )
+;; (add-hook 'after-init-hook #'l/start-kitty-daemon)
+(defun l/open-fzf()
+  (interactive)
+  (if l/kitty-daemon-process-exist
+      (async-start-process "kitty-fzf" "kitty" nil "-1" "--instance-group" l/kitty-daemon-instance-groupname "fzf")
+    (message "kitty-daemon not running.")
+    (l/start-kitty-daemon)
+    (l/open-fzf)
+    )
+  )
+(defun l/open-btop()
+  (interactive)
+  (if l/kitty-daemon-process-exist
+      (async-start-process "kitty-btop" "kitty" nil "-1" "--instance-group" l/kitty-daemon-instance-groupname "-c" "sh" "btop")
+    (message "kitty-daemon not running.")
+    (l/start-kitty-daemon)
+    (l/open-btop)
+    )
+  )
+(defun l/open-kitty-instance-group()
+  (interactive)
+  (if l/kitty-daemon-process-exist
+      (async-start-process "kitty-1" "kitty" nil "-1" "--instance-group" l/kitty-daemon-instance-groupname)
+    (message "kitty-daemon not running.")
+    (l/start-kitty-daemon)
+    (l/open-kitty-instance-group)
+    )
+  )
+
+
+;; --------------------char-emacs--------------------
+(when t
+  (set-char-table-range char-width-table ?’ 1)
+  (set-char-table-range char-width-table ?‘ 1)
+  (set-char-table-range char-width-table ?“ 1)
+  (set-char-table-range char-width-table ?” 1)
+  (set-char-table-range char-width-table ?° 1)
+  (set-char-table-range char-width-table ?— 1)
+  ;; (set-char-table-range char-width-table ?— 1)
+  (set-char-table-range char-width-table ?… 1)
+  )
+(when +only-tty
+  (global-auto-composition-mode -1)	;; fix only emacs run in terminal command
+  )
+;; (require 'cl-lib)
+(provide 'init-builtin-mini)
+;;; init-builtin-mini.el ends here
+
