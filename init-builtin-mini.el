@@ -1430,6 +1430,6 @@ file to visit if current buffer is not visiting a file."
   (global-auto-composition-mode -1)	;; fix only emacs run in terminal command
   )
 ;; (require 'cl-lib)
-(provide 'init-builtin-mini)
+;;(provide 'init-builtin-mini)
 ;;; init-builtin-mini.el ends here
 

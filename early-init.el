@@ -14,7 +14,7 @@
 (defconst l:+windows (eq system-type 'windows-nt))
 (defconst l:+linux (eq system-type 'gnu/linux))
 (defconst l:+daemonp (daemonp))
-(add-hook 'after-init-hook '(lambda () (require 'init-builtin)))
+(add-hook 'after-init-hook '(lambda () (require 'init-builtin)(if (not (null init-file-user)) (require 'init-package))))
 (defcustom l:leader-key "C-z" "Leader key." :type 'string :group 'l:custom)
 (keymap-unset global-map l:leader-key t)
 (defvar l:theme:default-background-color "grey94")

@@ -1380,4 +1380,4 @@ Like `colorful--colorize-match', but the prefix also carries a
 (add-to-list 'completion-styles 'partial-completion t) ;; 补充默认的补全功能
 (add-to-list 'completion-styles 'flex) ;; add flex in beginning
 
-(provide 'init-package)
+;;(provide 'init-package)

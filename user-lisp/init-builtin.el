@@ -371,9 +371,6 @@ When called from Lisp, if FILENAME is given, open that."
 (global-tab-line-mode 1)
 
 ;;;; dired
-(setq dired-listing-switches "-vhal")
-(setq delete-by-moving-to-trash t)
-(put 'dired-find-alternate-file 'disabled nil) ;; cacel warnning
 
 ;;;; minibuffer
 (setq enable-recursive-minibuffers t)	     ;;minibuffer can recursive
@@ -432,7 +429,7 @@ When called from Lisp, if FILENAME is given, open that."
 (setq hs-display-lines-hidden t) ;; use this can see hide line number
 (setq hs-show-indicators t)      ;; see hide line indicators
 (setq hs-indicator-type nil)
-(hs-minor-mode t)
+
 (setq ibuffer-use-header-line 'title)
 (setq ibuffer-human-readable-size t)
 (setq Buffer-menu-human-readable-sizes t)
@@ -463,6 +460,18 @@ When called from Lisp, if FILENAME is given, open that."
   l:minor-leader-keymap-mode
   :group 'l:custom)
 (l:global-leader-keymap-mode)
+
+(defcustom l:custom-keymap (make-sparse-keymap) "Custom keymap." :group 'l:custom)
+(defcustom l:custom-keymap-mode-keymap (make-sparse-keymap) "Custom keymap mode keymap." :group 'l:custom)
+(define-key l:custom-keymap-mode-keymap (kbd "C-c") l:custom-keymap)
+(define-minor-mode l:minor-custom-keymap-mode "Local custom keymap minor mode."
+  :lighter llcm
+  :keymap l:custom-keymap-mode-keymap
+  :group 'l:custom)
+(define-global-minor-mode l:global-custom-keymap-mode l:minor-custom-keymap-mode
+  l:minor-custom-keymap-mode
+  :group 'l:custom)
+(l:global-custom-keymap-mode)
 
 (defcustom l:global-keymap (make-sparse-keymap) "Local global keymap." :group 'l:custom)
 (define-minor-mode l:minor-global-keymap-mode "Local global keymap minor mode."
@@ -496,8 +505,17 @@ When called from Lisp, if FILENAME is given, open that."
 (keymap-set l:global-keymap "M-c" #'capitalize-dwim)
 (keymap-set l:global-keymap "M-u" #'upcase-dwim)
 (keymap-set l:global-keymap "M-z" #'zap-up-to-char)
-
-(with-eval-after-load 'dired
+(keymap-set l:leader-keymap "r" #'recompile)
+(keymap-set l:leader-keymap "p" #'pop-to-mark-command)
+(keymap-set l:leader-keymap "c" #'compile)
+(keymap-set l:custom-keymap "c c" #'comment-line)
+(use-package dired
+  :ensure nil
+  :defer t
+  :config
+    (setq dired-listing-switches "-vhal")
+  (setq delete-by-moving-to-trash t)
+  (put 'dired-find-alternate-file 'disabled nil) ;; cacel warnning
   (defun l:func:alternate-back-dir ()
     "Back to up dir alternate."
     (interactive)
@@ -507,6 +525,49 @@ When called from Lisp, if FILENAME is given, open that."
   (define-key dired-mode-map "z" #'dired-up-directory)
   (setq dired-dwim-target t)
   )
+(use-package compile
+  :config
+  (keymap-set compilation-mode-map "r" #'recompile)
+  )
+;; (with-eval-after-load 'compilation
+  ;; (keymap-set compilation-mode-map "r" #'recompile)
+  ;; )
+(use-package hideshow
+  :ensure nil
+  :defer t
+  :bind
+  (:map hs-minor-mode-map
+	("C-c [" . hs-show-all)
+	("C-c ]" . my-hs-hide-level)
+	("<TAB>" . my-hs-tab))
+  :hook
+  (prog-mode . hs-minor-mode)
+  ((conf-mode
+    js-json-mode json-ts-mode
+    python-mode python-ts-mode
+    yaml-ts-mode sh-mode)
+   . hs-indentation-mode)
+  :config
+  (defun my-hs-hide-level ()
+    (interactive)
+    (hs-hide-level 0))
+
+  (defun my-hs-set-up-overlay (ov)
+    (when (eq 'code (overlay-get ov 'hs))
+      (overlay-put ov 'face 'hs-ellipsis)
+      (overlay-put ov 'display nn-ellipsis)))
+
+  (defun my-hs-tab ()
+    (interactive)
+    (if (and (not (use-region-p))
+             (or (hs-already-hidden-p)
+                 (hs-hideable-block-p t)))
+        (hs-cycle)
+      (indent-for-tab-command)
+      )
+    )
+  )
+
 (defun l:func:open-emacs-file (file)
   "Open emacs config file."
   (interactive)
