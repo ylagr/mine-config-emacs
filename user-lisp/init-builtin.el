@@ -513,7 +513,7 @@ When called from Lisp, if FILENAME is given, open that."
   :ensure nil
   :defer t
   :config
-    (setq dired-listing-switches "-vhal")
+  (setq dired-listing-switches "-vhal")
   (setq delete-by-moving-to-trash t)
   (put 'dired-find-alternate-file 'disabled nil) ;; cacel warnning
   (defun l:func:alternate-back-dir ()
@@ -567,6 +567,27 @@ When called from Lisp, if FILENAME is given, open that."
       )
     )
   )
+(use-package newsticker
+  :ensure nil
+  :config
+  (setq newsticker-url-list l:rss-list)
+;;  (custom-reevaluate-setting 'newsticker-url-list-defaults)
+  :init
+  (defcustom l:rss-list
+    '(("Xkcd" "https://xkcd.com/rss.xml")
+      ("牛牛万事屋" "https://zdn.codeberg.page/rss.xml")
+      ("Sacha Chua" "https://sachachua.com/blog/category/emacs-news/feed/")
+      ("Planet Emacslife" "https://planet.emacslife.com/atom.xml")
+      ("Emacs TIL" "https://emacstil.com/feed.xml")
+      ("60秒看世界" "https://60s.viki.moe/v2/60s/rss"))
+    "RSS link list"
+    :type 'list
+    :group 'l:custom)
+  (defun l:func:newsticker-show-news ()
+    (interactive)
+    (require 'newsticker)
+    (cl-letf (((symbol-function 'newsticker-start) #'ignore))
+      (newsticker-show-news))))
 
 (defun l:func:open-emacs-file (file)
   "Open emacs config file."

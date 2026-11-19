@@ -11,8 +11,8 @@
 
   (meow-define-state passthrough
     "Native Emacs passthrough state without any key intercept."
-    :lighter " [emacs]"
-    :keymap meow-passthrough-state-keymap)
+    :lighter " [E]"
+    :keymap l:meow-passthrough-state-keymap)
 
   ;; 兼容别名
   (defalias 'l:meow-passthrough-mode #'meow-passthrough-mode)
@@ -24,25 +24,50 @@
 
   ;; 3. 将原本进入 insert 模式的命令与状态重定向到 passthrough
   ;; 这样你在 normal 模式按 i, a, c, s, o 等任何会进 insert 的键，都会自动进入 passthrough
-  ;; (defun meow--redirect-insert-to-passthrough (orig-fun state &rest args)
-  ;;   "Redirect 'insert state to 'passthrough state."
-  ;;   (if (eq state 'insert)
-  ;;       (apply orig-fun 'passthrough args)
-  ;;     (apply orig-fun state args)))
-  ;; (advice-add 'meow--switch-state :around #'meow--redirect-insert-to-passthrough)
-  (defalias 'meow-insert #'meow-passthrough-mode)
+  (defun meow--redirect-insert-to-passthrough (orig-fun state &rest args)
+    "Redirect 'insert state to 'passthrough state."
+    (if (eq state 'insert)
+        (apply orig-fun 'passthrough args)
+      (apply orig-fun state args)))
+  (advice-add 'meow--switch-state :around #'meow--redirect-insert-to-passthrough)
+  ;; (defalias 'meow-insert #'meow-passthrough-mode)
 
   ;; 4. 配置 major-mode 默认状态表，彻底移除 insert，换成 passthrough（注：值必须为 state 符号）
   (setq meow-mode-state-list
 	'((prog-mode . passthrough)
           (text-mode . passthrough)
           (conf-mode . passthrough)
-          (special-mode . motion)
-          (dired-mode . motion)))
+          (special-mode . passthrough)
+          (dired-mode . passthrough)))
 
   ;; 5. 设置光标样式（保持与 insert 一样的竖线光标）
-  (setq meow-cursor-type-passthrough '(bar . 2))
-
+  (setq meow-cursor-type-passthrough '(bar . 3))
+  (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
+  (meow-motion-define-key '("<escape>" . ignore))
+  (meow-leader-define-key '("/" . meow-keypad-describe-key)
+			  '("?" . meow-cheatsheet))
+  (meow-normal-define-key '("i" . meow-insert)
+			  '("/" . meow-search-highlight)
+			  '("C" . meow-quit)
+			  '("<escape>" . ignore)
+			  '("|" . meow-goto-line)
+			  '("\\" . meow-line)
+			  '("a" . meow-append)
+			  '("-" . negative-argument)
+			  '(";" . meow-reverse)
+			  '("," . meow-inner-of-thing)
+			  '("." . meow-bounds-of-thing)
+			  '("[" . meow-beginning-of-thing)
+			  '("]" . meow-end-of-thing)
+			  '("A" . meow-open-below)
+			  '("I" . meow-open-above)
+			  '("s" . backward-char)
+			  '("d" . next-line)
+			  '("f" . forward-char)
+			  '("e" . previous-line)
+			  '("o" . meow-block)
+			  '("O" . meow-to-block)
+			  '(":" . execute-extended-command))
   ;; 6. 切换窗口/Buffer 时自动激活安全切换到 passthrough
   (defun l:func:meow-switch-to-passthrough-safe ()
     "Switch to passthrough mode automatically in editable buffers."
@@ -69,6 +94,8 @@
     (let ((use-region (use-region-p)))
       (meow-append)
       (unless use-region
-	(forward-char)))))
+	(forward-char))))
+  (meow-global-mode))
+
 
 (provide 'init-package)
